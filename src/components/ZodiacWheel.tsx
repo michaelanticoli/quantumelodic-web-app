@@ -1,19 +1,20 @@
 import { motion } from 'framer-motion';
 import type { PlanetPosition } from '@/types/astrology';
 
+// Unicode astrological symbols with elegant gold/amber color palette
 const zodiacSigns = [
-  { symbol: '♈', name: 'Aries', color: 'hsl(0, 70%, 55%)' },
-  { symbol: '♉', name: 'Taurus', color: 'hsl(140, 50%, 45%)' },
-  { symbol: '♊', name: 'Gemini', color: 'hsl(50, 70%, 50%)' },
-  { symbol: '♋', name: 'Cancer', color: 'hsl(210, 30%, 80%)' },
-  { symbol: '♌', name: 'Leo', color: 'hsl(35, 90%, 55%)' },
-  { symbol: '♍', name: 'Virgo', color: 'hsl(140, 40%, 40%)' },
-  { symbol: '♎', name: 'Libra', color: 'hsl(300, 30%, 60%)' },
-  { symbol: '♏', name: 'Scorpio', color: 'hsl(0, 60%, 40%)' },
-  { symbol: '♐', name: 'Sagittarius', color: 'hsl(280, 60%, 55%)' },
-  { symbol: '♑', name: 'Capricorn', color: 'hsl(220, 30%, 40%)' },
-  { symbol: '♒', name: 'Aquarius', color: 'hsl(186, 70%, 50%)' },
-  { symbol: '♓', name: 'Pisces', color: 'hsl(240, 50%, 60%)' },
+  { symbol: '♈', name: 'Aries', color: 'hsl(35, 80%, 65%)' },
+  { symbol: '♉', name: 'Taurus', color: 'hsl(40, 75%, 60%)' },
+  { symbol: '♊', name: 'Gemini', color: 'hsl(45, 85%, 70%)' },
+  { symbol: '♋', name: 'Cancer', color: 'hsl(38, 70%, 75%)' },
+  { symbol: '♌', name: 'Leo', color: 'hsl(42, 90%, 65%)' },
+  { symbol: '♍', name: 'Virgo', color: 'hsl(48, 65%, 60%)' },
+  { symbol: '♎', name: 'Libra', color: 'hsl(36, 75%, 68%)' },
+  { symbol: '♏', name: 'Scorpio', color: 'hsl(30, 80%, 55%)' },
+  { symbol: '♐', name: 'Sagittarius', color: 'hsl(44, 85%, 62%)' },
+  { symbol: '♑', name: 'Capricorn', color: 'hsl(32, 70%, 58%)' },
+  { symbol: '♒', name: 'Aquarius', color: 'hsl(50, 75%, 70%)' },
+  { symbol: '♓', name: 'Pisces', color: 'hsl(38, 80%, 65%)' },
 ];
 
 // Default decorative planets when no real data
@@ -122,19 +123,25 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
             const y = center + Math.sin(angle) * radius;
 
             return (
-              <text
-                key={sign.name}
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={sign.color}
-                fontSize="16"
-                filter="url(#glow)"
-                style={{ fontFamily: 'serif' }}
-              >
-                {sign.symbol}
-              </text>
+              <g key={sign.name}>
+                {/* Outer glow effect for the symbol */}
+                <text
+                  x={x}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill={sign.color}
+                  fontSize="18"
+                  filter="url(#glow)"
+                  style={{ 
+                    fontFamily: '"Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", sans-serif',
+                    fontWeight: 400,
+                  }}
+                  opacity={0.9}
+                >
+                  {sign.symbol}
+                </text>
+              </g>
             );
           })}
         </motion.g>
