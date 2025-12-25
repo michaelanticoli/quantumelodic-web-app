@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
+import { generateCosmicMusic } from '@/lib/cosmicMusicGenerator';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -18,8 +19,6 @@ const signModes: Record<string, string> = {
   'Aquarius': 'F# Lydian',
   'Pisces': 'E Phrygian',
 };
-
-// Geocoding now handled server-side in the edge function
 
 export function useCosmicReading() {
   const [loading, setLoading] = useState(false);
@@ -61,32 +60,17 @@ export function useCosmicReading() {
       setChartData(chart);
       setProgress(50);
 
-      // Step 3: Generate music
+      // Step 2: Generate music using client-side Tone.js (free, no API key needed)
       setStage('generating');
       setProgress(60);
 
-      const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sunSign: chart.sunSign,
-          moonSign: chart.moonSign,
-          ascendant: chart.ascendant,
-          name: birthData.name,
-        }),
+      const audioBlob = await generateCosmicMusic({
+        sunSign: chart.sunSign,
+        moonSign: chart.moonSign,
+        duration: 30,
+        onProgress: (p) => setProgress(60 + p * 0.4), // 60-100%
       });
 
-      if (!musicResponse.ok) {
-        const contentType = musicResponse.headers.get('content-type');
-        if (contentType?.includes('application/json')) {
-          const errorData = await musicResponse.json();
-          throw new Error(errorData.error || 'Failed to generate music');
-        }
-        throw new Error('Failed to generate music');
-      }
-
-      // Get audio blob and create URL
-      const audioBlob = await musicResponse.blob();
       const url = URL.createObjectURL(audioBlob);
       setAudioUrl(url);
       setProgress(100);
