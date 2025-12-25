@@ -19,47 +19,7 @@ const signModes: Record<string, string> = {
   'Pisces': 'E Phrygian',
 };
 
-interface GeocodingResult {
-  latitude: number;
-  longitude: number;
-  timezone: number;
-}
-
-// Geocode location using a free service
-async function geocodeLocation(location: string): Promise<GeocodingResult> {
-  // Using Nominatim (OpenStreetMap) for geocoding - free and no API key required
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`,
-    {
-      headers: {
-        'User-Agent': 'QuantumMelodies/1.0'
-      }
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to geocode location');
-  }
-
-  const results = await response.json();
-  
-  if (results.length === 0) {
-    // Default to a common location if geocoding fails
-    console.warn('Location not found, using default coordinates');
-    return { latitude: 40.7128, longitude: -74.0060, timezone: -5 }; // NYC
-  }
-
-  const { lat, lon } = results[0];
-  
-  // Estimate timezone from longitude (rough approximation)
-  const timezone = Math.round(parseFloat(lon) / 15);
-  
-  return {
-    latitude: parseFloat(lat),
-    longitude: parseFloat(lon),
-    timezone,
-  };
-}
+// Geocoding now handled server-side in the edge function
 
 export function useCosmicReading() {
   const [loading, setLoading] = useState(false);
@@ -77,18 +37,8 @@ export function useCosmicReading() {
     setStage('geocoding');
 
     try {
-      // Step 1: Geocode the location
+      // Step 1 & 2: Calculate birth chart (geocoding handled server-side)
       setProgress(10);
-      const { latitude, longitude, timezone } = await geocodeLocation(birthData.location);
-      
-      const enrichedBirthData: BirthData = {
-        ...birthData,
-        latitude,
-        longitude,
-        timezone,
-      };
-
-      // Step 2: Calculate birth chart
       setStage('calculating');
       setProgress(30);
       
@@ -98,9 +48,7 @@ export function useCosmicReading() {
         body: JSON.stringify({
           date: birthData.date,
           time: birthData.time,
-          latitude,
-          longitude,
-          timezone,
+          location: birthData.location,
         }),
       });
 
@@ -147,7 +95,7 @@ export function useCosmicReading() {
       const musicalMode = signModes[chart.sunSign] || 'D Dorian';
 
       const cosmicReading: CosmicReading = {
-        birthData: enrichedBirthData,
+        birthData,
         chartData: chart,
         audioUrl: url,
         musicalMode,

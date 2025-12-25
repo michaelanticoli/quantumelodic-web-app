@@ -6,11 +6,12 @@ const corsHeaders = {
 };
 
 interface BirthData {
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
-  latitude: number;
-  longitude: number;
-  timezone: number;
+  date: string;
+  time: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  timezone?: number;
 }
 
 interface PlanetPosition {
@@ -20,6 +21,12 @@ interface PlanetPosition {
   sign: string;
   signNumber: number;
   isRetrograde: boolean;
+}
+
+interface GeocodingResult {
+  latitude: number;
+  longitude: number;
+  timezone: number;
 }
 
 const planetSymbols: Record<string, string> = {
@@ -41,6 +48,42 @@ const signNames = [
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
+// Geocode location using Nominatim (server-side to avoid CORS)
+async function geocodeLocation(location: string): Promise<GeocodingResult> {
+  console.log(`Geocoding location: ${location}`);
+  
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`,
+    {
+      headers: {
+        'User-Agent': 'QuantumMelodies/1.0 (cosmic music generation app)'
+      }
+    }
+  );
+
+  if (!response.ok) {
+    console.error(`Geocoding failed with status: ${response.status}`);
+    throw new Error('Failed to geocode location');
+  }
+
+  const results = await response.json();
+  console.log(`Geocoding results count:`, results.length);
+  
+  if (results.length === 0) {
+    console.warn('Location not found, using default coordinates (NYC)');
+    return { latitude: 40.7128, longitude: -74.0060, timezone: -5 };
+  }
+
+  const { lat, lon } = results[0];
+  const latitude = parseFloat(lat);
+  const longitude = parseFloat(lon);
+  const timezone = Math.round(longitude / 15);
+  
+  console.log(`Geocoded to: lat=${latitude}, lon=${longitude}, tz=${timezone}`);
+  
+  return { latitude, longitude, timezone };
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -48,16 +91,32 @@ serve(async (req) => {
   }
 
   try {
-    const { date, time, latitude, longitude, timezone } = await req.json() as BirthData;
+    const birthData: BirthData = await req.json();
+    console.log('Calculating chart for:', birthData);
 
-    console.log("Calculating chart for:", { date, time, latitude, longitude, timezone });
+    let { date, time, latitude, longitude, timezone } = birthData;
+    
+    // Geocode if location provided but no coordinates
+    if (birthData.location && (latitude === undefined || longitude === undefined)) {
+      const geo = await geocodeLocation(birthData.location);
+      latitude = geo.latitude;
+      longitude = geo.longitude;
+      timezone = geo.timezone;
+    }
+    
+    if (latitude === undefined || longitude === undefined) {
+      throw new Error('Location or coordinates required');
+    }
+    
+    if (timezone === undefined) {
+      timezone = Math.round(longitude / 15);
+    }
 
     // Parse date and time
     const [year, month, day] = date.split('-').map(Number);
     const [hour, minute] = time.split(':').map(Number);
 
     // Use our accurate astronomical calculations directly
-    // This is more reliable than external APIs that may be down or rate-limited
     const planets = calculatePlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone);
     
     console.log("Calculated planets:", planets.map(p => `${p.name}: ${p.degree.toFixed(1)}° ${p.sign}`).join(', '));
