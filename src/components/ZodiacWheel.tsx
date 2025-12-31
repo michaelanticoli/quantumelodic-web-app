@@ -29,12 +29,12 @@ const defaultPlanets = [
 ];
 
 // Aspect definitions with orbs and colors
-const aspects = [
-  { name: 'Conjunction', angle: 0, orb: 8, color: 'hsla(43, 74%, 52%, 0.8)', dash: '' },
-  { name: 'Sextile', angle: 60, orb: 6, color: 'hsla(186, 95%, 48%, 0.6)', dash: '4 2' },
-  { name: 'Square', angle: 90, orb: 8, color: 'hsla(0, 70%, 55%, 0.7)', dash: '' },
-  { name: 'Trine', angle: 120, orb: 8, color: 'hsla(120, 60%, 50%, 0.7)', dash: '' },
-  { name: 'Opposition', angle: 180, orb: 8, color: 'hsla(0, 70%, 55%, 0.6)', dash: '6 3' },
+export const aspects = [
+  { name: 'Conjunction', symbol: '☌', angle: 0, orb: 8, color: 'hsla(43, 74%, 52%, 0.8)', dash: '' },
+  { name: 'Sextile', symbol: '⚹', angle: 60, orb: 6, color: 'hsla(186, 95%, 48%, 0.6)', dash: '4 2' },
+  { name: 'Square', symbol: '□', angle: 90, orb: 8, color: 'hsla(0, 70%, 55%, 0.7)', dash: '' },
+  { name: 'Trine', symbol: '△', angle: 120, orb: 8, color: 'hsla(120, 60%, 50%, 0.7)', dash: '' },
+  { name: 'Opposition', symbol: '☍', angle: 180, orb: 8, color: 'hsla(0, 70%, 55%, 0.6)', dash: '6 3' },
 ];
 
 // Calculate aspects between planets
@@ -61,6 +61,17 @@ function calculateAspects(planets: { name: string; angle: number }[]) {
   return result;
 }
 
+// Convert zodiacal degree to screen position
+// In Western astrology: Ascendant at 9 o'clock (left), zodiac goes counter-clockwise
+// House 1 starts at ASC and goes clockwise (so H1 is below ASC at 8 o'clock position)
+function degreeToScreenAngle(zodiacDegree: number, ascendantDegree: number): number {
+  // The ascendant should appear at 180° (9 o'clock / left side)
+  // Zodiac degrees increase counter-clockwise
+  // So screen_angle = 180 - (zodiacDegree - ascendantDegree)
+  // This puts ASC at 180°, and zodiac increases counter-clockwise
+  return 180 - (zodiacDegree - ascendantDegree);
+}
+
 interface ZodiacWheelProps {
   planets?: PlanetPosition[];
   animate?: boolean;
@@ -70,25 +81,30 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
   const size = 300;
   const center = size / 2;
   
-  // Get ascendant degree for wheel rotation (Ascendant should be at 9 o'clock / left)
+  // Get ascendant degree for wheel rotation
   const ascendantDegree = planets?.find(p => p.name === 'Ascendant')?.degree || 0;
-  // Rotation offset: In Western charts, Ascendant is at 9 o'clock (180° on SVG coordinate system)
-  // If Ascendant is at X degrees zodiacal, we rotate the wheel so X° appears at 180° on screen
-  const wheelRotation = planets ? -(ascendantDegree) : 0;
 
   // Convert real planet data to display format, or use defaults
   const displayPlanets = planets 
     ? planets.map((p, i) => ({
         symbol: p.symbol,
         name: p.name,
-        angle: p.degree, // Use actual degree from chart
-        radius: 0.55 + (i % 3) * 0.08, // Stagger radii for visibility
+        zodiacDegree: p.degree,
+        screenAngle: degreeToScreenAngle(p.degree, ascendantDegree),
+        radius: 0.55 + (i % 3) * 0.08,
         isRetrograde: p.isRetrograde,
       }))
-    : defaultPlanets.map(p => ({ ...p, isRetrograde: false }));
+    : defaultPlanets.map(p => ({ 
+        ...p, 
+        zodiacDegree: p.angle,
+        screenAngle: p.angle, 
+        isRetrograde: false 
+      }));
   
-  // Calculate aspects between planets
-  const planetAspects = planets ? calculateAspects(displayPlanets) : [];
+  // Calculate aspects between planets (using zodiacal degrees)
+  const planetAspects = planets 
+    ? calculateAspects(displayPlanets.map(p => ({ name: p.name, angle: p.zodiacDegree })))
+    : [];
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -140,58 +156,55 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           strokeWidth="2"
         />
 
-        {/* Outer zodiac ring - rotated based on Ascendant when we have real data */}
-        <motion.g
-          initial={animate && !planets ? { rotate: 0 } : undefined}
-          animate={animate && !planets ? { rotate: 360 } : undefined}
-          transition={animate && !planets ? { duration: 120, repeat: Infinity, ease: "linear" } : undefined}
-          style={{ 
-            transformOrigin: 'center',
-            transform: planets ? `rotate(${wheelRotation}deg)` : undefined,
-          }}
-        >
-          <circle
-            cx={center}
-            cy={center}
-            r={center - 20}
-            fill="none"
-            stroke="hsla(43, 74%, 52%, 0.3)"
-            strokeWidth="1"
-            strokeDasharray="4 4"
-          />
+        {/* Outer zodiac ring */}
+        <circle
+          cx={center}
+          cy={center}
+          r={center - 20}
+          fill="none"
+          stroke="hsla(43, 74%, 52%, 0.3)"
+          strokeWidth="1"
+          strokeDasharray="4 4"
+        />
 
-          {/* Zodiac signs - 0° Aries starts at right (3 o'clock), goes counter-clockwise */}
-          {zodiacSigns.map((sign, index) => {
-            // Each sign occupies 30°, starting from 0° Aries
-            // In SVG, 0° is right (3 o'clock), and we go counter-clockwise for zodiac
-            const signMidpoint = index * 30 + 15; // Middle of each sign
-            const angle = (-signMidpoint + 180) * (Math.PI / 180); // Counter-clockwise, offset to put Aries at 9 o'clock when ASC=0
-            const radius = center - 35;
-            const x = center + Math.cos(angle) * radius;
-            const y = center + Math.sin(angle) * radius;
+        {/* Zodiac signs - positioned based on ascendant */}
+        {zodiacSigns.map((sign, index) => {
+          // Each sign occupies 30°, sign 0 (Aries) starts at 0°
+          const signStartDegree = index * 30;
+          const signMidDegree = signStartDegree + 15;
+          
+          // Convert to screen angle
+          const screenAngle = degreeToScreenAngle(signMidDegree, planets ? ascendantDegree : 0);
+          const angleRad = screenAngle * (Math.PI / 180);
+          
+          const radius = center - 35;
+          const x = center + Math.cos(angleRad) * radius;
+          const y = center + Math.sin(angleRad) * radius;
 
-            return (
-              <g key={sign.name}>
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill={sign.color}
-                  fontSize="18"
-                  filter="url(#glow)"
-                  style={{ 
-                    fontFamily: '"Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", sans-serif',
-                    fontWeight: 400,
-                  }}
-                  opacity={0.9}
-                >
-                  {sign.symbol}
-                </text>
-              </g>
-            );
-          })}
-        </motion.g>
+          return (
+            <motion.g 
+              key={sign.name}
+              initial={animate && !planets ? { opacity: 0 } : undefined}
+              animate={animate && !planets ? { opacity: 0.9 } : { opacity: 0.9 }}
+            >
+              <text
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={sign.color}
+                fontSize="18"
+                filter="url(#glow)"
+                style={{ 
+                  fontFamily: '"Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", sans-serif',
+                  fontWeight: 400,
+                }}
+              >
+                {sign.symbol}
+              </text>
+            </motion.g>
+          );
+        })}
 
         {/* Inner rings */}
         <circle
@@ -211,99 +224,113 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           strokeWidth="1"
         />
 
-        {/* House lines */}
+        {/* House cusp lines - 12 houses, starting from Ascendant */}
+        {/* In equal house system, each house is 30° starting from ASC */}
         {[...Array(12)].map((_, i) => {
-          const angle = (i * 30) * (Math.PI / 180);
-          const x1 = center + Math.cos(angle) * (center * 0.3);
-          const y1 = center + Math.sin(angle) * (center * 0.3);
-          const x2 = center + Math.cos(angle) * (center - 50);
-          const y2 = center + Math.sin(angle) * (center - 50);
+          // House cusp i starts at ASC + (i * 30) in the clockwise direction
+          // But houses go clockwise from ASC (which is at 180° screen angle)
+          // House 1 cusp is at ASC (180°), House 2 at 180° + 30° = 210°, etc.
+          const houseStartAngle = 180 + (i * 30);
+          const angleRad = houseStartAngle * (Math.PI / 180);
+          
+          const x1 = center + Math.cos(angleRad) * (center * 0.3);
+          const y1 = center + Math.sin(angleRad) * (center * 0.3);
+          const x2 = center + Math.cos(angleRad) * (center - 50);
+          const y2 = center + Math.sin(angleRad) * (center - 50);
+
+          // House number position (middle of the house)
+          const houseMidAngle = 180 + (i * 30) + 15;
+          const houseMidRad = houseMidAngle * (Math.PI / 180);
+          const houseNumX = center + Math.cos(houseMidRad) * (center * 0.2);
+          const houseNumY = center + Math.sin(houseMidRad) * (center * 0.2);
+
+          const isAngular = i === 0 || i === 3 || i === 6 || i === 9;
 
           return (
-            <line
-              key={i}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke="hsla(255, 30%, 40%, 0.3)"
-              strokeWidth="1"
-            />
+            <g key={`house-${i}`}>
+              <line
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={isAngular ? 'hsla(186, 95%, 60%, 0.6)' : 'hsla(255, 30%, 40%, 0.3)'}
+                strokeWidth={isAngular ? 1.5 : 1}
+              />
+              {/* House number */}
+              {planets && (
+                <text
+                  x={houseNumX}
+                  y={houseNumY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="hsla(255, 30%, 60%, 0.5)"
+                  fontSize="9"
+                >
+                  {i + 1}
+                </text>
+              )}
+            </g>
           );
         })}
 
-        {/* Planet positions - rotated with the wheel when we have real data */}
-        <motion.g
-          initial={animate && !planets ? { rotate: 0 } : undefined}
-          animate={animate && !planets ? { rotate: -360 } : undefined}
-          transition={animate && !planets ? { duration: 180, repeat: Infinity, ease: "linear" } : undefined}
-          style={{ 
-            transformOrigin: 'center',
-            transform: planets ? `rotate(${wheelRotation}deg)` : undefined,
-          }}
-        >
-          {displayPlanets.map((planet, idx) => {
-            // Skip drawing Ascendant as a planet (it's a point, shown by wheel orientation)
-            if (planet.name === 'Ascendant') return null;
-            
-            // Convert degree to position
-            // Zodiac goes counter-clockwise: 0° at 9 o'clock when wheel is at 0 rotation
-            const angle = (-planet.angle + 180) * (Math.PI / 180);
-            const radius = center * planet.radius;
-            const x = center + Math.cos(angle) * radius;
-            const y = center + Math.sin(angle) * radius;
+        {/* Planet positions */}
+        {displayPlanets.map((planet, idx) => {
+          // Skip drawing Ascendant as a planet (it's shown as the left axis)
+          if (planet.name === 'Ascendant') return null;
+          
+          const angleRad = planet.screenAngle * (Math.PI / 180);
+          const radius = center * planet.radius;
+          const x = center + Math.cos(angleRad) * radius;
+          const y = center + Math.sin(angleRad) * radius;
 
-            return (
-              <g key={planet.name}>
-                <motion.text
-                  x={x}
-                  y={y}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill={planet.isRetrograde ? 'hsla(0, 70%, 60%, 1)' : 'hsla(43, 74%, 70%, 1)'}
-                  fontSize="14"
-                  filter="url(#glow)"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 * idx }}
-                  // Counter-rotate text so it's readable
-                  style={{ transform: planets ? `rotate(${-wheelRotation}deg)` : undefined, transformOrigin: `${x}px ${y}px` }}
+          return (
+            <g key={planet.name}>
+              <motion.text
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={planet.isRetrograde ? 'hsla(0, 70%, 60%, 1)' : 'hsla(43, 74%, 70%, 1)'}
+                fontSize="14"
+                filter="url(#glow)"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 * idx }}
+              >
+                {planet.symbol}
+              </motion.text>
+              {/* Retrograde indicator */}
+              {planet.isRetrograde && (
+                <text
+                  x={x + 8}
+                  y={y - 5}
+                  fontSize="8"
+                  fill="hsla(0, 70%, 60%, 0.8)"
                 >
-                  {planet.symbol}
-                </motion.text>
-                {/* Retrograde indicator */}
-                {planet.isRetrograde && (
-                  <text
-                    x={x + 8}
-                    y={y - 5}
-                    fontSize="8"
-                    fill="hsla(0, 70%, 60%, 0.8)"
-                  >
-                    ℞
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        </motion.g>
+                  ℞
+                </text>
+              )}
+            </g>
+          );
+        })}
 
         {/* Aspect lines between planets */}
         {planets && (
-          <g style={{ transform: `rotate(${wheelRotation}deg)`, transformOrigin: 'center' }}>
+          <g>
             {planetAspects.map(({ p1, p2, aspect }, idx) => {
               const planet1 = displayPlanets[p1];
               const planet2 = displayPlanets[p2];
               
-              const angle1 = (-planet1.angle + 180) * (Math.PI / 180);
-              const angle2 = (-planet2.angle + 180) * (Math.PI / 180);
+              const angle1Rad = planet1.screenAngle * (Math.PI / 180);
+              const angle2Rad = planet2.screenAngle * (Math.PI / 180);
               
               const r1 = center * planet1.radius;
               const r2 = center * planet2.radius;
               
-              const x1 = center + Math.cos(angle1) * r1;
-              const y1 = center + Math.sin(angle1) * r1;
-              const x2 = center + Math.cos(angle2) * r2;
-              const y2 = center + Math.sin(angle2) * r2;
+              const x1 = center + Math.cos(angle1Rad) * r1;
+              const y1 = center + Math.sin(angle1Rad) * r1;
+              const x2 = center + Math.cos(angle2Rad) * r2;
+              const y2 = center + Math.sin(angle2Rad) * r2;
 
               return (
                 <motion.line
@@ -350,7 +377,7 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           </text>
         </motion.g>
 
-        {/* Ascendant marker (left side of chart) */}
+        {/* Ascendant marker (left side of chart - 9 o'clock) */}
         {planets && (
           <g>
             <text
@@ -372,6 +399,39 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
               stroke="hsla(186, 95%, 60%, 0.8)"
               strokeWidth="2"
             />
+            {/* Descendant marker (right side - 3 o'clock) */}
+            <text
+              x={size - 15}
+              y={center}
+              textAnchor="end"
+              dominantBaseline="middle"
+              fill="hsla(186, 95%, 60%, 0.6)"
+              fontSize="10"
+            >
+              DSC
+            </text>
+            {/* MC marker (top - 12 o'clock) */}
+            <text
+              x={center}
+              y={15}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="hsla(186, 95%, 60%, 0.6)"
+              fontSize="10"
+            >
+              MC
+            </text>
+            {/* IC marker (bottom - 6 o'clock) */}
+            <text
+              x={center}
+              y={size - 10}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="hsla(186, 95%, 60%, 0.6)"
+              fontSize="10"
+            >
+              IC
+            </text>
           </g>
         )}
       </svg>

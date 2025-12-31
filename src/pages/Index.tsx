@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { ZodiacWheel } from '@/components/ZodiacWheel';
+import { AspectLegend } from '@/components/AspectLegend';
+import { PlanetDetailsTable } from '@/components/PlanetDetailsTable';
 import { BirthDataForm } from '@/components/BirthDataForm';
 import { BottomNav } from '@/components/BottomNav';
 import { GeneratingState } from '@/components/GeneratingState';
@@ -209,7 +211,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="text-center max-w-md mx-auto">
+    <div className="text-center w-full max-w-2xl mx-auto">
       {/* Back button */}
       <motion.button
         className="absolute top-6 left-6 text-muted-foreground hover:text-foreground transition-colors"
@@ -222,12 +224,17 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
 
       {/* Zodiac wheel with real planetary positions */}
       <motion.div
-        className="mb-8"
+        className="mb-4 flex justify-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <ZodiacWheel planets={chartData.planets} animate={false} />
       </motion.div>
+
+      {/* Aspect Legend */}
+      <div className="mb-6">
+        <AspectLegend />
+      </div>
 
       {/* Track info */}
       <motion.div
@@ -250,6 +257,11 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
           </p>
         )}
       </motion.div>
+
+      {/* Planet Details Table */}
+      <div className="my-6">
+        <PlanetDetailsTable planets={chartData.planets} />
+      </div>
 
       {/* Audio controls */}
       <motion.div
