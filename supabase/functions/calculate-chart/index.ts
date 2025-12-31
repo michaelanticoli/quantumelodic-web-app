@@ -245,9 +245,9 @@ function calculatePlanetaryPositions(
   const plutoLong = normalize(238.929 + 145.2078 * T);
 
   // ========== ASCENDANT ==========
-  // Sidereal time at Greenwich
+  // Sidereal time at Greenwich (in degrees)
   const GMST = normalize(280.46061837 + 360.98564736629 * d + 0.000387933 * T * T);
-  // Local sidereal time
+  // Local sidereal time (RAMC - Right Ascension of Midheaven)
   const LST = normalize(GMST + longitude);
   
   // Obliquity of the ecliptic
@@ -256,14 +256,24 @@ function calculatePlanetaryPositions(
   const lat_rad = latitude * DEG_TO_RAD;
   const LST_rad = LST * DEG_TO_RAD;
   
-  // Calculate ascendant
-  const ascRad = Math.atan2(
-    Math.cos(LST_rad),
-    -(Math.sin(LST_rad) * Math.cos(eps_rad) + Math.tan(lat_rad) * Math.sin(eps_rad))
-  );
-  let ascendant = normalize(ascRad * RAD_TO_DEG);
-  // Adjust for correct quadrant
-  if (Math.cos(LST_rad) < 0) ascendant = normalize(ascendant + 180);
+  // Calculate ascendant using the standard formula
+  // ASC = atan2(cos(RAMC), -(sin(RAMC) * cos(ε) + tan(φ) * sin(ε)))
+  const ascY = Math.cos(LST_rad);
+  const ascX = -(Math.sin(LST_rad) * Math.cos(eps_rad) + Math.tan(lat_rad) * Math.sin(eps_rad));
+  
+  let ascendant = Math.atan2(ascY, ascX) * RAD_TO_DEG;
+  ascendant = normalize(ascendant);
+  
+  // The atan2 result needs adjustment: it gives the angle from the positive x-axis
+  // For the ascendant, we need to ensure proper quadrant based on LST
+  // When LST is 0-180°, ASC should be in range 180-360° (Libra through Pisces)
+  // When LST is 180-360°, ASC should be in range 0-180° (Aries through Virgo)
+  // This is because the ascendant is the point rising on the eastern horizon
+  if (LST >= 0 && LST < 180) {
+    if (ascendant < 180) ascendant = normalize(ascendant + 180);
+  } else {
+    if (ascendant >= 180) ascendant = normalize(ascendant - 180);
+  }
 
   // Determine retrograde motion for outer planets (simplified check)
   const isRetrograde = (planetLong: number, sunLong: number, isInner: boolean): boolean => {

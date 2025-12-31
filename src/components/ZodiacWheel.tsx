@@ -28,6 +28,39 @@ const defaultPlanets = [
   { symbol: '♄', name: 'Saturn', angle: 320, radius: 0.45 },
 ];
 
+// Aspect definitions with orbs and colors
+const aspects = [
+  { name: 'Conjunction', angle: 0, orb: 8, color: 'hsla(43, 74%, 52%, 0.8)', dash: '' },
+  { name: 'Sextile', angle: 60, orb: 6, color: 'hsla(186, 95%, 48%, 0.6)', dash: '4 2' },
+  { name: 'Square', angle: 90, orb: 8, color: 'hsla(0, 70%, 55%, 0.7)', dash: '' },
+  { name: 'Trine', angle: 120, orb: 8, color: 'hsla(120, 60%, 50%, 0.7)', dash: '' },
+  { name: 'Opposition', angle: 180, orb: 8, color: 'hsla(0, 70%, 55%, 0.6)', dash: '6 3' },
+];
+
+// Calculate aspects between planets
+function calculateAspects(planets: { name: string; angle: number }[]) {
+  const result: { p1: number; p2: number; aspect: typeof aspects[0] }[] = [];
+  
+  for (let i = 0; i < planets.length; i++) {
+    for (let j = i + 1; j < planets.length; j++) {
+      // Skip Ascendant for aspect calculations
+      if (planets[i].name === 'Ascendant' || planets[j].name === 'Ascendant') continue;
+      
+      let diff = Math.abs(planets[i].angle - planets[j].angle);
+      if (diff > 180) diff = 360 - diff;
+      
+      for (const aspect of aspects) {
+        if (Math.abs(diff - aspect.angle) <= aspect.orb) {
+          result.push({ p1: i, p2: j, aspect });
+          break;
+        }
+      }
+    }
+  }
+  
+  return result;
+}
+
 interface ZodiacWheelProps {
   planets?: PlanetPosition[];
   animate?: boolean;
@@ -36,6 +69,12 @@ interface ZodiacWheelProps {
 export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
   const size = 300;
   const center = size / 2;
+  
+  // Get ascendant degree for wheel rotation (Ascendant should be at 9 o'clock / left)
+  const ascendantDegree = planets?.find(p => p.name === 'Ascendant')?.degree || 0;
+  // Rotation offset: In Western charts, Ascendant is at 9 o'clock (180° on SVG coordinate system)
+  // If Ascendant is at X degrees zodiacal, we rotate the wheel so X° appears at 180° on screen
+  const wheelRotation = planets ? -(ascendantDegree) : 0;
 
   // Convert real planet data to display format, or use defaults
   const displayPlanets = planets 
@@ -43,10 +82,13 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
         symbol: p.symbol,
         name: p.name,
         angle: p.degree, // Use actual degree from chart
-        radius: 0.25 + (i * 0.03), // Stagger radii for visibility
+        radius: 0.55 + (i % 3) * 0.08, // Stagger radii for visibility
         isRetrograde: p.isRetrograde,
       }))
     : defaultPlanets.map(p => ({ ...p, isRetrograde: false }));
+  
+  // Calculate aspects between planets
+  const planetAspects = planets ? calculateAspects(displayPlanets) : [];
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -98,12 +140,15 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           strokeWidth="2"
         />
 
-        {/* Outer zodiac ring - only animate in decorative mode */}
+        {/* Outer zodiac ring - rotated based on Ascendant when we have real data */}
         <motion.g
           initial={animate && !planets ? { rotate: 0 } : undefined}
           animate={animate && !planets ? { rotate: 360 } : undefined}
           transition={animate && !planets ? { duration: 120, repeat: Infinity, ease: "linear" } : undefined}
-          style={{ transformOrigin: 'center' }}
+          style={{ 
+            transformOrigin: 'center',
+            transform: planets ? `rotate(${wheelRotation}deg)` : undefined,
+          }}
         >
           <circle
             cx={center}
@@ -115,16 +160,18 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
             strokeDasharray="4 4"
           />
 
-          {/* Zodiac signs */}
+          {/* Zodiac signs - 0° Aries starts at right (3 o'clock), goes counter-clockwise */}
           {zodiacSigns.map((sign, index) => {
-            const angle = (index * 30 - 90) * (Math.PI / 180);
+            // Each sign occupies 30°, starting from 0° Aries
+            // In SVG, 0° is right (3 o'clock), and we go counter-clockwise for zodiac
+            const signMidpoint = index * 30 + 15; // Middle of each sign
+            const angle = (-signMidpoint + 180) * (Math.PI / 180); // Counter-clockwise, offset to put Aries at 9 o'clock when ASC=0
             const radius = center - 35;
             const x = center + Math.cos(angle) * radius;
             const y = center + Math.sin(angle) * radius;
 
             return (
               <g key={sign.name}>
-                {/* Outer glow effect for the symbol */}
                 <text
                   x={x}
                   y={y}
@@ -185,16 +232,23 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           );
         })}
 
-        {/* Planet positions - static when real data, animated when decorative */}
+        {/* Planet positions - rotated with the wheel when we have real data */}
         <motion.g
           initial={animate && !planets ? { rotate: 0 } : undefined}
           animate={animate && !planets ? { rotate: -360 } : undefined}
           transition={animate && !planets ? { duration: 180, repeat: Infinity, ease: "linear" } : undefined}
-          style={{ transformOrigin: 'center' }}
+          style={{ 
+            transformOrigin: 'center',
+            transform: planets ? `rotate(${wheelRotation}deg)` : undefined,
+          }}
         >
           {displayPlanets.map((planet, idx) => {
-            // Convert degree to position (0° = right, going counter-clockwise)
-            const angle = (planet.angle - 90) * (Math.PI / 180);
+            // Skip drawing Ascendant as a planet (it's a point, shown by wheel orientation)
+            if (planet.name === 'Ascendant') return null;
+            
+            // Convert degree to position
+            // Zodiac goes counter-clockwise: 0° at 9 o'clock when wheel is at 0 rotation
+            const angle = (-planet.angle + 180) * (Math.PI / 180);
             const radius = center * planet.radius;
             const x = center + Math.cos(angle) * radius;
             const y = center + Math.sin(angle) * radius;
@@ -212,6 +266,8 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 * idx }}
+                  // Counter-rotate text so it's readable
+                  style={{ transform: planets ? `rotate(${-wheelRotation}deg)` : undefined, transformOrigin: `${x}px ${y}px` }}
                 >
                   {planet.symbol}
                 </motion.text>
@@ -230,6 +286,43 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
             );
           })}
         </motion.g>
+
+        {/* Aspect lines between planets */}
+        {planets && (
+          <g style={{ transform: `rotate(${wheelRotation}deg)`, transformOrigin: 'center' }}>
+            {planetAspects.map(({ p1, p2, aspect }, idx) => {
+              const planet1 = displayPlanets[p1];
+              const planet2 = displayPlanets[p2];
+              
+              const angle1 = (-planet1.angle + 180) * (Math.PI / 180);
+              const angle2 = (-planet2.angle + 180) * (Math.PI / 180);
+              
+              const r1 = center * planet1.radius;
+              const r2 = center * planet2.radius;
+              
+              const x1 = center + Math.cos(angle1) * r1;
+              const y1 = center + Math.sin(angle1) * r1;
+              const x2 = center + Math.cos(angle2) * r2;
+              const y2 = center + Math.sin(angle2) * r2;
+
+              return (
+                <motion.line
+                  key={`aspect-${idx}`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={aspect.color}
+                  strokeWidth={aspect.name === 'Conjunction' || aspect.name === 'Opposition' ? 1.5 : 1}
+                  strokeDasharray={aspect.dash}
+                  initial={{ opacity: 0, pathLength: 0 }}
+                  animate={{ opacity: 1, pathLength: 1 }}
+                  transition={{ delay: 0.5 + idx * 0.1, duration: 0.3 }}
+                />
+              );
+            })}
+          </g>
+        )}
 
         {/* Center music note */}
         <motion.g
@@ -257,34 +350,28 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           </text>
         </motion.g>
 
-        {/* Aspect lines - only show when we have real data */}
-        {planets && planets.length > 1 && (
-          <g opacity="0.3">
-            {/* Draw aspect lines between Sun and Moon if both exist */}
-            {(() => {
-              const sun = displayPlanets.find(p => p.name === 'Sun');
-              const moon = displayPlanets.find(p => p.name === 'Moon');
-              if (sun && moon) {
-                const sunAngle = (sun.angle - 90) * (Math.PI / 180);
-                const moonAngle = (moon.angle - 90) * (Math.PI / 180);
-                const sunX = center + Math.cos(sunAngle) * (center * sun.radius);
-                const sunY = center + Math.sin(sunAngle) * (center * sun.radius);
-                const moonX = center + Math.cos(moonAngle) * (center * moon.radius);
-                const moonY = center + Math.sin(moonAngle) * (center * moon.radius);
-                return (
-                  <line
-                    x1={sunX}
-                    y1={sunY}
-                    x2={moonX}
-                    y2={moonY}
-                    stroke="hsla(43, 74%, 52%, 0.5)"
-                    strokeWidth="1"
-                    strokeDasharray="3 3"
-                  />
-                );
-              }
-              return null;
-            })()}
+        {/* Ascendant marker (left side of chart) */}
+        {planets && (
+          <g>
+            <text
+              x={15}
+              y={center}
+              textAnchor="start"
+              dominantBaseline="middle"
+              fill="hsla(186, 95%, 60%, 1)"
+              fontSize="12"
+              fontWeight="bold"
+            >
+              ASC
+            </text>
+            <line
+              x1={5}
+              y1={center}
+              x2={40}
+              y2={center}
+              stroke="hsla(186, 95%, 60%, 0.8)"
+              strokeWidth="2"
+            />
           </g>
         )}
       </svg>
