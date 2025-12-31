@@ -61,34 +61,35 @@ export function useCosmicReading() {
       setChartData(chart);
       setProgress(50);
 
-      // Step 3: Generate music
+      // Step 3: Generate music (optional - gracefully handle failures)
       setStage('generating');
       setProgress(60);
 
-      const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sunSign: chart.sunSign,
-          moonSign: chart.moonSign,
-          ascendant: chart.ascendant,
-          name: birthData.name,
-        }),
-      });
+      let url: string | null = null;
+      try {
+        const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sunSign: chart.sunSign,
+            moonSign: chart.moonSign,
+            ascendant: chart.ascendant,
+            name: birthData.name,
+          }),
+        });
 
-      if (!musicResponse.ok) {
-        const contentType = musicResponse.headers.get('content-type');
-        if (contentType?.includes('application/json')) {
-          const errorData = await musicResponse.json();
-          throw new Error(errorData.error || 'Failed to generate music');
+        if (musicResponse.ok) {
+          const audioBlob = await musicResponse.blob();
+          url = URL.createObjectURL(audioBlob);
+          setAudioUrl(url);
+        } else {
+          // Music generation failed but we can still show the chart
+          console.warn('Music generation unavailable - continuing without audio');
         }
-        throw new Error('Failed to generate music');
+      } catch (musicErr) {
+        console.warn('Music generation error - continuing without audio:', musicErr);
       }
 
-      // Get audio blob and create URL
-      const audioBlob = await musicResponse.blob();
-      const url = URL.createObjectURL(audioBlob);
-      setAudioUrl(url);
       setProgress(100);
 
       // Get musical mode
