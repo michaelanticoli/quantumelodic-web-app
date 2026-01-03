@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -78,13 +79,18 @@ export function useCosmicReading() {
           }),
         });
 
-        if (musicResponse.ok) {
+        const contentType = musicResponse.headers.get('content-type') || '';
+
+        if (musicResponse.ok && contentType.includes('audio/')) {
           const audioBlob = await musicResponse.blob();
           url = URL.createObjectURL(audioBlob);
           setAudioUrl(url);
         } else {
-          // Music generation failed but we can still show the chart
-          console.warn('Music generation unavailable - continuing without audio');
+          // Music generation is optional; show a friendly message and continue.
+          const data = await musicResponse.json().catch(() => null);
+          const msg = data?.error || 'Music generation is currently unavailable — continuing without audio.';
+          console.warn('Music generation unavailable - continuing without audio:', msg);
+          toast('Music unavailable', { description: msg });
         }
       } catch (musicErr) {
         console.warn('Music generation error - continuing without audio:', musicErr);

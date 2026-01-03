@@ -67,27 +67,40 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('ElevenLabs error:', response.status, errorText);
-      
-      // Check for rate limit or payment errors
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: 'Rate limited. Please try again in a moment.',
-          retryAfter: 30
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: 'ElevenLabs API credits exhausted. Please check your ElevenLabs account.'
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+
+      let apiMessage: string | null = null;
+      try {
+        const parsed = JSON.parse(errorText);
+        apiMessage = parsed?.detail?.message ?? parsed?.error ?? parsed?.message ?? null;
+      } catch {
+        // ignore non-JSON error bodies
       }
 
+      // Treat known "expected" conditions as non-fatal for the app UI.
+      if (response.status === 429 || response.status === 402) {
+        const fallback =
+          response.status === 429
+            ? "Rate limited. Please try again in a moment."
+            : "Music generation is unavailable on the current plan.";
+
+        console.warn("ElevenLabs music unavailable:", response.status, errorText);
+
+        return new Response(
+          JSON.stringify({
+            unavailable: true,
+            error: apiMessage ?? fallback,
+            status: response.status,
+            retryAfter: response.status === 429 ? 30 : undefined,
+          }),
+          {
+            // Return 200 to avoid surfacing this as a hard runtime error in the preview.
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.error("ElevenLabs error:", response.status, errorText);
       throw new Error(`ElevenLabs API error: ${response.status}`);
     }
 
