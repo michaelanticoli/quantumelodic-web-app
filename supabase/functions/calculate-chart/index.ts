@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// Import Moshier's ephemeris via esm.sh - professional-grade accuracy (DE404)
+import ephemeris from "https://esm.sh/ephemeris@2.2.0";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -116,17 +119,111 @@ serve(async (req) => {
     const [year, month, day] = date.split('-').map(Number);
     const [hour, minute] = time.split(':').map(Number);
 
-    // Use our accurate astronomical calculations directly
-    const planets = calculatePlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone);
+    // Create UTC date for ephemeris calculation
+    // The ephemeris library expects a JavaScript Date object
+    const utcHour = hour - timezone;
+    const dateObj = new Date(Date.UTC(year, month - 1, day, utcHour, minute, 0));
     
-    console.log("Calculated planets:", planets.map(p => `${p.name}: ${p.degree.toFixed(1)}° ${p.sign}`).join(', '));
+    console.log(`Calculating ephemeris for UTC: ${dateObj.toISOString()}`);
+    console.log(`Observer location: lat=${latitude}, lon=${longitude}`);
+
+    // Calculate using Moshier's DE404 ephemeris (professional accuracy)
+    const result = ephemeris.getAllPlanets(dateObj, longitude, latitude, 0);
+    
+    console.log("Ephemeris calculation complete");
+    console.log("Date info:", result.date);
+
+    // Extract planetary positions from the ephemeris result
+    const planets: PlanetPosition[] = [];
+    
+    // Helper function to create planet position
+    const createPlanet = (name: string, degree: number, isRetro = false): PlanetPosition => {
+      const normalizedDegree = ((degree % 360) + 360) % 360;
+      const signNumber = Math.floor(normalizedDegree / 30) + 1;
+      return {
+        name,
+        symbol: planetSymbols[name] || '?',
+        degree: normalizedDegree,
+        sign: signNames[signNumber - 1],
+        signNumber,
+        isRetrograde: isRetro,
+      };
+    };
+
+    // Map ephemeris results to our format
+    const observed = result.observed;
+    
+    if (observed.sun) {
+      planets.push(createPlanet('Sun', observed.sun.apparentLongitudeDd));
+      console.log(`Sun: ${observed.sun.apparentLongitudeDd.toFixed(2)}°`);
+    }
+    
+    if (observed.moon) {
+      planets.push(createPlanet('Moon', observed.moon.apparentLongitudeDd));
+      console.log(`Moon: ${observed.moon.apparentLongitudeDd.toFixed(2)}°`);
+    }
+    
+    if (observed.mercury) {
+      const isRetro = observed.mercury.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Mercury', observed.mercury.apparentLongitudeDd, isRetro));
+      console.log(`Mercury: ${observed.mercury.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.venus) {
+      const isRetro = observed.venus.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Venus', observed.venus.apparentLongitudeDd, isRetro));
+      console.log(`Venus: ${observed.venus.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.mars) {
+      const isRetro = observed.mars.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Mars', observed.mars.apparentLongitudeDd, isRetro));
+      console.log(`Mars: ${observed.mars.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.jupiter) {
+      const isRetro = observed.jupiter.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Jupiter', observed.jupiter.apparentLongitudeDd, isRetro));
+      console.log(`Jupiter: ${observed.jupiter.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.saturn) {
+      const isRetro = observed.saturn.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Saturn', observed.saturn.apparentLongitudeDd, isRetro));
+      console.log(`Saturn: ${observed.saturn.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.uranus) {
+      const isRetro = observed.uranus.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Uranus', observed.uranus.apparentLongitudeDd, isRetro));
+      console.log(`Uranus: ${observed.uranus.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.neptune) {
+      const isRetro = observed.neptune.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Neptune', observed.neptune.apparentLongitudeDd, isRetro));
+      console.log(`Neptune: ${observed.neptune.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+    
+    if (observed.pluto) {
+      const isRetro = observed.pluto.raw?.motion?.isRetrograde || false;
+      planets.push(createPlanet('Pluto', observed.pluto.apparentLongitudeDd, isRetro));
+      console.log(`Pluto: ${observed.pluto.apparentLongitudeDd.toFixed(2)}° ${isRetro ? '(R)' : ''}`);
+    }
+
+    // Calculate Ascendant using accurate astronomical formula
+    const ascendant = calculateAscendant(year, month, day, utcHour, minute, latitude, longitude);
+    planets.push(createPlanet('Ascendant', ascendant));
+    console.log(`Ascendant: ${ascendant.toFixed(2)}°`);
+
+    console.log("Final planets:", planets.map(p => `${p.name}: ${p.degree.toFixed(1)}° ${p.sign}`).join(', '));
 
     return new Response(JSON.stringify({
       planets,
       sunSign: planets.find(p => p.name === 'Sun')?.sign || 'Unknown',
       moonSign: planets.find(p => p.name === 'Moon')?.sign || 'Unknown',
       ascendant: planets.find(p => p.name === 'Ascendant')?.sign || 'Unknown',
-      source: 'calculated'
+      source: 'moshier-de404'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -141,261 +238,30 @@ serve(async (req) => {
   }
 });
 
-// Accurate astronomical calculations for planetary positions
-function calculatePlanetaryPositions(
-  year: number, month: number, day: number, 
-  hour: number, minute: number,
-  latitude: number, longitude: number, timezone: number
-): PlanetPosition[] {
-  // Calculate Julian Day Number (more precise formula)
+// Calculate Ascendant using standard astronomical formula
+function calculateAscendant(
+  year: number, month: number, day: number,
+  utcHour: number, minute: number,
+  latitude: number, longitude: number
+): number {
+  const DEG_TO_RAD = Math.PI / 180;
+  const RAD_TO_DEG = 180 / Math.PI;
+
+  // Calculate Julian Day Number
   const a = Math.floor((14 - month) / 12);
   const y = year + 4800 - a;
   const m = month + 12 * a - 3;
   const jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
   
-  // Convert local time to UT
-  const utHour = hour - timezone;
-  const jd = jdn + (utHour + minute / 60) / 24 - 0.5;
-  
-  // Days and centuries since J2000.0 (January 1, 2000, 12:00 TT)
+  const jd = jdn + (utcHour + minute / 60) / 24 - 0.5;
   const d = jd - 2451545.0;
-  const T = d / 36525; // Julian centuries
+  const T = d / 36525;
 
-  const DEG_TO_RAD = Math.PI / 180;
-  const RAD_TO_DEG = 180 / Math.PI;
-
-  // Normalize angle to 0-360
-  const normalize = (angle: number): number => {
-    let result = angle % 360;
-    if (result < 0) result += 360;
-    return result;
-  };
-
-  // ========== SUN ==========
-  // Mean longitude and anomaly
-  const L0_sun = normalize(280.46646 + 36000.76983 * T + 0.0003032 * T * T);
-  const M_sun = normalize(357.52911 + 35999.05029 * T - 0.0001537 * T * T);
-  const M_rad = M_sun * DEG_TO_RAD;
-  
-  // Equation of center
-  const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M_rad)
-          + (0.019993 - 0.000101 * T) * Math.sin(2 * M_rad)
-          + 0.000289 * Math.sin(3 * M_rad);
-  
-  const sunLong = normalize(L0_sun + C);
-
-  // ========== MOON ==========
-  // Mean longitude
-  const L_moon = normalize(218.3165 + 481267.8813 * T);
-  // Mean elongation
-  const D = normalize(297.8502 + 445267.1115 * T);
-  // Mean anomaly
-  const M_moon = normalize(134.9634 + 477198.8675 * T);
-  // Argument of latitude
-  const F = normalize(93.2721 + 483202.0175 * T);
-  
-  // Corrections (simplified but accurate enough for zodiac sign)
-  const moonLong = normalize(
-    L_moon 
-    + 6.289 * Math.sin(M_moon * DEG_TO_RAD)
-    - 1.274 * Math.sin((2 * D - M_moon) * DEG_TO_RAD)
-    + 0.658 * Math.sin(2 * D * DEG_TO_RAD)
-    - 0.214 * Math.sin(2 * M_moon * DEG_TO_RAD)
-    - 0.186 * Math.sin(M_rad) // Sun's mean anomaly
-  );
-
-  // ========== PLANETS (accurate Keplerian elements with perturbations) ==========
-  
-  // Helper: solve Kepler's equation for eccentric anomaly
-  const solveKepler = (M: number, e: number): number => {
-    const M_rad = M * DEG_TO_RAD;
-    let E = M_rad;
-    for (let i = 0; i < 10; i++) {
-      E = M_rad + e * Math.sin(E);
-    }
-    return E;
-  };
-
-  // Helper: calculate heliocentric longitude from orbital elements
-  const helioLongitude = (L: number, w: number, W: number, M: number, e: number, i: number): number => {
-    const E = solveKepler(M, e);
-    // True anomaly
-    const v = 2 * Math.atan2(
-      Math.sqrt(1 + e) * Math.sin(E / 2),
-      Math.sqrt(1 - e) * Math.cos(E / 2)
-    ) * RAD_TO_DEG;
-    // Heliocentric longitude in orbital plane
-    const lon = normalize(v + w);
-    // Convert to ecliptic (simplified for small inclinations)
-    return normalize(lon + W);
-  };
-
-  // ========== MERCURY ==========
-  // Orbital elements at J2000.0 with rates
-  const mercury_L = normalize(252.250906 + 149472.6746358 * T);
-  const mercury_a = 0.38709927;
-  const mercury_e = 0.20563593 + 0.00001906 * T;
-  const mercury_i = 7.00497902 - 0.00594749 * T;
-  const mercury_W = 48.33076593 - 0.12534081 * T; // longitude of ascending node
-  const mercury_w_bar = 77.45779628 + 0.16047689 * T; // longitude of perihelion
-  const mercury_w = mercury_w_bar - mercury_W; // argument of perihelion
-  const mercury_M = normalize(mercury_L - mercury_w_bar);
-  
-  let mercuryLong = helioLongitude(mercury_L, mercury_w, mercury_W, mercury_M, mercury_e, mercury_i);
-  // Apply perturbations from other planets
-  const mercuryPert = 
-    + 4.40 * Math.sin((2 * mercury_M + 130.3) * DEG_TO_RAD)
-    - 2.50 * Math.sin(M_sun * DEG_TO_RAD)
-    + 1.10 * Math.sin((mercury_M - M_sun + 20) * DEG_TO_RAD);
-  mercuryLong = normalize(mercuryLong + mercuryPert);
-
-  // ========== VENUS ==========
-  const venus_L = normalize(181.979801 + 58517.8156760 * T);
-  const venus_e = 0.00677672 - 0.00004107 * T;
-  const venus_i = 3.39467605 - 0.00078890 * T;
-  const venus_W = 76.67984255 - 0.27769418 * T;
-  const venus_w_bar = 131.60246718 + 0.00268329 * T;
-  const venus_w = venus_w_bar - venus_W;
-  const venus_M = normalize(venus_L - venus_w_bar);
-  
-  let venusLong = helioLongitude(venus_L, venus_w, venus_W, venus_M, venus_e, venus_i);
-  // Perturbations
-  const venusPert = 
-    + 2.76 * Math.cos((3 * venus_M - 2 * M_sun + 12) * DEG_TO_RAD)
-    + 0.54 * Math.sin((venus_M - M_sun) * DEG_TO_RAD)
-    - 0.50 * Math.sin((2 * mercury_M - 3 * venus_M) * DEG_TO_RAD);
-  venusLong = normalize(venusLong + venusPert);
-
-  // ========== MARS ==========
-  const mars_L = normalize(355.433275 + 19140.2993313 * T);
-  const mars_e = 0.09339410 + 0.00007882 * T;
-  const mars_i = 1.84969142 - 0.00813131 * T;
-  const mars_W = 49.55953891 - 0.29257343 * T;
-  const mars_w_bar = 336.05637041 + 0.44441088 * T;
-  const mars_w = mars_w_bar - mars_W;
-  const mars_M = normalize(mars_L - mars_w_bar);
-  
-  let marsLong = helioLongitude(mars_L, mars_w, mars_W, mars_M, mars_e, mars_i);
-  // Major perturbations from Jupiter
-  const M_jupiter_pert = normalize(20.020 + 3034.6962 * T);
-  const marsPert = 
-    - 0.85 * Math.cos((mars_M - 2 * M_jupiter_pert + 68) * DEG_TO_RAD)
-    + 0.51 * Math.cos((2 * mars_M - M_jupiter_pert) * DEG_TO_RAD)
-    - 0.32 * Math.cos((mars_M + M_sun) * DEG_TO_RAD);
-  marsLong = normalize(marsLong + marsPert);
-
-  // ========== JUPITER ==========
-  const jupiter_L = normalize(34.351484 + 3034.9056746 * T);
-  const jupiter_e = 0.04838624 - 0.00013253 * T;
-  const jupiter_i = 1.30326903 - 0.00183714 * T;
-  const jupiter_W = 100.47390909 + 0.20469106 * T;
-  const jupiter_w_bar = 14.72847983 + 0.21252668 * T;
-  const jupiter_w = jupiter_w_bar - jupiter_W;
-  const jupiter_M = normalize(jupiter_L - jupiter_w_bar);
-  
-  let jupiterLong = helioLongitude(jupiter_L, jupiter_w, jupiter_W, jupiter_M, jupiter_e, jupiter_i);
-  // Saturn perturbation
-  const M_saturn_pert = normalize(317.020 + 1222.1138 * T);
-  const jupiterPert = 
-    - 0.332 * Math.sin((2 * jupiter_M - 5 * M_saturn_pert - 67) * DEG_TO_RAD)
-    + 0.056 * Math.sin((2 * jupiter_M - 2 * M_saturn_pert + 21) * DEG_TO_RAD);
-  jupiterLong = normalize(jupiterLong + jupiterPert);
-
-  // ========== SATURN ==========
-  const saturn_L = normalize(50.077471 + 1222.1137943 * T);
-  const saturn_e = 0.05386179 - 0.00050991 * T;
-  const saturn_i = 2.48599187 + 0.00193609 * T;
-  const saturn_W = 113.66242448 - 0.28867794 * T;
-  const saturn_w_bar = 92.59887831 - 0.41897216 * T;
-  const saturn_w = saturn_w_bar - saturn_W;
-  const saturn_M = normalize(saturn_L - saturn_w_bar);
-  
-  let saturnLong = helioLongitude(saturn_L, saturn_w, saturn_W, saturn_M, saturn_e, saturn_i);
-  // Jupiter perturbation
-  const saturnPert = 
-    + 0.812 * Math.sin((2 * jupiter_M - 5 * saturn_M + 67) * DEG_TO_RAD)
-    - 0.229 * Math.cos((2 * jupiter_M - 4 * saturn_M + 2) * DEG_TO_RAD);
-  saturnLong = normalize(saturnLong + saturnPert);
-
-  // ========== URANUS ==========
-  const uranus_L = normalize(314.055005 + 428.4669983 * T);
-  const uranus_e = 0.04725744 - 0.00004397 * T;
-  const uranus_i = 0.77263783 - 0.00242939 * T;
-  const uranus_W = 74.01692503 + 0.04240589 * T;
-  const uranus_w_bar = 170.95427630 + 0.40805281 * T;
-  const uranus_w = uranus_w_bar - uranus_W;
-  const uranus_M = normalize(uranus_L - uranus_w_bar);
-  
-  const uranusLong = helioLongitude(uranus_L, uranus_w, uranus_W, uranus_M, uranus_e, uranus_i);
-
-  // ========== NEPTUNE ==========
-  const neptune_L = normalize(304.348665 + 218.4862002 * T);
-  const neptune_e = 0.00859048 + 0.00000603 * T;
-  const neptune_i = 1.77004347 + 0.00035372 * T;
-  const neptune_W = 131.78422574 - 0.00508664 * T;
-  const neptune_w_bar = 44.96476227 - 0.32241464 * T;
-  const neptune_w = neptune_w_bar - neptune_W;
-  const neptune_M = normalize(neptune_L - neptune_w_bar);
-  
-  const neptuneLong = helioLongitude(neptune_L, neptune_w, neptune_W, neptune_M, neptune_e, neptune_i);
-
-  // ========== PLUTO (polynomial fit) ==========
-  const plutoLong = normalize(
-    238.9588 + 144.96 * T
-    + 3.908 * Math.sin((178.7 + 144.96 * T) * DEG_TO_RAD)
-  );
-
-  // ========== Convert heliocentric to geocentric ==========
-  // For accurate geocentric positions, we need Earth's position
-  const earth_L = normalize(100.466449 + 35999.3728519 * T);
-  const earth_e = 0.01671123 - 0.00004392 * T;
-  const earth_w_bar = 102.93768193 + 0.32327364 * T;
-  const earth_M = normalize(earth_L - earth_w_bar);
-  const earth_E = solveKepler(earth_M, earth_e);
-  
-  // Earth's heliocentric radius and true anomaly
-  const earth_v = 2 * Math.atan2(
-    Math.sqrt(1 + earth_e) * Math.sin(earth_E / 2),
-    Math.sqrt(1 - earth_e) * Math.cos(earth_E / 2)
-  ) * RAD_TO_DEG;
-  const earth_lon = normalize(earth_v + earth_w_bar);
-  const earth_r = 1.00000011 * (1 - earth_e * earth_e) / (1 + earth_e * Math.cos(earth_v * DEG_TO_RAD));
-
-  // Proper geocentric conversion using vector math
-  const helioToGeo = (helioLong: number, a: number, e: number, M: number): number => {
-    // Calculate planet's heliocentric radius
-    const E = solveKepler(M, e);
-    const v = 2 * Math.atan2(
-      Math.sqrt(1 + e) * Math.sin(E / 2),
-      Math.sqrt(1 - e) * Math.cos(E / 2)
-    ) * RAD_TO_DEG;
-    const r = a * (1 - e * e) / (1 + e * Math.cos(v * DEG_TO_RAD));
-    
-    // Convert to heliocentric Cartesian coordinates
-    const planet_x = r * Math.cos(helioLong * DEG_TO_RAD);
-    const planet_y = r * Math.sin(helioLong * DEG_TO_RAD);
-    
-    // Earth's heliocentric Cartesian (Earth is at earth_lon, opposite from Sun as seen from Earth)
-    const earth_x = earth_r * Math.cos(earth_lon * DEG_TO_RAD);
-    const earth_y = earth_r * Math.sin(earth_lon * DEG_TO_RAD);
-    
-    // Geocentric = planet position - Earth position
-    const geo_x = planet_x - earth_x;
-    const geo_y = planet_y - earth_y;
-    
-    // Convert back to geocentric longitude
-    return normalize(Math.atan2(geo_y, geo_x) * RAD_TO_DEG);
-  };
-
-  // Apply proper geocentric corrections to inner planets
-  mercuryLong = helioToGeo(mercuryLong, mercury_a, mercury_e, mercury_M);
-  venusLong = helioToGeo(venusLong, 0.72333566, venus_e, venus_M);
-
-  // ========== ASCENDANT ==========
   // Sidereal time at Greenwich (in degrees)
-  const GMST = normalize(280.46061837 + 360.98564736629 * d + 0.000387933 * T * T);
-  // Local sidereal time (RAMC - Right Ascension of Midheaven)
-  const LST = normalize(GMST + longitude);
+  const GMST = ((280.46061837 + 360.98564736629 * d + 0.000387933 * T * T) % 360 + 360) % 360;
+  
+  // Local sidereal time
+  const LST = ((GMST + longitude) % 360 + 360) % 360;
   
   // Obliquity of the ecliptic
   const eps = 23.439291 - 0.0130042 * T;
@@ -404,67 +270,18 @@ function calculatePlanetaryPositions(
   const LST_rad = LST * DEG_TO_RAD;
   
   // Calculate ascendant using the standard formula
-  // ASC = atan2(cos(RAMC), -(sin(RAMC) * cos(ε) + tan(φ) * sin(ε)))
   const ascY = Math.cos(LST_rad);
   const ascX = -(Math.sin(LST_rad) * Math.cos(eps_rad) + Math.tan(lat_rad) * Math.sin(eps_rad));
   
   let ascendant = Math.atan2(ascY, ascX) * RAD_TO_DEG;
-  ascendant = normalize(ascendant);
+  ascendant = ((ascendant % 360) + 360) % 360;
   
-  // The atan2 result needs adjustment: it gives the angle from the positive x-axis
-  // For the ascendant, we need to ensure proper quadrant based on LST
-  // When LST is 0-180°, ASC should be in range 180-360° (Libra through Pisces)
-  // When LST is 180-360°, ASC should be in range 0-180° (Aries through Virgo)
-  // This is because the ascendant is the point rising on the eastern horizon
+  // Quadrant adjustment for proper ascendant placement
   if (LST >= 0 && LST < 180) {
-    if (ascendant < 180) ascendant = normalize(ascendant + 180);
+    if (ascendant < 180) ascendant = ((ascendant + 180) % 360 + 360) % 360;
   } else {
-    if (ascendant >= 180) ascendant = normalize(ascendant - 180);
+    if (ascendant >= 180) ascendant = ((ascendant - 180) % 360 + 360) % 360;
   }
 
-  // Determine retrograde motion for outer planets (simplified check)
-  const isRetrograde = (planetLong: number, sunLong: number, isInner: boolean): boolean => {
-    if (isInner) {
-      // Inner planets: retrograde when between Earth and Sun
-      const diff = Math.abs(normalize(planetLong - sunLong));
-      return diff < 30 || diff > 330;
-    } else {
-      // Outer planets: retrograde when opposite to Sun
-      const diff = Math.abs(normalize(planetLong - sunLong));
-      return diff > 150 && diff < 210;
-    }
-  };
-
-  const getSignFromDegree = (degree: number): { sign: string; signNumber: number } => {
-    const normalizedDegree = normalize(degree);
-    const signNumber = Math.floor(normalizedDegree / 30) + 1;
-    return { sign: signNames[signNumber - 1], signNumber };
-  };
-
-  const createPlanet = (name: string, degree: number, isRetro = false): PlanetPosition => {
-    const normalizedDegree = normalize(degree);
-    const { sign, signNumber } = getSignFromDegree(normalizedDegree);
-    return {
-      name,
-      symbol: planetSymbols[name] || '?',
-      degree: normalizedDegree,
-      sign,
-      signNumber,
-      isRetrograde: isRetro,
-    };
-  };
-
-  return [
-    createPlanet('Sun', sunLong),
-    createPlanet('Moon', moonLong),
-    createPlanet('Mercury', mercuryLong, isRetrograde(mercuryLong, sunLong, true)),
-    createPlanet('Venus', venusLong, isRetrograde(venusLong, sunLong, true)),
-    createPlanet('Mars', marsLong, isRetrograde(marsLong, sunLong, false)),
-    createPlanet('Jupiter', jupiterLong, isRetrograde(jupiterLong, sunLong, false)),
-    createPlanet('Saturn', saturnLong, isRetrograde(saturnLong, sunLong, false)),
-    createPlanet('Uranus', uranusLong, isRetrograde(uranusLong, sunLong, false)),
-    createPlanet('Neptune', neptuneLong, isRetrograde(neptuneLong, sunLong, false)),
-    createPlanet('Pluto', plutoLong, isRetrograde(plutoLong, sunLong, false)),
-    createPlanet('Ascendant', ascendant),
-  ];
+  return ascendant;
 }
