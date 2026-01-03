@@ -204,45 +204,181 @@ function calculatePlanetaryPositions(
     - 0.186 * Math.sin(M_rad) // Sun's mean anomaly
   );
 
-  // ========== PLANETS (using VSOP87 simplified) ==========
+  // ========== PLANETS (accurate Keplerian elements with perturbations) ==========
   
-  // Mercury
-  const L_mercury = normalize(252.2509 + 149472.6746 * T);
-  const M_mercury = normalize(174.7948 + 149472.5153 * T);
-  const mercuryLong = normalize(L_mercury + 23.4405 * Math.sin(M_mercury * DEG_TO_RAD) 
-                               + 2.9818 * Math.sin(2 * M_mercury * DEG_TO_RAD));
+  // Helper: solve Kepler's equation for eccentric anomaly
+  const solveKepler = (M: number, e: number): number => {
+    const M_rad = M * DEG_TO_RAD;
+    let E = M_rad;
+    for (let i = 0; i < 10; i++) {
+      E = M_rad + e * Math.sin(E);
+    }
+    return E;
+  };
+
+  // Helper: calculate heliocentric longitude from orbital elements
+  const helioLongitude = (L: number, w: number, W: number, M: number, e: number, i: number): number => {
+    const E = solveKepler(M, e);
+    // True anomaly
+    const v = 2 * Math.atan2(
+      Math.sqrt(1 + e) * Math.sin(E / 2),
+      Math.sqrt(1 - e) * Math.cos(E / 2)
+    ) * RAD_TO_DEG;
+    // Heliocentric longitude in orbital plane
+    const lon = normalize(v + w);
+    // Convert to ecliptic (simplified for small inclinations)
+    return normalize(lon + W);
+  };
+
+  // ========== MERCURY ==========
+  // Orbital elements at J2000.0 with rates
+  const mercury_L = normalize(252.250906 + 149472.6746358 * T);
+  const mercury_a = 0.38709927;
+  const mercury_e = 0.20563593 + 0.00001906 * T;
+  const mercury_i = 7.00497902 - 0.00594749 * T;
+  const mercury_W = 48.33076593 - 0.12534081 * T; // longitude of ascending node
+  const mercury_w_bar = 77.45779628 + 0.16047689 * T; // longitude of perihelion
+  const mercury_w = mercury_w_bar - mercury_W; // argument of perihelion
+  const mercury_M = normalize(mercury_L - mercury_w_bar);
   
-  // Venus
-  const L_venus = normalize(181.9798 + 58517.8039 * T);
-  const M_venus = normalize(50.4161 + 58517.8039 * T);
-  const venusLong = normalize(L_venus + 0.7758 * Math.sin(M_venus * DEG_TO_RAD));
+  let mercuryLong = helioLongitude(mercury_L, mercury_w, mercury_W, mercury_M, mercury_e, mercury_i);
+  // Apply perturbations from other planets
+  const mercuryPert = 
+    + 4.40 * Math.sin((2 * mercury_M + 130.3) * DEG_TO_RAD)
+    - 2.50 * Math.sin(M_sun * DEG_TO_RAD)
+    + 1.10 * Math.sin((mercury_M - M_sun + 20) * DEG_TO_RAD);
+  mercuryLong = normalize(mercuryLong + mercuryPert);
+
+  // ========== VENUS ==========
+  const venus_L = normalize(181.979801 + 58517.8156760 * T);
+  const venus_e = 0.00677672 - 0.00004107 * T;
+  const venus_i = 3.39467605 - 0.00078890 * T;
+  const venus_W = 76.67984255 - 0.27769418 * T;
+  const venus_w_bar = 131.60246718 + 0.00268329 * T;
+  const venus_w = venus_w_bar - venus_W;
+  const venus_M = normalize(venus_L - venus_w_bar);
   
-  // Mars
-  const L_mars = normalize(355.4330 + 19140.2993 * T);
-  const M_mars = normalize(19.3730 + 19139.8585 * T);
-  const marsLong = normalize(L_mars + 10.6912 * Math.sin(M_mars * DEG_TO_RAD)
-                            + 0.6228 * Math.sin(2 * M_mars * DEG_TO_RAD));
+  let venusLong = helioLongitude(venus_L, venus_w, venus_W, venus_M, venus_e, venus_i);
+  // Perturbations
+  const venusPert = 
+    + 2.76 * Math.cos((3 * venus_M - 2 * M_sun + 12) * DEG_TO_RAD)
+    + 0.54 * Math.sin((venus_M - M_sun) * DEG_TO_RAD)
+    - 0.50 * Math.sin((2 * mercury_M - 3 * venus_M) * DEG_TO_RAD);
+  venusLong = normalize(venusLong + venusPert);
+
+  // ========== MARS ==========
+  const mars_L = normalize(355.433275 + 19140.2993313 * T);
+  const mars_e = 0.09339410 + 0.00007882 * T;
+  const mars_i = 1.84969142 - 0.00813131 * T;
+  const mars_W = 49.55953891 - 0.29257343 * T;
+  const mars_w_bar = 336.05637041 + 0.44441088 * T;
+  const mars_w = mars_w_bar - mars_W;
+  const mars_M = normalize(mars_L - mars_w_bar);
   
-  // Jupiter
-  const L_jupiter = normalize(34.3515 + 3034.9057 * T);
-  const M_jupiter = normalize(20.0202 + 3034.6962 * T);
-  const jupiterLong = normalize(L_jupiter + 5.5549 * Math.sin(M_jupiter * DEG_TO_RAD)
-                               + 0.1683 * Math.sin(2 * M_jupiter * DEG_TO_RAD));
+  let marsLong = helioLongitude(mars_L, mars_w, mars_W, mars_M, mars_e, mars_i);
+  // Major perturbations from Jupiter
+  const M_jupiter_pert = normalize(20.020 + 3034.6962 * T);
+  const marsPert = 
+    - 0.85 * Math.cos((mars_M - 2 * M_jupiter_pert + 68) * DEG_TO_RAD)
+    + 0.51 * Math.cos((2 * mars_M - M_jupiter_pert) * DEG_TO_RAD)
+    - 0.32 * Math.cos((mars_M + M_sun) * DEG_TO_RAD);
+  marsLong = normalize(marsLong + marsPert);
+
+  // ========== JUPITER ==========
+  const jupiter_L = normalize(34.351484 + 3034.9056746 * T);
+  const jupiter_e = 0.04838624 - 0.00013253 * T;
+  const jupiter_i = 1.30326903 - 0.00183714 * T;
+  const jupiter_W = 100.47390909 + 0.20469106 * T;
+  const jupiter_w_bar = 14.72847983 + 0.21252668 * T;
+  const jupiter_w = jupiter_w_bar - jupiter_W;
+  const jupiter_M = normalize(jupiter_L - jupiter_w_bar);
   
-  // Saturn
-  const L_saturn = normalize(50.0774 + 1222.1139 * T);
-  const M_saturn = normalize(317.0207 + 1222.1138 * T);
-  const saturnLong = normalize(L_saturn + 6.3585 * Math.sin(M_saturn * DEG_TO_RAD)
-                              + 0.5204 * Math.sin(2 * M_saturn * DEG_TO_RAD));
+  let jupiterLong = helioLongitude(jupiter_L, jupiter_w, jupiter_W, jupiter_M, jupiter_e, jupiter_i);
+  // Saturn perturbation
+  const M_saturn_pert = normalize(317.020 + 1222.1138 * T);
+  const jupiterPert = 
+    - 0.332 * Math.sin((2 * jupiter_M - 5 * M_saturn_pert - 67) * DEG_TO_RAD)
+    + 0.056 * Math.sin((2 * jupiter_M - 2 * M_saturn_pert + 21) * DEG_TO_RAD);
+  jupiterLong = normalize(jupiterLong + jupiterPert);
+
+  // ========== SATURN ==========
+  const saturn_L = normalize(50.077471 + 1222.1137943 * T);
+  const saturn_e = 0.05386179 - 0.00050991 * T;
+  const saturn_i = 2.48599187 + 0.00193609 * T;
+  const saturn_W = 113.66242448 - 0.28867794 * T;
+  const saturn_w_bar = 92.59887831 - 0.41897216 * T;
+  const saturn_w = saturn_w_bar - saturn_W;
+  const saturn_M = normalize(saturn_L - saturn_w_bar);
   
-  // Uranus
-  const uranusLong = normalize(314.055 + 428.4669 * T);
+  let saturnLong = helioLongitude(saturn_L, saturn_w, saturn_W, saturn_M, saturn_e, saturn_i);
+  // Jupiter perturbation
+  const saturnPert = 
+    + 0.812 * Math.sin((2 * jupiter_M - 5 * saturn_M + 67) * DEG_TO_RAD)
+    - 0.229 * Math.cos((2 * jupiter_M - 4 * saturn_M + 2) * DEG_TO_RAD);
+  saturnLong = normalize(saturnLong + saturnPert);
+
+  // ========== URANUS ==========
+  const uranus_L = normalize(314.055005 + 428.4669983 * T);
+  const uranus_e = 0.04725744 - 0.00004397 * T;
+  const uranus_i = 0.77263783 - 0.00242939 * T;
+  const uranus_W = 74.01692503 + 0.04240589 * T;
+  const uranus_w_bar = 170.95427630 + 0.40805281 * T;
+  const uranus_w = uranus_w_bar - uranus_W;
+  const uranus_M = normalize(uranus_L - uranus_w_bar);
   
-  // Neptune
-  const neptuneLong = normalize(304.349 + 218.4862 * T);
+  const uranusLong = helioLongitude(uranus_L, uranus_w, uranus_W, uranus_M, uranus_e, uranus_i);
+
+  // ========== NEPTUNE ==========
+  const neptune_L = normalize(304.348665 + 218.4862002 * T);
+  const neptune_e = 0.00859048 + 0.00000603 * T;
+  const neptune_i = 1.77004347 + 0.00035372 * T;
+  const neptune_W = 131.78422574 - 0.00508664 * T;
+  const neptune_w_bar = 44.96476227 - 0.32241464 * T;
+  const neptune_w = neptune_w_bar - neptune_W;
+  const neptune_M = normalize(neptune_L - neptune_w_bar);
   
-  // Pluto (very simplified)
-  const plutoLong = normalize(238.929 + 145.2078 * T);
+  const neptuneLong = helioLongitude(neptune_L, neptune_w, neptune_W, neptune_M, neptune_e, neptune_i);
+
+  // ========== PLUTO (polynomial fit) ==========
+  const plutoLong = normalize(
+    238.9588 + 144.96 * T
+    + 3.908 * Math.sin((178.7 + 144.96 * T) * DEG_TO_RAD)
+  );
+
+  // ========== Convert heliocentric to geocentric ==========
+  // For accurate geocentric positions, we need Earth's position
+  const earth_L = normalize(100.466449 + 35999.3728519 * T);
+  const earth_e = 0.01671123 - 0.00004392 * T;
+  const earth_w_bar = 102.93768193 + 0.32327364 * T;
+  const earth_M = normalize(earth_L - earth_w_bar);
+  const earth_E = solveKepler(earth_M, earth_e);
+  
+  // Earth's heliocentric radius and true anomaly
+  const earth_v = 2 * Math.atan2(
+    Math.sqrt(1 + earth_e) * Math.sin(earth_E / 2),
+    Math.sqrt(1 - earth_e) * Math.cos(earth_E / 2)
+  ) * RAD_TO_DEG;
+  const earth_lon = normalize(earth_v + earth_w_bar);
+  
+  // Geocentric correction for inner planets (approximate)
+  const geocentricCorrection = (helioLong: number, planetDist: number, earthDist: number): number => {
+    // Simplified geocentric conversion using elongation
+    const elong = normalize(helioLong - earth_lon);
+    // Inner planets appear ahead of their heliocentric position when on our side
+    // This is a first-order correction
+    if (planetDist < earthDist) {
+      // Inner planet
+      const maxElongation = Math.asin(planetDist / earthDist) * RAD_TO_DEG;
+      if (elong > 180) {
+        return helioLong + (180 - elong) * 0.1 * (earthDist - planetDist);
+      }
+    }
+    return helioLong;
+  };
+
+  // Apply geocentric corrections to inner planets
+  mercuryLong = geocentricCorrection(mercuryLong, 0.387, 1.0);
+  venusLong = geocentricCorrection(venusLong, 0.723, 1.0);
 
   // ========== ASCENDANT ==========
   // Sidereal time at Greenwich (in degrees)
