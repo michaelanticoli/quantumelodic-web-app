@@ -359,26 +359,37 @@ function calculatePlanetaryPositions(
     Math.sqrt(1 - earth_e) * Math.cos(earth_E / 2)
   ) * RAD_TO_DEG;
   const earth_lon = normalize(earth_v + earth_w_bar);
-  
-  // Geocentric correction for inner planets (approximate)
-  const geocentricCorrection = (helioLong: number, planetDist: number, earthDist: number): number => {
-    // Simplified geocentric conversion using elongation
-    const elong = normalize(helioLong - earth_lon);
-    // Inner planets appear ahead of their heliocentric position when on our side
-    // This is a first-order correction
-    if (planetDist < earthDist) {
-      // Inner planet
-      const maxElongation = Math.asin(planetDist / earthDist) * RAD_TO_DEG;
-      if (elong > 180) {
-        return helioLong + (180 - elong) * 0.1 * (earthDist - planetDist);
-      }
-    }
-    return helioLong;
+  const earth_r = 1.00000011 * (1 - earth_e * earth_e) / (1 + earth_e * Math.cos(earth_v * DEG_TO_RAD));
+
+  // Proper geocentric conversion using vector math
+  const helioToGeo = (helioLong: number, a: number, e: number, M: number): number => {
+    // Calculate planet's heliocentric radius
+    const E = solveKepler(M, e);
+    const v = 2 * Math.atan2(
+      Math.sqrt(1 + e) * Math.sin(E / 2),
+      Math.sqrt(1 - e) * Math.cos(E / 2)
+    ) * RAD_TO_DEG;
+    const r = a * (1 - e * e) / (1 + e * Math.cos(v * DEG_TO_RAD));
+    
+    // Convert to heliocentric Cartesian coordinates
+    const planet_x = r * Math.cos(helioLong * DEG_TO_RAD);
+    const planet_y = r * Math.sin(helioLong * DEG_TO_RAD);
+    
+    // Earth's heliocentric Cartesian (Earth is at earth_lon, opposite from Sun as seen from Earth)
+    const earth_x = earth_r * Math.cos(earth_lon * DEG_TO_RAD);
+    const earth_y = earth_r * Math.sin(earth_lon * DEG_TO_RAD);
+    
+    // Geocentric = planet position - Earth position
+    const geo_x = planet_x - earth_x;
+    const geo_y = planet_y - earth_y;
+    
+    // Convert back to geocentric longitude
+    return normalize(Math.atan2(geo_y, geo_x) * RAD_TO_DEG);
   };
 
-  // Apply geocentric corrections to inner planets
-  mercuryLong = geocentricCorrection(mercuryLong, 0.387, 1.0);
-  venusLong = geocentricCorrection(venusLong, 0.723, 1.0);
+  // Apply proper geocentric corrections to inner planets
+  mercuryLong = helioToGeo(mercuryLong, mercury_a, mercury_e, mercury_M);
+  venusLong = helioToGeo(venusLong, 0.72333566, venus_e, venus_M);
 
   // ========== ASCENDANT ==========
   // Sidereal time at Greenwich (in degrees)
