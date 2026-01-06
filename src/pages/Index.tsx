@@ -102,7 +102,7 @@ const Index = () => {
             </motion.div>
 
             {/* Birth Data Form */}
-            <BirthDataForm onSubmit={handleFormSubmit} />
+            <BirthDataForm onSubmit={handleFormSubmit} isLoading={loading} />
           </motion.main>
         )}
 
