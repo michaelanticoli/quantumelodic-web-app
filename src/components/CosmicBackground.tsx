@@ -104,7 +104,7 @@ export const CosmicBackground = () => {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ background: 'linear-gradient(180deg, hsl(222 47% 6%) 0%, hsl(255 40% 10%) 50%, hsl(280 35% 8%) 100%)' }}
+      style={{ background: 'linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(0 0% 2%) 50%, hsl(0 0% 0%) 100%)' }}
     />
   );
 };

@@ -1,18 +1,20 @@
 import { motion } from 'framer-motion';
-import { Home, CircleDot, Music, User } from 'lucide-react';
+import { Home, CircleDot, Music, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
   icon: React.ElementType;
   label: string;
   active?: boolean;
+  href?: string;
+  external?: boolean;
 }
 
 const navItems: NavItem[] = [
   { icon: Home, label: 'Home', active: false },
   { icon: CircleDot, label: 'Chart', active: true },
   { icon: Music, label: 'Music', active: false },
-  { icon: User, label: 'Profile', active: false },
+  { icon: ExternalLink, label: 'Pitch', href: 'https://quantumelodics.vercel.app', external: true },
 ];
 
 export const BottomNav = () => {
@@ -28,14 +30,18 @@ export const BottomNav = () => {
           <div className="flex items-center justify-around">
             {navItems.map((item) => {
               const Icon = item.icon;
+              const Component = item.external ? 'a' : 'button';
+              const externalProps = item.external ? { href: item.href, target: '_blank', rel: 'noopener noreferrer' } : {};
+              
               return (
-                <button
+                <Component
                   key={item.label}
+                  {...externalProps}
                   className={cn(
                     "flex flex-col items-center gap-1.5 px-5 py-2 rounded-xl transition-all duration-500",
                     item.active
                       ? "text-primary"
-                      : "text-muted-foreground/60 hover:text-muted-foreground"
+                      : "text-muted-foreground/60 hover:text-muted-foreground hover:text-primary/80"
                   )}
                 >
                   <div className="relative">
@@ -49,7 +55,7 @@ export const BottomNav = () => {
                     )}
                   </div>
                   <span className="text-[10px] tracking-widest uppercase">{item.label}</span>
-                </button>
+                </Component>
               );
             })}
           </div>
