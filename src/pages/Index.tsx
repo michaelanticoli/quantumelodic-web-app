@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { ZodiacWheel } from '@/components/ZodiacWheel';
@@ -15,6 +16,7 @@ type AppState = 'input' | 'generating' | 'result';
 
 const Index = () => {
   const [appState, setAppState] = useState<AppState>('input');
+  const navigate = useNavigate();
   const { toast } = useToast();
   const {
     loading,
@@ -128,6 +130,7 @@ const Index = () => {
               musicalMode={reading.musicalMode}
               audioUrl={reading.audioUrl}
               onBack={handleBack}
+              onExplore={() => navigate('/explore', { state: { chartData: reading.chartData, name: reading.birthData.name } })}
             />
           </motion.main>
         )}
@@ -159,9 +162,10 @@ interface ResultsViewProps {
   musicalMode: string;
   audioUrl?: string;
   onBack: () => void;
+  onExplore: () => void;
 }
 
-const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: ResultsViewProps) => {
+const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack, onExplore }: ResultsViewProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -262,6 +266,16 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
       <div className="my-6">
         <PlanetDetailsTable planets={chartData.planets} />
       </div>
+
+      {/* Explore Chart Button */}
+      <motion.button
+        className="mb-4 px-6 py-2 rounded-full border border-accent/40 text-accent text-xs tracking-widest uppercase hover:bg-accent/10 transition-all"
+        onClick={onExplore}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        Explore Full Chart
+      </motion.button>
 
       {/* Audio controls */}
       <motion.div

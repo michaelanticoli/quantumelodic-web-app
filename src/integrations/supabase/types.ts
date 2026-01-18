@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      qm_aspects: {
+        Row: {
+          angle: number
+          color: string
+          consonance: string
+          created_at: string
+          harmonic_interval: string
+          id: string
+          musical_effect: string
+          name: string
+          orb: number
+          sonic_expression: string
+          symbol: string
+          tension_level: number
+        }
+        Insert: {
+          angle: number
+          color: string
+          consonance: string
+          created_at?: string
+          harmonic_interval: string
+          id?: string
+          musical_effect: string
+          name: string
+          orb?: number
+          sonic_expression: string
+          symbol: string
+          tension_level: number
+        }
+        Update: {
+          angle?: number
+          color?: string
+          consonance?: string
+          created_at?: string
+          harmonic_interval?: string
+          id?: string
+          musical_effect?: string
+          name?: string
+          orb?: number
+          sonic_expression?: string
+          symbol?: string
+          tension_level?: number
+        }
+        Relationships: []
+      }
+      qm_houses: {
+        Row: {
+          created_at: string
+          domain: string
+          dynamic: string
+          expression: string
+          frequency_range: string
+          id: string
+          name: string
+          number: number
+          tonal_area: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          dynamic: string
+          expression: string
+          frequency_range: string
+          id?: string
+          name: string
+          number: number
+          tonal_area: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          dynamic?: string
+          expression?: string
+          frequency_range?: string
+          id?: string
+          name?: string
+          number?: number
+          tonal_area?: string
+        }
+        Relationships: []
+      }
+      qm_planets: {
+        Row: {
+          archetypal_energy: string
+          created_at: string
+          frequency_hz: number
+          harmonic_quality: string
+          id: string
+          instrument: string
+          name: string
+          note: string
+          octave: number
+          sonic_character: string
+          symbol: string
+          timbre: string
+        }
+        Insert: {
+          archetypal_energy: string
+          created_at?: string
+          frequency_hz: number
+          harmonic_quality: string
+          id?: string
+          instrument: string
+          name: string
+          note: string
+          octave?: number
+          sonic_character: string
+          symbol: string
+          timbre: string
+        }
+        Update: {
+          archetypal_energy?: string
+          created_at?: string
+          frequency_hz?: number
+          harmonic_quality?: string
+          id?: string
+          instrument?: string
+          name?: string
+          note?: string
+          octave?: number
+          sonic_character?: string
+          symbol?: string
+          timbre?: string
+        }
+        Relationships: []
+      }
+      qm_signs: {
+        Row: {
+          created_at: string
+          element: string
+          emotional_quality: string
+          id: string
+          key_signature: string
+          modality: string
+          musical_mode: string
+          name: string
+          sonic_palette: string
+          symbol: string
+          tempo_bpm: number
+          texture: string
+        }
+        Insert: {
+          created_at?: string
+          element: string
+          emotional_quality: string
+          id?: string
+          key_signature: string
+          modality: string
+          musical_mode: string
+          name: string
+          sonic_palette: string
+          symbol: string
+          tempo_bpm: number
+          texture: string
+        }
+        Update: {
+          created_at?: string
+          element?: string
+          emotional_quality?: string
+          id?: string
+          key_signature?: string
+          modality?: string
+          musical_mode?: string
+          name?: string
+          sonic_palette?: string
+          symbol?: string
+          tempo_bpm?: number
+          texture?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
