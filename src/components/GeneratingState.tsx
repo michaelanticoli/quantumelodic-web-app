@@ -139,11 +139,12 @@ export const GeneratingState = ({ onComplete, stage = 'calculating', progress: e
         {/* Center icon */}
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg"
+            style={{ boxShadow: '0 0 40px hsla(43, 74%, 52%, 0.4)' }}
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           >
-            <span className="text-2xl">🎵</span>
+            <span className="text-2xl text-primary-foreground font-light">♫</span>
           </motion.div>
         </div>
       </div>
