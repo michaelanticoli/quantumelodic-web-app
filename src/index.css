@@ -6,15 +6,15 @@
 
 @layer base {
   :root {
-    /* Cosmic Deep Space Theme */
-    --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
+    /* Pure Black Cosmic Theme - aligned with pitch deck */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
 
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 96%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 95%;
 
     /* Celestial Gold Primary */
     --primary: 43 74% 52%;
@@ -76,12 +76,12 @@
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 96%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 96%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 95%;
     --primary: 43 74% 52%;
     --primary-foreground: 222 47% 6%;
     --secondary: 255 50% 30%;
