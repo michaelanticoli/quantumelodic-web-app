@@ -51,12 +51,85 @@ const signNames = [
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
+// Input validation helpers
+function validateBirthData(data: unknown): { valid: true; data: BirthData } | { valid: false; error: string } {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Invalid request body' };
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  // Validate date format (YYYY-MM-DD)
+  if (typeof obj.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(obj.date)) {
+    return { valid: false, error: 'Invalid date format. Use YYYY-MM-DD' };
+  }
+  
+  // Validate time format (HH:MM)
+  if (typeof obj.time !== 'string' || !/^\d{2}:\d{2}$/.test(obj.time)) {
+    return { valid: false, error: 'Invalid time format. Use HH:MM' };
+  }
+  
+  // Validate date is reasonable (1900-2100)
+  const year = parseInt(obj.date.split('-')[0]);
+  if (year < 1900 || year > 2100) {
+    return { valid: false, error: 'Date must be between 1900 and 2100' };
+  }
+  
+  // Validate location if provided
+  if (obj.location !== undefined) {
+    if (typeof obj.location !== 'string' || obj.location.length < 2 || obj.location.length > 200) {
+      return { valid: false, error: 'Location must be 2-200 characters' };
+    }
+    // Sanitize location - remove potentially dangerous characters
+    const sanitizedLocation = obj.location.replace(/[<>\"'&;]/g, '').trim();
+    if (sanitizedLocation !== obj.location.trim()) {
+      return { valid: false, error: 'Location contains invalid characters' };
+    }
+  }
+  
+  // Validate latitude if provided
+  if (obj.latitude !== undefined) {
+    if (typeof obj.latitude !== 'number' || obj.latitude < -90 || obj.latitude > 90) {
+      return { valid: false, error: 'Latitude must be between -90 and 90' };
+    }
+  }
+  
+  // Validate longitude if provided
+  if (obj.longitude !== undefined) {
+    if (typeof obj.longitude !== 'number' || obj.longitude < -180 || obj.longitude > 180) {
+      return { valid: false, error: 'Longitude must be between -180 and 180' };
+    }
+  }
+  
+  // Validate timezone if provided
+  if (obj.timezone !== undefined) {
+    if (typeof obj.timezone !== 'number' || obj.timezone < -12 || obj.timezone > 14) {
+      return { valid: false, error: 'Timezone must be between -12 and 14' };
+    }
+  }
+  
+  return {
+    valid: true,
+    data: {
+      date: obj.date,
+      time: obj.time,
+      location: obj.location as string | undefined,
+      latitude: obj.latitude as number | undefined,
+      longitude: obj.longitude as number | undefined,
+      timezone: obj.timezone as number | undefined,
+    }
+  };
+}
+
 // Geocode location using Nominatim (server-side to avoid CORS)
 async function geocodeLocation(location: string): Promise<GeocodingResult> {
   console.log(`Geocoding location: ${location}`);
   
+  // Additional sanitization for URL encoding
+  const sanitizedLocation = location.replace(/[<>\"'&;]/g, '').trim().substring(0, 200);
+  
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`,
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedLocation)}&limit=1`,
     {
       headers: {
         'User-Agent': 'QuantumMelodies/1.0 (cosmic music generation app)'
@@ -66,7 +139,7 @@ async function geocodeLocation(location: string): Promise<GeocodingResult> {
 
   if (!response.ok) {
     console.error(`Geocoding failed with status: ${response.status}`);
-    throw new Error('Failed to geocode location');
+    throw new Error('Unable to process location');
   }
 
   const results = await response.json();
@@ -94,8 +167,27 @@ serve(async (req) => {
   }
 
   try {
-    const birthData: BirthData = await req.json();
-    console.log('Calculating chart for:', birthData);
+    // Parse and validate input
+    let rawData: unknown;
+    try {
+      rawData = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const validation = validateBirthData(rawData);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const birthData = validation.data;
+    console.log('Calculating chart for date:', birthData.date, 'time:', birthData.time);
 
     let { date, time, latitude, longitude, timezone } = birthData;
     
@@ -108,7 +200,10 @@ serve(async (req) => {
     }
     
     if (latitude === undefined || longitude === undefined) {
-      throw new Error('Location or coordinates required');
+      return new Response(
+        JSON.stringify({ error: 'Location or coordinates required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
     if (timezone === undefined) {
@@ -229,12 +324,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    // Log detailed error server-side only
     console.error("Error calculating chart:", error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Return generic error to client
+    return new Response(
+      JSON.stringify({ error: 'Unable to calculate birth chart. Please check your input and try again.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
 

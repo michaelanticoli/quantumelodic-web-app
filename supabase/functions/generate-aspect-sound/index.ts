@@ -12,6 +12,60 @@ interface AspectSoundRequest {
   prompt: string;
 }
 
+// Valid aspect names whitelist
+const VALID_ASPECTS = [
+  'Conjunction', 'Sextile', 'Square', 'Trine', 'Opposition',
+  'Semisextile', 'Quincunx', 'Semisquare', 'Sesquiquadrate'
+];
+
+// Valid planet names whitelist
+const VALID_PLANETS = [
+  'Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 
+  'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Ascendant'
+];
+
+// Input validation
+function validateAspectSoundRequest(data: unknown): { valid: true; data: AspectSoundRequest } | { valid: false; error: string } {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Invalid request body' };
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  // Validate aspectName
+  if (typeof obj.aspectName !== 'string' || !VALID_ASPECTS.includes(obj.aspectName)) {
+    return { valid: false, error: 'Invalid aspect name' };
+  }
+  
+  // Validate planet1
+  if (typeof obj.planet1 !== 'string' || !VALID_PLANETS.includes(obj.planet1)) {
+    return { valid: false, error: 'Invalid planet1' };
+  }
+  
+  // Validate planet2
+  if (typeof obj.planet2 !== 'string' || !VALID_PLANETS.includes(obj.planet2)) {
+    return { valid: false, error: 'Invalid planet2' };
+  }
+  
+  // Validate prompt (max 500 chars to prevent abuse)
+  if (typeof obj.prompt !== 'string' || obj.prompt.length === 0 || obj.prompt.length > 500) {
+    return { valid: false, error: 'Prompt must be 1-500 characters' };
+  }
+  
+  // Sanitize prompt - remove potentially dangerous characters
+  const sanitizedPrompt = obj.prompt.replace(/[<>\"'&;]/g, '').trim().substring(0, 500);
+  
+  return {
+    valid: true,
+    data: {
+      aspectName: obj.aspectName,
+      planet1: obj.planet1,
+      planet2: obj.planet2,
+      prompt: sanitizedPrompt,
+    }
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,16 +74,36 @@ serve(async (req) => {
   try {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
     if (!ELEVENLABS_API_KEY) {
+      console.error('ELEVENLABS_API_KEY not configured');
       return new Response(
-        JSON.stringify({ error: 'ELEVENLABS_API_KEY not configured', unavailable: true }),
+        JSON.stringify({ error: 'Sound generation is currently unavailable', unavailable: true }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { aspectName, planet1, planet2, prompt } = await req.json() as AspectSoundRequest;
+    // Parse and validate input
+    let rawData: unknown;
+    try {
+      rawData = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const validation = validateAspectSoundRequest(rawData);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const { aspectName, planet1, planet2, prompt } = validation.data;
 
     console.log(`Generating aspect sound: ${planet1} ${aspectName} ${planet2}`);
-    console.log(`Prompt: ${prompt}`);
+    console.log(`Prompt length: ${prompt.length}`);
 
     // Use ElevenLabs Sound Effects API for short aspect sounds
     const response = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
@@ -46,8 +120,7 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('ElevenLabs SFX error:', response.status, errorText);
+      console.error('ElevenLabs SFX error:', response.status);
 
       // Handle rate limiting gracefully
       if (response.status === 429 || response.status === 402) {
@@ -60,7 +133,11 @@ serve(async (req) => {
         );
       }
 
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      // Generic error for other failures
+      return new Response(
+        JSON.stringify({ error: 'Unable to generate sound. Please try again later.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const audioBuffer = await response.arrayBuffer();
@@ -77,11 +154,12 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    // Log detailed error server-side only
     console.error('Error generating aspect sound:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Return generic error to client
+    return new Response(
+      JSON.stringify({ error: 'Unable to generate sound. Please try again later.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
