@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Play } from 'lucide-react';
 
 interface BirthDataFormProps {
   onSubmit: (data: { name: string; date: string; time: string; location: string }) => void;
@@ -22,13 +21,14 @@ export const BirthDataForm = ({ onSubmit, isLoading }: BirthDataFormProps) => {
   };
 
   const inputClasses = `
-    w-full px-4 py-3.5
-    bg-muted/30 backdrop-blur-md
-    border border-border/40 
+    w-full px-5 py-4
+    bg-muted/20 backdrop-blur-xl
+    border border-border/30 
     rounded-xl
-    text-foreground placeholder:text-muted-foreground
-    focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50
-    transition-all duration-300
+    text-foreground text-sm tracking-wide
+    placeholder:text-muted-foreground/60 placeholder:text-sm
+    focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/40
+    transition-all duration-500 ease-out
     [color-scheme:dark]
   `;
 
@@ -83,8 +83,8 @@ export const BirthDataForm = ({ onSubmit, isLoading }: BirthDataFormProps) => {
           onChange={(e) => setFormData({ ...formData, time: e.target.value })}
           className={inputClasses}
         />
-        <div className="flex items-center justify-center text-muted-foreground text-sm">
-          (optional)
+        <div className="flex items-center justify-center text-muted-foreground/50 text-xs tracking-wide italic">
+          optional
         </div>
       </motion.div>
 
@@ -119,14 +119,14 @@ export const BirthDataForm = ({ onSubmit, isLoading }: BirthDataFormProps) => {
           {isLoading ? (
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
+              transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+              className="w-4 h-4 border border-primary-foreground/80 border-t-transparent rounded-full"
             />
           ) : (
-            <>
-              Generate My Cosmic Symphony
-              <Play className="w-4 h-4 ml-1" />
-            </>
+            <span className="flex items-center gap-2 text-sm tracking-wide">
+              Generate Symphony
+              <span className="text-lg opacity-80">›</span>
+            </span>
           )}
         </Button>
       </motion.div>

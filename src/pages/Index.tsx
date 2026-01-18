@@ -82,11 +82,11 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+              <h1 className="font-display text-3xl md:text-4xl font-light tracking-wide">
                 <span className="text-gold-gradient">Quantum</span>
-                <span className="text-foreground">Melodic</span>
+                <span className="text-foreground/90">Melodic</span>
               </h1>
-              <p className="text-muted-foreground text-sm mt-2">
+              <p className="text-muted-foreground text-xs tracking-widest uppercase mt-3">
                 Find yourself in the frequency
               </p>
             </motion.div>
@@ -214,12 +214,12 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
     <div className="text-center w-full max-w-2xl mx-auto">
       {/* Back button */}
       <motion.button
-        className="absolute top-6 left-6 text-muted-foreground hover:text-foreground transition-colors"
+        className="absolute top-6 left-6 text-muted-foreground hover:text-foreground transition-colors text-sm tracking-wide"
         onClick={onBack}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ x: -2 }}
+        whileTap={{ scale: 0.98 }}
       >
-        ← New Reading
+        ‹ New Reading
       </motion.button>
 
       {/* Zodiac wheel with real planetary positions */}
@@ -242,18 +242,18 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="font-display text-2xl font-bold text-foreground mb-2">
+        <h2 className="font-display text-2xl font-light tracking-wide text-foreground mb-2">
           Cosmic Symphony
         </h2>
-        <p className="text-muted-foreground mb-1">
+        <p className="text-muted-foreground text-sm mb-2">
           A unique composition for {name}
         </p>
-        <p className="text-sm text-primary">
-          {chartData.sunSign} Sun • {chartData.moonSign} Moon • {musicalMode}
+        <p className="text-xs tracking-widest text-primary/80">
+          {chartData.sunSign} ☉ · {chartData.moonSign} ☽ · {musicalMode}
         </p>
         {chartData.source === 'approximate' && (
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            (approximate positions)
+          <p className="text-xs text-muted-foreground/50 mt-2 italic">
+            approximate positions
           </p>
         )}
       </motion.div>
@@ -339,12 +339,12 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack }: Results
 
       {/* Share button */}
       <motion.button
-        className="mt-8 px-8 py-3 rounded-full bg-highlight text-highlight-foreground font-medium hover:bg-highlight/90 transition-colors"
+        className="mt-8 px-10 py-3 rounded-full border border-primary/40 text-primary text-sm tracking-widest uppercase hover:bg-primary/10 transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.01, borderColor: 'hsl(43 74% 52% / 0.6)' }}
+        whileTap={{ scale: 0.99 }}
       >
         Share
       </motion.button>
