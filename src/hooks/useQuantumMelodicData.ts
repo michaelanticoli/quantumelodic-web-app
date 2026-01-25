@@ -77,8 +77,10 @@ export function useQuantumMelodicData() {
   }, [aspects]);
 
   // Get house number for a degree (equal house system)
+  // House 1 starts at the Ascendant and proceeds counter-clockwise
   const getHouseNumber = useCallback((degree: number, ascendantDegree: number): number => {
-    const adjustedDegree = ((degree - ascendantDegree) % 360 + 360) % 360;
+    // How far behind the Ascendant is this planet (in counter-clockwise direction)
+    const adjustedDegree = ((ascendantDegree - degree) % 360 + 360) % 360;
     return Math.floor(adjustedDegree / 30) + 1;
   }, []);
 
