@@ -48,9 +48,11 @@ export const InteractiveZodiacWheel = ({
   const ascendant = planets.find(p => p.name === 'Ascendant');
   const ascDegree = ascendant?.degree || 0;
 
-  // Convert zodiac degree to screen angle (Aries starts at 9 o'clock, goes counter-clockwise)
+  // Convert zodiac degree to screen angle
+  // Ascendant at 9 o'clock (180°), signs proceed counter-clockwise
   const degreeToAngle = (degree: number): number => {
-    return (90 - degree + ascDegree) * (Math.PI / 180);
+    // Offset so ascendant is at 180° (9 o'clock), then counter-clockwise
+    return (180 - (degree - ascDegree)) * (Math.PI / 180);
   };
 
   const planetPositions = useMemo(() => {
