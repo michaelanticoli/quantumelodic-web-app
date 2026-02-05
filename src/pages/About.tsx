@@ -218,11 +218,44 @@ const About = () => {
             </div>
           </motion.section>
 
+          {/* Mini Course Section */}
+          <motion.section
+            className="glass rounded-2xl p-8 mb-8 border border-border/20"
+            {...fadeInUp}
+            transition={{ delay: 0.7 }}
+          >
+            <h2 className="font-display text-xl text-primary mb-4 tracking-wide">
+              Dive Deeper: Mini Course
+            </h2>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+              Explore the foundations of Quantum Vibrations—harmonizing astrology, music, and the resonant mind.
+            </p>
+            <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: '100%' }}>
+              <iframe
+                id="mcg-about"
+                name="mcg_frame_about"
+                title="Quantum Vibrations Mini-Course"
+                src="https://share.minicoursegenerator.com/quantum-vibrations-harmonizing-astrology-music-and-the-resonant-mind-b04888"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                className="absolute inset-0 w-full h-full border-0"
+              />
+            </div>
+            <div className="mt-4 text-center">
+              <motion.button
+                className="text-primary/80 hover:text-primary text-sm tracking-wide underline underline-offset-4"
+                onClick={() => navigate('/learn')}
+                whileHover={{ scale: 1.02 }}
+              >
+                Open Full Screen →
+              </motion.button>
+            </div>
+          </motion.section>
+
           {/* CTA */}
           <motion.div
             className="text-center"
             {...fadeInUp}
-            transition={{ delay: 0.7 }}
+            transition={{ delay: 0.8 }}
           >
             <motion.button
               className="px-10 py-4 rounded-full bg-gradient-to-r from-primary to-amber-500 text-primary-foreground text-sm tracking-widest uppercase shadow-lg shadow-primary/30"

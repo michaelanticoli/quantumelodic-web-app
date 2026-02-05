@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Home, CircleDot, Music, ExternalLink, Info } from 'lucide-react';
+import { Home, CircleDot, ExternalLink, Info, GraduationCap } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Info, label: 'About', path: '/about' },
+  { icon: GraduationCap, label: 'Learn', path: '/learn' },
   { icon: CircleDot, label: 'Chart', path: '/explore' },
   { icon: ExternalLink, label: 'Pitch', href: 'https://quantumelodics.vercel.app', external: true },
 ];
