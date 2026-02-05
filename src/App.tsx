@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PixelPerfectOverlay } from "@/components/PixelPerfectOverlay";
 import Index from "./pages/Index";
 import About from "./pages/About";
+import Learn from "./pages/Learn";
 import ChartExplorer from "./pages/ChartExplorer";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
+            <Route path="/learn" element={<Learn />} />
             <Route path="/explore" element={<ChartExplorer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
