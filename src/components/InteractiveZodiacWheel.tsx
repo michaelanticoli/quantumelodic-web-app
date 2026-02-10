@@ -59,7 +59,7 @@ export const InteractiveZodiacWheel = ({
     return planets.map(planet => {
       const angle = degreeToAngle(planet.degree);
       const x = center + Math.cos(angle) * planetRadius;
-      const y = center - Math.sin(angle) * planetRadius;
+      const y = center + Math.sin(angle) * planetRadius;
       return { planet, x, y, angle };
     });
   }, [planets, ascDegree]);
@@ -152,13 +152,13 @@ export const InteractiveZodiacWheel = ({
         const startAngle = degreeToAngle(i * 30);
         const midAngle = degreeToAngle(i * 30 + 15);
         const x = center + Math.cos(midAngle) * (outerRadius - 18);
-        const y = center - Math.sin(midAngle) * (outerRadius - 18);
+        const y = center + Math.sin(midAngle) * (outerRadius - 18);
         
         // Divider line
         const lineX1 = center + Math.cos(startAngle) * signRadius;
-        const lineY1 = center - Math.sin(startAngle) * signRadius;
+        const lineY1 = center + Math.sin(startAngle) * signRadius;
         const lineX2 = center + Math.cos(startAngle) * outerRadius;
-        const lineY2 = center - Math.sin(startAngle) * outerRadius;
+        const lineY2 = center + Math.sin(startAngle) * outerRadius;
 
         return (
           <g key={sign.name}>
@@ -190,9 +190,9 @@ export const InteractiveZodiacWheel = ({
       {Array.from({ length: 12 }).map((_, i) => {
         const angle = degreeToAngle(i * 30);
         const x1 = center + Math.cos(angle) * innerRadius;
-        const y1 = center - Math.sin(angle) * innerRadius;
+        const y1 = center + Math.sin(angle) * innerRadius;
         const x2 = center + Math.cos(angle) * signRadius;
-        const y2 = center - Math.sin(angle) * signRadius;
+        const y2 = center + Math.sin(angle) * signRadius;
         
         return (
           <line
