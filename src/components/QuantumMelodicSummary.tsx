@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { calculateHarmonicAnalysis, getResolutionGuidance, elementInfo } from '@/utils/harmonicWisdom';
+import { Music } from 'lucide-react';
 
 interface Props {
   reading: QuantumMelodicReading;
+  onAspectPatternClick?: (aspectName: string) => void;
 }
 
-export const QuantumMelodicSummary = ({ reading }: Props) => {
+export const QuantumMelodicSummary = ({ reading, onAspectPatternClick }: Props) => {
   const { dominantElement, dominantModality, overallKey, overallTempo, aspects, planets } = reading;
 
   // Calculate harmonic analysis
@@ -139,17 +141,20 @@ export const QuantumMelodicSummary = ({ reading }: Props) => {
           {Object.entries(aspectCounts).map(([name, count]) => {
             const aspectData = aspects.find(a => a.aspectType.name === name)?.aspectType;
             return (
-              <span
+              <button
                 key={name}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm"
+                onClick={() => onAspectPatternClick?.(name)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all hover:scale-105 hover:shadow-lg cursor-pointer border"
                 style={{
                   backgroundColor: `${aspectData?.color}20`,
                   color: aspectData?.color,
+                  borderColor: `${aspectData?.color}40`,
                 }}
               >
                 <span>{aspectData?.symbol}</span>
                 <span>{count}</span>
-              </span>
+                <Music className="w-3 h-3 opacity-60" />
+              </button>
             );
           })}
         </div>

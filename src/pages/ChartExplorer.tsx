@@ -1,11 +1,13 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { InteractiveZodiacWheel } from '@/components/InteractiveZodiacWheel';
 import { PlanetDetailPanel } from '@/components/PlanetDetailPanel';
 import { AspectDetailPanel } from '@/components/AspectDetailPanel';
+import { AspectPatternPanel } from '@/components/AspectPatternPanel';
 import { QuantumMelodicSummary } from '@/components/QuantumMelodicSummary';
+import { PlanetChoirMixer } from '@/components/PlanetChoirMixer';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
 import type { ComputedAspect } from '@/types/quantumMelodic';
@@ -22,7 +24,12 @@ const ChartExplorer = () => {
   
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetPosition | null>(null);
   const [selectedAspect, setSelectedAspect] = useState<ComputedAspect | null>(null);
+  const [selectedAspectPattern, setSelectedAspectPattern] = useState<string | null>(null);
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
+  
+  // Planet choir mixer state
+  const [enabledPlanets, setEnabledPlanets] = useState<Set<string>>(new Set());
+  const [activeElements, setActiveElements] = useState<Set<string>>(new Set());
   
   const { loading, error, buildReading } = useQuantumMelodicData();
 
@@ -38,23 +45,90 @@ const ChartExplorer = () => {
     return buildReading(state.chartData.planets);
   }, [state?.chartData?.planets, buildReading]);
 
+  // Initialize all planets as enabled once reading is available
+  useEffect(() => {
+    if (reading) {
+      const allNames = new Set(
+        reading.planets
+          .filter(p => p.position.name !== 'Ascendant')
+          .map(p => p.position.name)
+      );
+      setEnabledPlanets(allNames);
+    }
+  }, [reading]);
+
+  const handleTogglePlanet = useCallback((name: string) => {
+    setEnabledPlanets(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleElement = useCallback((element: string) => {
+    if (!reading) return;
+    
+    setActiveElements(prev => {
+      const next = new Set(prev);
+      const isActive = next.has(element);
+      
+      if (isActive) {
+        next.delete(element);
+      } else {
+        next.add(element);
+      }
+      
+      // Get planets of this element
+      const elementPlanets = reading.planets
+        .filter(p => p.signData?.element === element && p.position.name !== 'Ascendant')
+        .map(p => p.position.name);
+      
+      setEnabledPlanets(prevEnabled => {
+        const nextEnabled = new Set(prevEnabled);
+        if (isActive) {
+          // Turning element OFF - disable those planets
+          elementPlanets.forEach(name => nextEnabled.delete(name));
+        } else {
+          // Turning element ON - enable those planets
+          elementPlanets.forEach(name => nextEnabled.add(name));
+        }
+        return nextEnabled;
+      });
+      
+      return next;
+    });
+  }, [reading]);
+
   if (!state?.chartData) {
     return null;
   }
 
   const handlePlanetClick = (planet: PlanetPosition) => {
     setSelectedAspect(null);
+    setSelectedAspectPattern(null);
     setSelectedPlanet(planet);
   };
 
   const handleAspectClick = (aspect: ComputedAspect) => {
     setSelectedPlanet(null);
+    setSelectedAspectPattern(null);
     setSelectedAspect(aspect);
+  };
+
+  const handleAspectPatternClick = (aspectName: string) => {
+    setSelectedPlanet(null);
+    setSelectedAspect(null);
+    setSelectedAspectPattern(aspectName);
   };
 
   const handleClose = () => {
     setSelectedPlanet(null);
     setSelectedAspect(null);
+    setSelectedAspectPattern(null);
   };
 
   return (
@@ -117,6 +191,7 @@ const ChartExplorer = () => {
                 onPlanetHover={setHoveredElement}
                 selectedPlanet={selectedPlanet}
                 selectedAspect={selectedAspect}
+                enabledPlanets={enabledPlanets}
               />
               
               {/* Hover tooltip */}
@@ -134,9 +209,25 @@ const ChartExplorer = () => {
               </AnimatePresence>
             </motion.div>
 
+            {/* Planet Choir Mixer */}
+            {reading && (
+              <PlanetChoirMixer
+                reading={reading}
+                enabledPlanets={enabledPlanets}
+                onTogglePlanet={handleTogglePlanet}
+                activeElements={activeElements}
+                onToggleElement={handleToggleElement}
+              />
+            )}
+
             {/* QuantumMelodic Summary */}
             {reading && (
-              <QuantumMelodicSummary reading={reading} />
+              <div className="mt-4">
+                <QuantumMelodicSummary
+                  reading={reading}
+                  onAspectPatternClick={handleAspectPatternClick}
+                />
+              </div>
             )}
 
             {/* Instruction hint */}
@@ -146,7 +237,7 @@ const ChartExplorer = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
             >
-              Tap any planet or aspect line to explore its QuantumMelodic expression
+              Tap any planet or aspect line to explore · Click aspect patterns to hear chordal recipes · Toggle planets to create custom choirs
             </motion.p>
           </div>
         )}
@@ -164,6 +255,15 @@ const ChartExplorer = () => {
         {selectedAspect && (
           <AspectDetailPanel
             aspect={selectedAspect}
+            onClose={handleClose}
+          />
+        )}
+
+        {selectedAspectPattern && reading && (
+          <AspectPatternPanel
+            aspectName={selectedAspectPattern}
+            aspects={reading.aspects}
+            reading={reading}
             onClose={handleClose}
           />
         )}

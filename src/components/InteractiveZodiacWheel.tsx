@@ -26,6 +26,7 @@ interface Props {
   onPlanetHover: (name: string | null) => void;
   selectedPlanet: PlanetPosition | null;
   selectedAspect: ComputedAspect | null;
+  enabledPlanets?: Set<string>;
 }
 
 export const InteractiveZodiacWheel = ({
@@ -36,6 +37,7 @@ export const InteractiveZodiacWheel = ({
   onPlanetHover,
   selectedPlanet,
   selectedAspect,
+  enabledPlanets,
 }: Props) => {
   const size = 600;
   const center = size / 2;
@@ -252,9 +254,10 @@ export const InteractiveZodiacWheel = ({
         const isSelected = selectedPlanet?.name === planet.name;
         const isAscendant = planet.name === 'Ascendant';
         const baseRadius = isAscendant ? 16 : 20;
+        const isEnabled = !enabledPlanets || isAscendant || enabledPlanets.has(planet.name);
 
         return (
-          <g key={planet.name}>
+          <g key={planet.name} opacity={isEnabled ? 1 : 0.15}>
             {/* Frequency wave ripples - animated circles emanating from planet */}
             {!isAscendant && (
               <>
