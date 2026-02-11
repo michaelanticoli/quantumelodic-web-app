@@ -15,7 +15,7 @@ interface AspectSoundRequest {
 // Valid aspect names whitelist
 const VALID_ASPECTS = [
   'Conjunction', 'Sextile', 'Square', 'Trine', 'Opposition',
-  'Semisextile', 'Quincunx', 'Semisquare', 'Sesquiquadrate'
+  'Semi-sextile', 'Quincunx', 'Semi-square', 'Sesquiquadrate', 'Quintile'
 ];
 
 // Valid planet names whitelist
