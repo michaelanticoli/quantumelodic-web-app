@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import './LoadingAnimation.css';
 
 const stageMessages: Record<string, string[]> = {
   geocoding: [
@@ -19,6 +20,12 @@ const stageMessages: Record<string, string[]> = {
   ],
 };
 
+const stageLabels: Record<string, string> = {
+  geocoding: 'Locating',
+  calculating: 'Calculating',
+  generating: 'Generating',
+};
+
 interface GeneratingStateProps {
   onComplete?: () => void;
   stage?: 'geocoding' | 'calculating' | 'generating';
@@ -31,9 +38,9 @@ export const GeneratingState = ({ onComplete, stage = 'calculating', progress: e
 
   const progress = externalProgress ?? internalProgress;
   const messages = stageMessages[stage] || stageMessages.calculating;
+  const label = stageLabels[stage] || 'Loading';
 
   useEffect(() => {
-    // Only use internal progress if no external progress is provided
     if (externalProgress === undefined) {
       const progressInterval = setInterval(() => {
         setInternalProgress((prev) => {
@@ -58,7 +65,6 @@ export const GeneratingState = ({ onComplete, stage = 'calculating', progress: e
     return () => clearInterval(messageInterval);
   }, [messages.length]);
 
-  // Trigger onComplete when external progress reaches 100
   useEffect(() => {
     if (externalProgress !== undefined && externalProgress >= 100) {
       onComplete?.();
@@ -72,94 +78,17 @@ export const GeneratingState = ({ onComplete, stage = 'calculating', progress: e
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Animated cosmic visualization */}
-      <div className="relative w-64 h-64 mb-8">
-        {/* Outer rotating ring */}
-        <motion.div
-          className="absolute inset-0 rounded-full border-2 border-primary/30"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        />
-        
-        {/* Middle ring */}
-        <motion.div
-          className="absolute inset-4 rounded-full border border-accent/40"
-          animate={{ rotate: -360 }}
-          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-        />
-        
-        {/* Inner ring */}
-        <motion.div
-          className="absolute inset-8 rounded-full border border-highlight/30"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-        />
-
-        {/* Central glow */}
-        <motion.div
-          className="absolute inset-16 rounded-full"
-          style={{
-            background: 'radial-gradient(circle, hsla(291, 64%, 55%, 0.6) 0%, hsla(43, 74%, 52%, 0.3) 50%, transparent 70%)',
-          }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.5, 0.8, 0.5],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
-        {/* Music notes floating */}
-        {['♪', '♫', '♩', '♬'].map((note, i) => (
-          <motion.span
-            key={i}
-            className="absolute text-2xl text-primary/60"
-            style={{
-              left: `${50 + 35 * Math.cos((i * Math.PI) / 2)}%`,
-              top: `${50 + 35 * Math.sin((i * Math.PI) / 2)}%`,
-            }}
-            animate={{
-              y: [-5, 5, -5],
-              opacity: [0.3, 0.8, 0.3],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              delay: i * 0.3,
-              ease: "easeInOut",
-            }}
-          >
-            {note}
-          </motion.span>
+      {/* Letter-by-letter animated loader */}
+      <div className="loader-wrapper">
+        {label.split('').map((char, i) => (
+          <span key={i} className="loader-letter">
+            {char}
+          </span>
         ))}
-
-        {/* Center icon */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg"
-            style={{ boxShadow: '0 0 40px hsla(43, 74%, 52%, 0.4)' }}
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <span className="text-2xl text-primary-foreground font-light">♫</span>
-          </motion.div>
-        </div>
+        <div className="loader" />
       </div>
 
-      {/* Loading text */}
-      <motion.h2
-        className="font-display text-2xl font-semibold text-foreground mb-4 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        {stage === 'geocoding' && 'Locating'}
-        {stage === 'calculating' && 'Calculating'}
-        {stage === 'generating' && 'Generating'}
-      </motion.h2>
-
+      {/* Stage message */}
       <motion.p
         key={`${stage}-${messageIndex}`}
         className="text-muted-foreground text-center mb-6 h-6"
