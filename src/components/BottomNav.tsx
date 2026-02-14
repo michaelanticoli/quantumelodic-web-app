@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Home, CircleDot, ExternalLink, Info, GraduationCap, Library } from 'lucide-react';
+import { Home, CircleDot, ExternalLink, Info, GraduationCap, Library, BookOpen } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Info, label: 'About', path: '/about' },
   { icon: GraduationCap, label: 'Learn', path: '/learn' },
+  { icon: BookOpen, label: 'Guide', path: '/guide' },
   { icon: CircleDot, label: 'Chart', path: '/explore' },
   { icon: Library, label: 'Volumes', href: 'https://agent-69760f0deef6ca7076f--quantumelodic-volumes.netlify.app/#stats', external: true },
 ];
