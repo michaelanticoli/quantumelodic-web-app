@@ -69,10 +69,10 @@ const Guide = () => {
           <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60 mb-8">
             Cosmic User's Guide
           </p>
-          <h2 className="font-sans font-extralight text-3xl sm:text-4xl md:text-5xl leading-[1.15] tracking-tight text-foreground mb-6">
+          <h2 className="font-sans font-light text-3xl sm:text-4xl md:text-5xl leading-[1.15] tracking-tight text-foreground mb-6">
             The Quantumelodic<br />System
           </h2>
-          <p className="font-sans font-extralight text-sm text-muted-foreground/70 tracking-wide max-w-sm mx-auto leading-relaxed">
+          <p className="font-sans font-light text-sm text-muted-foreground tracking-wide max-w-sm mx-auto leading-relaxed">
             A harmonic interface for navigating the multiverse
           </p>
         </motion.section>
@@ -297,7 +297,7 @@ const Guide = () => {
 
             <div className="mt-16 border-l border-primary/20 pl-6">
               <p className="text-[10px] uppercase tracking-[0.3em] text-primary/60 mb-2">The Fifth Archetype</p>
-              <h4 className="font-sans font-extralight text-lg text-foreground mb-3">The Harmonic Weaver</h4>
+              <h4 className="font-sans font-normal text-lg text-foreground mb-3">The Harmonic Weaver</h4>
               <P>
                 Beyond the four lies a hidden Fifth Archetype. This soul blends all modes — Mystic, Coder, Cartographer, and Seeker into one. They are the future facilitators of the Quantumelodic Academy — teachers, healers, and composers of collective resonance.
               </P>
@@ -414,10 +414,10 @@ const Guide = () => {
 
             <div className="mt-20 mb-12 text-center">
               <div className="w-px h-16 bg-gradient-to-b from-transparent via-primary/30 to-transparent mx-auto mb-8" />
-              <p className="font-sans font-extralight text-xs text-muted-foreground/40 tracking-[0.3em] uppercase">
+              <p className="font-sans font-light text-xs text-muted-foreground/60 tracking-[0.3em] uppercase">
                 The next chapter is not on paper
               </p>
-              <p className="font-sans font-extralight text-xs text-muted-foreground/40 tracking-[0.3em] uppercase mt-1">
+              <p className="font-sans font-light text-xs text-muted-foreground/60 tracking-[0.3em] uppercase mt-1">
                 It is in the sound you choose to make today
               </p>
             </div>
@@ -443,19 +443,19 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="font-sans font-extralight text-2xl sm:text-3xl tracking-tight text-foreground mb-8 leading-tight">{children}</h2>
+  <h2 className="font-sans font-normal text-2xl sm:text-3xl tracking-tight text-foreground mb-8 leading-tight">{children}</h2>
 );
 
 const H3 = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="font-sans font-extralight text-lg text-foreground mt-14 mb-4 tracking-tight">{children}</h3>
+  <h3 className="font-sans font-normal text-lg text-foreground mt-14 mb-4 tracking-tight">{children}</h3>
 );
 
 const H4 = ({ children }: { children: React.ReactNode }) => (
-  <h4 className="font-sans font-extralight text-base text-foreground/80 mt-10 mb-3 tracking-tight">{children}</h4>
+  <h4 className="font-sans font-normal text-base text-foreground/90 mt-10 mb-3 tracking-tight">{children}</h4>
 );
 
 const P = ({ children }: { children: React.ReactNode }) => (
-  <p className="font-sans font-extralight text-sm text-muted-foreground/70 leading-[1.8] mb-4 tracking-wide">{children}</p>
+  <p className="font-sans font-light text-sm text-muted-foreground leading-[1.8] mb-4 tracking-wide">{children}</p>
 );
 
 const Keywords = ({ children }: { children: React.ReactNode }) => (
@@ -464,14 +464,14 @@ const Keywords = ({ children }: { children: React.ReactNode }) => (
 
 const Callout = ({ children }: { children: React.ReactNode }) => (
   <div className="border-l border-primary/20 pl-6 my-8">
-    <p className="font-sans font-extralight text-base text-foreground/60 italic leading-relaxed">{children}</p>
+    <p className="font-sans font-light text-base text-foreground/80 italic leading-relaxed">{children}</p>
   </div>
 );
 
 const BulletList = ({ items }: { items: string[] }) => (
   <ul className="space-y-2 my-4 ml-4">
     {items.map((item, i) => (
-      <li key={i} className="font-sans font-extralight text-sm text-muted-foreground/60 leading-relaxed flex gap-3">
+      <li key={i} className="font-sans font-light text-sm text-muted-foreground leading-relaxed flex gap-3">
         <span className="text-primary/30 mt-0.5">·</span>
         <span>{item}</span>
       </li>
@@ -482,8 +482,8 @@ const BulletList = ({ items }: { items: string[] }) => (
 const NumberedList = ({ items }: { items: string[] }) => (
   <ol className="space-y-2 my-4 ml-4">
     {items.map((item, i) => (
-      <li key={i} className="font-sans font-extralight text-sm text-muted-foreground/60 leading-relaxed flex gap-3">
-        <span className="text-primary/40 tabular-nums text-xs mt-0.5 min-w-[1rem]">{i + 1}.</span>
+      <li key={i} className="font-sans font-light text-sm text-muted-foreground leading-relaxed flex gap-3">
+        <span className="text-primary/50 tabular-nums text-xs mt-0.5 min-w-[1rem]">{i + 1}.</span>
         <span>{item}</span>
       </li>
     ))}
@@ -504,7 +504,7 @@ const DataTable = ({ headers, rows }: { headers: string[]; rows: string[][] }) =
         {rows.map((row, ri) => (
           <tr key={ri} className="border-b border-border/10">
             {row.map((cell, ci) => (
-              <td key={ci} className="font-sans font-extralight text-xs text-muted-foreground/60 py-3 pr-4 whitespace-nowrap">{cell}</td>
+              <td key={ci} className="font-sans font-light text-xs text-muted-foreground py-3 pr-4 whitespace-nowrap">{cell}</td>
             ))}
           </tr>
         ))}
@@ -515,8 +515,8 @@ const DataTable = ({ headers, rows }: { headers: string[]; rows: string[][] }) =
 
 const ArchetypeCard = ({ title, quote, entry, goal }: { title: string; quote: string; entry: string; goal: string }) => (
   <div className="mt-10 p-6 rounded-xl border border-border/10 bg-card/20">
-    <h4 className="font-sans font-extralight text-base text-foreground mb-2">{title}</h4>
-    <p className="font-sans font-extralight text-xs text-foreground/40 italic mb-4">"{quote}"</p>
+    <h4 className="font-sans font-normal text-base text-foreground mb-2">{title}</h4>
+    <p className="font-sans font-light text-xs text-foreground/60 italic mb-4">"{quote}"</p>
     <div className="flex flex-col gap-1">
       <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40">
         Entry: <span className="text-muted-foreground/60">{entry}</span>
@@ -533,7 +533,7 @@ const RitualBlock = ({ title, items }: { title: string; items: string[] }) => (
     <p className="text-[10px] uppercase tracking-[0.3em] text-primary/50 mb-3">{title}</p>
     <ul className="space-y-1.5">
       {items.map((item, i) => (
-        <li key={i} className="font-sans font-extralight text-xs text-muted-foreground/50 leading-relaxed">{item}</li>
+        <li key={i} className="font-sans font-light text-xs text-muted-foreground leading-relaxed">{item}</li>
       ))}
     </ul>
   </div>
@@ -541,9 +541,9 @@ const RitualBlock = ({ title, items }: { title: string; items: string[] }) => (
 
 const MovementTier = ({ number, title, description }: { number: string; title: string; description: string }) => (
   <div className="flex gap-5">
-    <span className="font-sans font-extralight text-3xl text-primary/20 tabular-nums mt-[-4px]">{number}</span>
+    <span className="font-sans font-light text-3xl text-primary/30 tabular-nums mt-[-4px]">{number}</span>
     <div>
-      <h4 className="font-sans font-extralight text-base text-foreground mb-1">{title}</h4>
+      <h4 className="font-sans font-normal text-base text-foreground mb-1">{title}</h4>
       <P>{description}</P>
     </div>
   </div>
