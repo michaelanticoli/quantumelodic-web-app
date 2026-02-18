@@ -15,7 +15,12 @@ interface AspectSoundRequest {
 // Valid aspect names whitelist
 const VALID_ASPECTS = [
   'Conjunction', 'Sextile', 'Square', 'Trine', 'Opposition',
-  'Semi-sextile', 'Quincunx', 'Semi-square', 'Sesquiquadrate', 'Quintile'
+  'Semi-sextile', 'Quincunx', 'Semi-square', 'Sesquiquadrate', 'Quintile',
+  // Choir mixer custom aspect names
+  'solo-mix', 'duet-mix', 'trio-mix', 'choir-mix',
+  // Pattern names (Grand Trine, T-Square, etc.)
+  'Grand Trine', 'T-Square', 'Grand Cross', 'Stellium', 'Yod',
+  'Kite', 'Mystic Rectangle', 'Cradle', 'Star of David',
 ];
 
 // Valid planet names whitelist
