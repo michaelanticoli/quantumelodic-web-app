@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
+import { generateProceduralAudio } from '@/utils/proceduralAudio';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -20,8 +21,6 @@ const signModes: Record<string, string> = {
   'Pisces': 'E Phrygian',
 };
 
-// Geocoding now handled server-side in the edge function
-
 export function useCosmicReading() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,19 +29,27 @@ export function useCosmicReading() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState<'idle' | 'geocoding' | 'calculating' | 'generating' | 'complete'>('idle');
+  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | null>(null);
 
   const generateReading = useCallback(async (birthData: BirthData) => {
     setLoading(true);
     setError(null);
     setProgress(0);
-    setStage('geocoding');
+    setAudioSource(null);
 
     try {
-      // Step 1 & 2: Calculate birth chart (geocoding handled server-side)
-      setProgress(10);
+      // Stage 1: Geocoding (server-side)
+      setStage('geocoding');
+      setProgress(5);
+
+      // Small delay for visual smoothness
+      await new Promise(r => setTimeout(r, 400));
+      setProgress(15);
+
+      // Stage 2: Calculate birth chart
       setStage('calculating');
-      setProgress(30);
-      
+      setProgress(25);
+
       const chartResponse = await fetch(`${SUPABASE_URL}/functions/v1/calculate-chart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,13 +67,16 @@ export function useCosmicReading() {
 
       const chart: ChartData = await chartResponse.json();
       setChartData(chart);
-      setProgress(50);
+      setProgress(45);
 
-      // Step 3: Generate music (optional - gracefully handle failures)
+      // Stage 3: Generate music
       setStage('generating');
-      setProgress(60);
+      setProgress(55);
 
       let url: string | null = null;
+      let source: 'elevenlabs' | 'procedural' | null = null;
+
+      // Attempt ElevenLabs generation
       try {
         const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
           method: 'POST',
@@ -79,21 +89,45 @@ export function useCosmicReading() {
           }),
         });
 
+        setProgress(75);
+
         const contentType = musicResponse.headers.get('content-type') || '';
 
         if (musicResponse.ok && contentType.includes('audio/')) {
           const audioBlob = await musicResponse.blob();
           url = URL.createObjectURL(audioBlob);
-          setAudioUrl(url);
+          source = 'elevenlabs';
+          setProgress(90);
         } else {
-          // Music generation is optional; show a friendly message and continue.
+          // ElevenLabs unavailable — fall back to procedural
           const data = await musicResponse.json().catch(() => null);
-          const msg = data?.error || 'Music generation is currently unavailable — continuing without audio.';
-          console.warn('Music generation unavailable - continuing without audio:', msg);
-          toast('Music unavailable', { description: msg });
+          console.warn('ElevenLabs unavailable, using procedural fallback:', data?.error);
+          setProgress(70);
         }
       } catch (musicErr) {
-        console.warn('Music generation error - continuing without audio:', musicErr);
+        console.warn('Music generation error, using procedural fallback:', musicErr);
+        setProgress(70);
+      }
+
+      // Procedural fallback if ElevenLabs didn't produce audio
+      if (!url) {
+        try {
+          setProgress(75);
+          url = await generateProceduralAudio(chart);
+          source = 'procedural';
+          setProgress(90);
+          toast('Cosmic tones generated', {
+            description: 'Using procedural synthesis based on your planetary frequencies.',
+          });
+        } catch (procErr) {
+          console.warn('Procedural audio also failed:', procErr);
+          setProgress(90);
+        }
+      }
+
+      if (url) {
+        setAudioUrl(url);
+        setAudioSource(source);
       }
 
       setProgress(100);
@@ -104,7 +138,7 @@ export function useCosmicReading() {
       const cosmicReading: CosmicReading = {
         birthData,
         chartData: chart,
-        audioUrl: url,
+        audioUrl: url ?? undefined,
         musicalMode,
       };
 
@@ -130,7 +164,8 @@ export function useCosmicReading() {
     setChartData(null);
     setProgress(0);
     setStage('idle');
-    
+    setAudioSource(null);
+
     // Clean up audio URL
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -144,6 +179,7 @@ export function useCosmicReading() {
     reading,
     chartData,
     audioUrl,
+    audioSource,
     progress,
     stage,
     generateReading,

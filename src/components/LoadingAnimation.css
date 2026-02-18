@@ -1,4 +1,4 @@
-/* Adapted from Uiverse.io by dexter-st */
+/* Premium LoadingUI – Poppins 600, vivid scanline gradient */
 .loader-wrapper {
   position: relative;
   display: flex;
@@ -8,7 +8,7 @@
   width: auto;
   margin: 2rem;
 
-  font-family: inherit;
+  font-family: 'Poppins', sans-serif;
   font-size: 1.6em;
   font-weight: 600;
   user-select: none;
@@ -43,11 +43,12 @@
   width: 100%;
   height: 100%;
 
-  background-image: radial-gradient(circle at 50% 50%, hsl(43, 74%, 52%) 0%, transparent 50%),
-    radial-gradient(circle at 45% 45%, hsl(291, 64%, 55%) 0%, transparent 45%),
-    radial-gradient(circle at 55% 55%, hsl(186, 95%, 48%) 0%, transparent 45%),
-    radial-gradient(circle at 45% 55%, hsl(43, 74%, 52%) 0%, transparent 45%),
-    radial-gradient(circle at 55% 45%, hsl(291, 64%, 55%) 0%, transparent 45%);
+  background-image:
+    radial-gradient(circle at 50% 50%, #ff0 0%, transparent 50%),
+    radial-gradient(circle at 45% 45%, #f00 0%, transparent 45%),
+    radial-gradient(circle at 55% 55%, #0ff 0%, transparent 45%),
+    radial-gradient(circle at 45% 55%, #0f0 0%, transparent 45%),
+    radial-gradient(circle at 55% 45%, #00f 0%, transparent 45%);
   mask: radial-gradient(
     circle at 50% 50%,
     transparent 0%,
@@ -108,7 +109,7 @@
   }
   5% {
     opacity: 1;
-    text-shadow: 0 0 4px hsl(var(--foreground));
+    text-shadow: 0 0 6px currentColor, 0 0 12px rgba(255, 255, 0, 0.4);
     transform: scale(1.1) translateY(-2px);
   }
   20% {

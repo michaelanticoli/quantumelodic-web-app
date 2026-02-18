@@ -24,6 +24,7 @@ const Index = () => {
     reading,
     chartData,
     audioUrl,
+    audioSource,
     progress,
     stage,
     generateReading,
@@ -129,6 +130,7 @@ const Index = () => {
               chartData={reading.chartData}
               musicalMode={reading.musicalMode}
               audioUrl={reading.audioUrl}
+              audioSource={audioSource}
               onBack={handleBack}
               onExplore={() => navigate('/explore', { state: { chartData: reading.chartData, name: reading.birthData.name } })}
             />
@@ -161,11 +163,12 @@ interface ResultsViewProps {
   };
   musicalMode: string;
   audioUrl?: string;
+  audioSource?: 'elevenlabs' | 'procedural' | null;
   onBack: () => void;
   onExplore: () => void;
 }
 
-const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack, onExplore }: ResultsViewProps) => {
+const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBack, onExplore }: ResultsViewProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -279,77 +282,92 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, onBack, onExplore
 
       {/* Audio controls */}
       <motion.div
-        className="mt-8 flex items-center justify-center gap-4"
+        className="mt-8 flex flex-col items-center gap-2"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        {/* Progress bar */}
-        <div className="flex-1 max-w-[200px]">
-          <div className="h-1 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>{formatTime(currentTime)}</span>
-            <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
-          </div>
-        </div>
+        {audioUrl ? (
+          <>
+            {/* Source label */}
+            {audioSource === 'procedural' && (
+              <p className="text-xs text-muted-foreground/50 tracking-wide mb-1">
+                ✦ Procedural synthesis from your chart
+              </p>
+            )}
+            {/* Progress bar */}
+            <div className="flex-1 w-full max-w-[200px]">
+              <div className="h-1 bg-muted rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>{formatTime(currentTime)}</span>
+                <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground/40 italic">
+            Audio unavailable — explore your chart data below
+          </p>
+        )}
       </motion.div>
 
       {/* Playback controls */}
-      <motion.div
-        className="mt-6 flex items-center justify-center gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <button 
-          className="text-muted-foreground hover:text-foreground transition-colors"
-          onClick={() => {
-            if (audioRef.current) {
-              audioRef.current.currentTime = Math.max(0, currentTime - 10);
-            }
-          }}
+      {audioUrl && (
+        <motion.div
+          className="mt-6 flex items-center justify-center gap-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
-          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-          </svg>
-        </button>
-
-        <motion.button
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center shadow-lg shadow-primary/30 disabled:opacity-50"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={togglePlayPause}
-          disabled={!audioUrl}
-        >
-          {isPlaying ? (
-            <svg className="w-8 h-8 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+          <button 
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = Math.max(0, currentTime - 10);
+              }
+            }}
+          >
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
             </svg>
-          ) : (
-            <svg className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </motion.button>
+          </button>
 
-        <button 
-          className="text-muted-foreground hover:text-foreground transition-colors"
-          onClick={() => {
-            if (audioRef.current) {
-              audioRef.current.currentTime = Math.min(duration, currentTime + 10);
-            }
-          }}
-        >
-          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-          </svg>
-        </button>
-      </motion.div>
+          <motion.button
+            className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={togglePlayPause}
+          >
+            {isPlaying ? (
+              <svg className="w-8 h-8 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+              </svg>
+            ) : (
+              <svg className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </motion.button>
+
+          <button 
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => {
+              if (audioRef.current) {
+                audioRef.current.currentTime = Math.min(duration, currentTime + 10);
+              }
+            }}
+          >
+            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+            </svg>
+          </button>
+        </motion.div>
+      )}
 
       {/* Share button */}
       <motion.button
