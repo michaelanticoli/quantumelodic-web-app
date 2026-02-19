@@ -85,13 +85,14 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
   const ascendantDegree = planets?.find(p => p.name === 'Ascendant')?.degree || 0;
 
   // Convert real planet data to display format, or use defaults
+  // Place all real planets on the 0.6 ring (matches the inner circle drawn at center * 0.6)
   const displayPlanets = planets 
-    ? planets.map((p, i) => ({
+    ? planets.map((p) => ({
         symbol: p.symbol,
         name: p.name,
         zodiacDegree: p.degree,
         screenAngle: degreeToScreenAngle(p.degree, ascendantDegree),
-        radius: 0.55 + (i % 3) * 0.08,
+        radius: 0.6,
         isRetrograde: p.isRetrograde,
       }))
     : defaultPlanets.map(p => ({ 
