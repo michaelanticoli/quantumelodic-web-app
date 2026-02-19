@@ -8,6 +8,7 @@ import { AspectDetailPanel } from '@/components/AspectDetailPanel';
 import { AspectPatternPanel } from '@/components/AspectPatternPanel';
 import { QuantumMelodicSummary } from '@/components/QuantumMelodicSummary';
 import { PlanetChoirMixer } from '@/components/PlanetChoirMixer';
+import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
 import type { ComputedAspect } from '@/types/quantumMelodic';
@@ -207,6 +208,20 @@ const ChartExplorer = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+            </motion.div>
+
+            {/* Audio Visualizer */}
+            <motion.div
+              className="w-full h-28 rounded-2xl overflow-hidden mb-4 shadow-lg shadow-primary/10"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <AudioReactiveGradient
+                idleIntensity={0.35}
+                borderRadius={0}
+                palette={paletteFromSign(state.chartData.sunSign)}
+              />
             </motion.div>
 
             {/* Planet Choir Mixer */}

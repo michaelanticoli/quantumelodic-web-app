@@ -8,7 +8,7 @@ import { PlanetDetailsTable } from '@/components/PlanetDetailsTable';
 import { BirthDataForm } from '@/components/BirthDataForm';
 import { BottomNav } from '@/components/BottomNav';
 import { GeneratingState } from '@/components/GeneratingState';
-import { AudioReactiveGradient } from '@/components/AudioReactiveGradient';
+import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
 import { useCosmicReading } from '@/hooks/useCosmicReading';
 import { useToast } from '@/hooks/use-toast';
 import type { BirthData } from '@/types/astrology';
@@ -299,6 +299,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
             audioElement={audioEl}
             idleIntensity={isPlaying ? 0.5 : 0.25}
             borderRadius={0}
+            palette={paletteFromSign(chartData.sunSign)}
           />
           {/* Overlay play button centered on gradient */}
           {audioUrl && (

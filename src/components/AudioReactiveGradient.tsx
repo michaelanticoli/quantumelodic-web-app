@@ -1,5 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 
+type RGB = { r: number; g: number; b: number };
+
+export type GradientPalette = 'cosmic' | 'fire' | 'earth' | 'air' | 'water';
+
 interface AudioReactiveGradientProps {
   /** Pass an HTMLAudioElement to react to its frequencies */
   audioElement?: HTMLAudioElement | null;
@@ -9,31 +13,77 @@ interface AudioReactiveGradientProps {
   className?: string;
   /** Border radius in px */
   borderRadius?: number;
+  /** Color palette — auto-select from chart element or pass directly */
+  palette?: GradientPalette;
 }
 
-// Color palette inspired by the Figma gradient shader card
-const PALETTE = [
-  { r: 255, g: 182, b: 255 }, // soft pink
-  { r: 255, g: 140, b: 50 },  // warm orange
-  { r: 255, g: 200, b: 80 },  // golden yellow
-  { r: 20, g: 80, b: 255 },   // vivid blue
-  { r: 10, g: 10, b: 30 },    // deep black-blue
-];
+// Element-mapped palettes inspired by Shader Dash spectral presets
+const PALETTES: Record<GradientPalette, RGB[]> = {
+  cosmic: [
+    { r: 255, g: 182, b: 255 }, // soft pink
+    { r: 255, g: 140, b: 50 },  // warm orange
+    { r: 255, g: 200, b: 80 },  // golden yellow
+    { r: 20, g: 80, b: 255 },   // vivid blue
+    { r: 10, g: 10, b: 30 },    // deep black-blue
+  ],
+  fire: [
+    { r: 255, g: 240, b: 180 }, // bright gold
+    { r: 255, g: 120, b: 20 },  // vivid orange
+    { r: 220, g: 40, b: 20 },   // hot red
+    { r: 160, g: 20, b: 60 },   // crimson
+    { r: 30, g: 5, b: 10 },     // ember dark
+  ],
+  earth: [
+    { r: 200, g: 220, b: 160 }, // sage
+    { r: 160, g: 140, b: 80 },  // ochre
+    { r: 120, g: 90, b: 50 },   // umber
+    { r: 60, g: 80, b: 40 },    // forest
+    { r: 15, g: 20, b: 10 },    // deep earth
+  ],
+  air: [
+    { r: 220, g: 240, b: 255 }, // ice white
+    { r: 160, g: 210, b: 255 }, // sky blue
+    { r: 200, g: 180, b: 255 }, // lavender
+    { r: 100, g: 140, b: 220 }, // periwinkle
+    { r: 20, g: 20, b: 50 },    // night sky
+  ],
+  water: [
+    { r: 180, g: 255, b: 240 }, // seafoam
+    { r: 40, g: 200, b: 200 },  // teal
+    { r: 20, g: 100, b: 200 },  // deep ocean
+    { r: 60, g: 40, b: 160 },   // indigo
+    { r: 5, g: 10, b: 40 },     // abyss
+  ],
+};
+
+// Map sun sign to dominant element
+const SIGN_ELEMENTS: Record<string, GradientPalette> = {
+  Aries: 'fire', Leo: 'fire', Sagittarius: 'fire',
+  Taurus: 'earth', Virgo: 'earth', Capricorn: 'earth',
+  Gemini: 'air', Libra: 'air', Aquarius: 'air',
+  Cancer: 'water', Scorpio: 'water', Pisces: 'water',
+};
+
+/** Derive the best palette from a sun sign string */
+export function paletteFromSign(sunSign?: string): GradientPalette {
+  if (!sunSign) return 'cosmic';
+  return SIGN_ELEMENTS[sunSign] || 'cosmic';
+}
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function samplePalette(t: number) {
+function samplePalette(colors: RGB[], t: number) {
   const ct = Math.max(0, Math.min(1, t));
-  const idx = ct * (PALETTE.length - 1);
+  const idx = ct * (colors.length - 1);
   const lo = Math.floor(idx);
-  const hi = Math.min(lo + 1, PALETTE.length - 1);
+  const hi = Math.min(lo + 1, colors.length - 1);
   const frac = idx - lo;
   return {
-    r: lerp(PALETTE[lo].r, PALETTE[hi].r, frac),
-    g: lerp(PALETTE[lo].g, PALETTE[hi].g, frac),
-    b: lerp(PALETTE[lo].b, PALETTE[hi].b, frac),
+    r: lerp(colors[lo].r, colors[hi].r, frac),
+    g: lerp(colors[lo].g, colors[hi].g, frac),
+    b: lerp(colors[lo].b, colors[hi].b, frac),
   };
 }
 
@@ -42,6 +92,7 @@ export const AudioReactiveGradient = ({
   idleIntensity = 0.3,
   className = '',
   borderRadius = 16,
+  palette = 'cosmic',
 }: AudioReactiveGradientProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
@@ -50,6 +101,12 @@ export const AudioReactiveGradient = ({
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const freqDataRef = useRef(new Uint8Array(64));
   const timeRef = useRef(0);
+  const paletteRef = useRef(palette);
+
+  // Keep palette ref in sync without restarting animation loop
+  useEffect(() => {
+    paletteRef.current = palette;
+  }, [palette]);
 
   // Connect audio element to analyser
   useEffect(() => {
@@ -68,7 +125,6 @@ export const AudioReactiveGradient = ({
         analyserRef.current.connect(ctx.destination);
       }
 
-      // Only create source once per audio element
       if (!sourceRef.current) {
         sourceRef.current = ctx.createMediaElementSource(audioElement);
         sourceRef.current.connect(analyserRef.current);
@@ -78,10 +134,6 @@ export const AudioReactiveGradient = ({
     } catch (e) {
       console.warn('AudioReactiveGradient: could not connect analyser', e);
     }
-
-    return () => {
-      // Don't disconnect — let it persist for the audio element's lifetime
-    };
   }, [audioElement]);
 
   const draw = useCallback(() => {
@@ -101,11 +153,12 @@ export const AudioReactiveGradient = ({
       ctx.scale(dpr, dpr);
     }
 
+    const colors = PALETTES[paletteRef.current] || PALETTES.cosmic;
+
     // Get frequency data
     let bands: number[] = [];
     if (analyserRef.current) {
       analyserRef.current.getByteFrequencyData(freqDataRef.current);
-      // Group into 5 bands
       const binCount = freqDataRef.current.length;
       const bandSize = Math.floor(binCount / 5);
       for (let b = 0; b < 5; b++) {
@@ -132,7 +185,6 @@ export const AudioReactiveGradient = ({
     timeRef.current += 0.016;
     const t = timeRef.current;
 
-    // Clear
     ctx.clearRect(0, 0, w, h);
 
     // Draw layered undulating gradient waves
@@ -159,11 +211,10 @@ export const AudioReactiveGradient = ({
       ctx.lineTo(w, h);
       ctx.closePath();
 
-      // Gradient fill for this layer
       const paletteT = layer / (layers - 1);
-      const color = samplePalette(paletteT);
+      const color = samplePalette(colors, paletteT);
       const alpha = 0.6 + bandVal * 0.4;
-      
+
       const grad = ctx.createLinearGradient(0, baseY - amplitude, 0, h);
       grad.addColorStop(0, `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${alpha})`);
       grad.addColorStop(1, `rgba(${Math.round(color.r * 0.3)}, ${Math.round(color.g * 0.3)}, ${Math.round(color.b * 0.3)}, ${alpha * 0.8})`);
