@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { AudioReactiveGradient } from './AudioReactiveGradient';
 import './LoadingAnimation.css';
 
 const stageMessages: Record<string, string[]> = {
@@ -103,6 +104,14 @@ export const GeneratingState = ({ onComplete, stage = 'calculating', progress: e
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      {/* Ambient gradient visualizer */}
+      <div className="w-full max-w-sm h-32 rounded-2xl overflow-hidden mb-8 shadow-lg shadow-primary/10">
+        <AudioReactiveGradient
+          idleIntensity={0.4 + (progress / 100) * 0.5}
+          borderRadius={0}
+        />
+      </div>
+
       {/* Letter-by-letter animated loader */}
       <div className="loader-wrapper">
         {label.split('').map((char, i) => (

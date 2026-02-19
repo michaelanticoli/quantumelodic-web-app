@@ -8,6 +8,7 @@ import { PlanetDetailsTable } from '@/components/PlanetDetailsTable';
 import { BirthDataForm } from '@/components/BirthDataForm';
 import { BottomNav } from '@/components/BottomNav';
 import { GeneratingState } from '@/components/GeneratingState';
+import { AudioReactiveGradient } from '@/components/AudioReactiveGradient';
 import { useCosmicReading } from '@/hooks/useCosmicReading';
 import { useToast } from '@/hooks/use-toast';
 import type { BirthData } from '@/types/astrology';
@@ -170,30 +171,35 @@ interface ResultsViewProps {
 
 const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBack, onExplore }: ResultsViewProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     if (audioUrl) {
-      audioRef.current = new Audio(audioUrl);
+      const audio = new Audio(audioUrl);
+      audio.crossOrigin = 'anonymous';
+      audioRef.current = audio;
+      setAudioEl(audio);
       
-      audioRef.current.addEventListener('loadedmetadata', () => {
-        setDuration(audioRef.current?.duration || 0);
+      audio.addEventListener('loadedmetadata', () => {
+        setDuration(audio.duration || 0);
       });
       
-      audioRef.current.addEventListener('timeupdate', () => {
-        setCurrentTime(audioRef.current?.currentTime || 0);
+      audio.addEventListener('timeupdate', () => {
+        setCurrentTime(audio.currentTime || 0);
       });
       
-      audioRef.current.addEventListener('ended', () => {
+      audio.addEventListener('ended', () => {
         setIsPlaying(false);
         setCurrentTime(0);
       });
 
       return () => {
-        audioRef.current?.pause();
+        audio.pause();
         audioRef.current = null;
+        setAudioEl(null);
       };
     }
   }, [audioUrl]);
@@ -280,23 +286,54 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
         Explore Full Chart
       </motion.button>
 
-      {/* Audio controls */}
+      {/* Audio Visualizer + Controls */}
       <motion.div
-        className="mt-8 flex flex-col items-center gap-2"
+        className="mt-8 w-full max-w-md mx-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
+        {/* Gradient Shader Visualizer */}
+        <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-4 shadow-lg shadow-primary/10">
+          <AudioReactiveGradient
+            audioElement={audioEl}
+            idleIntensity={isPlaying ? 0.5 : 0.25}
+            borderRadius={0}
+          />
+          {/* Overlay play button centered on gradient */}
+          {audioUrl && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.button
+                className="w-14 h-14 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10 flex items-center justify-center"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={togglePlayPause}
+              >
+                {isPlaying ? (
+                  <svg className="w-6 h-6 text-foreground" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6 text-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </motion.button>
+            </div>
+          )}
+        </div>
+
         {audioUrl ? (
           <>
             {/* Source label */}
             {audioSource === 'procedural' && (
-              <p className="text-xs text-muted-foreground/50 tracking-wide mb-1">
+              <p className="text-xs text-muted-foreground/50 tracking-wide mb-2 text-center">
                 ✦ Procedural synthesis from your chart
               </p>
             )}
+
             {/* Progress bar */}
-            <div className="flex-1 w-full max-w-[200px]">
+            <div className="w-full max-w-[280px] mx-auto">
               <div className="h-1 bg-muted rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
@@ -308,66 +345,42 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
                 <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
               </div>
             </div>
+
+            {/* Skip controls */}
+            <div className="mt-3 flex items-center justify-center gap-8">
+              <button 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = Math.max(0, currentTime - 10);
+                  }
+                }}
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                </svg>
+              </button>
+
+              <button 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = Math.min(duration, currentTime + 10);
+                  }
+                }}
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                </svg>
+              </button>
+            </div>
           </>
         ) : (
-          <p className="text-xs text-muted-foreground/40 italic">
+          <p className="text-xs text-muted-foreground/40 italic text-center">
             Audio unavailable — explore your chart data below
           </p>
         )}
       </motion.div>
-
-      {/* Playback controls */}
-      {audioUrl && (
-        <motion.div
-          className="mt-6 flex items-center justify-center gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <button 
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = Math.max(0, currentTime - 10);
-              }
-            }}
-          >
-            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-            </svg>
-          </button>
-
-          <motion.button
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={togglePlayPause}
-          >
-            {isPlaying ? (
-              <svg className="w-8 h-8 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-              </svg>
-            ) : (
-              <svg className="w-8 h-8 text-primary-foreground ml-1" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            )}
-          </motion.button>
-
-          <button 
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => {
-              if (audioRef.current) {
-                audioRef.current.currentTime = Math.min(duration, currentTime + 10);
-              }
-            }}
-          >
-            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-            </svg>
-          </button>
-        </motion.div>
-      )}
 
       {/* Share button */}
       <motion.button
