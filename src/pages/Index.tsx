@@ -10,33 +10,45 @@ import { BottomNav } from '@/components/BottomNav';
 import { GeneratingState } from '@/components/GeneratingState';
 import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
 import { useCosmicReading } from '@/hooks/useCosmicReading';
+import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import { useToast } from '@/hooks/use-toast';
+import { downloadChartImage, downloadAudio, downloadPdfReport } from '@/utils/downloadHelpers';
 import type { BirthData } from '@/types/astrology';
 
 type AppState = 'input' | 'generating' | 'result';
 
 const Index = () => {
-  const [appState, setAppState] = useState<AppState>('input');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const cosmicCtx = useCosmicReadingContext();
+
+  // If we already have a reading in context, start in result state
+  const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? 'result' : 'input');
+
   const {
     loading,
     error,
-    reading,
-    chartData,
-    audioUrl,
-    audioSource,
+    reading: hookReading,
+    audioSource: hookAudioSource,
     progress,
     stage,
     generateReading,
-    reset,
+    reset: hookReset,
   } = useCosmicReading();
+
+  // Use context reading if available, otherwise hook reading
+  const reading = cosmicCtx.reading || hookReading;
+  const audioUrl = cosmicCtx.audioUrl || null;
+  const audioSource = cosmicCtx.audioSource || hookAudioSource;
 
   const handleFormSubmit = async (data: BirthData) => {
     setAppState('generating');
     
     try {
-      await generateReading(data);
+      const result = await generateReading(data);
+      if (result) {
+        cosmicCtx.setReadingData(result, result.audioUrl ?? null, hookAudioSource);
+      }
       setAppState('result');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate your cosmic reading';
@@ -56,20 +68,18 @@ const Index = () => {
   };
 
   const handleBack = () => {
-    reset();
+    hookReset();
+    cosmicCtx.clearReading();
     setAppState('input');
   };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* SEO */}
       <title>QuantumMelodies - Your Cosmic Symphony Awaits</title>
       <meta name="description" content="Transform your birth chart into a unique musical composition. Discover your cosmic symphony through advanced astrological and harmonic principles." />
 
-      {/* Cosmic Background */}
       <CosmicBackground />
 
-      {/* Main Content */}
       <AnimatePresence mode="wait">
         {appState === 'input' && (
           <motion.main
@@ -79,7 +89,6 @@ const Index = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Logo / Title */}
             <motion.div
               className="text-center mb-8"
               initial={{ opacity: 0, y: -20 }}
@@ -95,7 +104,6 @@ const Index = () => {
               </p>
             </motion.div>
 
-            {/* Zodiac Wheel - decorative mode */}
             <motion.div
               className="mb-10"
               initial={{ opacity: 0, scale: 0.8 }}
@@ -105,7 +113,6 @@ const Index = () => {
               <ZodiacWheel />
             </motion.div>
 
-            {/* Birth Data Form */}
             <BirthDataForm onSubmit={handleFormSubmit} isLoading={loading} />
           </motion.main>
         )}
@@ -130,22 +137,22 @@ const Index = () => {
               name={reading.birthData.name} 
               chartData={reading.chartData}
               musicalMode={reading.musicalMode}
-              audioUrl={reading.audioUrl}
+              audioUrl={audioUrl ?? reading.audioUrl}
               audioSource={audioSource}
+              reading={reading}
               onBack={handleBack}
-              onExplore={() => navigate('/explore', { state: { chartData: reading.chartData, name: reading.birthData.name } })}
+              onExplore={() => navigate('/explore')}
             />
           </motion.main>
         )}
       </AnimatePresence>
 
-      {/* Bottom Navigation */}
       <BottomNav />
     </div>
   );
 };
 
-// Results View Component with real data
+// Results View Component
 interface ResultsViewProps {
   name: string;
   chartData: {
@@ -163,18 +170,20 @@ interface ResultsViewProps {
     source: string;
   };
   musicalMode: string;
-  audioUrl?: string;
+  audioUrl?: string | null;
   audioSource?: 'elevenlabs' | 'procedural' | null;
+  reading: import('@/types/astrology').CosmicReading;
   onBack: () => void;
   onExplore: () => void;
 }
 
-const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBack, onExplore }: ResultsViewProps) => {
+const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, reading, onBack, onExplore }: ResultsViewProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     if (audioUrl) {
@@ -183,35 +192,17 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
       audioRef.current = audio;
       setAudioEl(audio);
       
-      audio.addEventListener('loadedmetadata', () => {
-        setDuration(audio.duration || 0);
-      });
-      
-      audio.addEventListener('timeupdate', () => {
-        setCurrentTime(audio.currentTime || 0);
-      });
-      
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-      });
+      audio.addEventListener('loadedmetadata', () => setDuration(audio.duration || 0));
+      audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime || 0));
+      audio.addEventListener('ended', () => { setIsPlaying(false); setCurrentTime(0); });
 
-      return () => {
-        audio.pause();
-        audioRef.current = null;
-        setAudioEl(null);
-      };
+      return () => { audio.pause(); audioRef.current = null; setAudioEl(null); };
     }
   }, [audioUrl]);
 
   const togglePlayPause = () => {
     if (!audioRef.current) return;
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
+    if (isPlaying) audioRef.current.pause(); else audioRef.current.play();
     setIsPlaying(!isPlaying);
   };
 
@@ -222,6 +213,30 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleDownloadChart = async () => {
+    setIsDownloading('chart');
+    try {
+      await downloadChartImage('chart-wheel-container', `${name.replace(/\s+/g, '-').toLowerCase()}-chart.png`);
+    } finally {
+      setIsDownloading(null);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading('pdf');
+    try {
+      await downloadPdfReport(reading, 'chart-wheel-container');
+    } finally {
+      setIsDownloading(null);
+    }
+  };
+
+  const handleDownloadMusic = () => {
+    if (audioUrl) {
+      downloadAudio(audioUrl, `${name.replace(/\s+/g, '-').toLowerCase()}-composition.mp3`);
+    }
+  };
 
   return (
     <div className="text-center w-full max-w-2xl mx-auto">
@@ -237,6 +252,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
 
       {/* Zodiac wheel with real planetary positions */}
       <motion.div
+        id="chart-wheel-container"
         className="mb-4 flex justify-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -301,7 +317,6 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
             borderRadius={0}
             palette={paletteFromSign(chartData.sunSign)}
           />
-          {/* Overlay play button centered on gradient */}
           {audioUrl && (
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
@@ -326,14 +341,12 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
 
         {audioUrl ? (
           <>
-            {/* Source label */}
             {audioSource === 'procedural' && (
               <p className="text-xs text-muted-foreground/50 tracking-wide mb-2 text-center">
                 ✦ Procedural synthesis from your chart
               </p>
             )}
 
-            {/* Progress bar */}
             <div className="w-full max-w-[280px] mx-auto">
               <div className="h-1 bg-muted rounded-full overflow-hidden">
                 <motion.div
@@ -347,28 +360,18 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
               </div>
             </div>
 
-            {/* Skip controls */}
             <div className="mt-3 flex items-center justify-center gap-8">
               <button 
                 className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = Math.max(0, currentTime - 10);
-                  }
-                }}
+                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, currentTime - 10); }}
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                 </svg>
               </button>
-
               <button 
                 className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = Math.min(duration, currentTime + 10);
-                  }
-                }}
+                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(duration, currentTime + 10); }}
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
@@ -383,9 +386,40 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, onBa
         )}
       </motion.div>
 
+      {/* Download Actions */}
+      <motion.div
+        className="mt-8 flex flex-wrap items-center justify-center gap-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <button
+          onClick={handleDownloadChart}
+          disabled={isDownloading === 'chart'}
+          className="px-5 py-2.5 rounded-full border border-primary/30 text-primary text-xs tracking-widest uppercase hover:bg-primary/10 transition-all disabled:opacity-50"
+        >
+          {isDownloading === 'chart' ? '…' : '⬇ Chart Image'}
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={isDownloading === 'pdf'}
+          className="px-5 py-2.5 rounded-full border border-accent/30 text-accent text-xs tracking-widest uppercase hover:bg-accent/10 transition-all disabled:opacity-50"
+        >
+          {isDownloading === 'pdf' ? '…' : '⬇ PDF Report'}
+        </button>
+        {audioUrl && (
+          <button
+            onClick={handleDownloadMusic}
+            className="px-5 py-2.5 rounded-full border border-foreground/20 text-foreground/80 text-xs tracking-widest uppercase hover:bg-foreground/5 transition-all"
+          >
+            ⬇ Music
+          </button>
+        )}
+      </motion.div>
+
       {/* Share button */}
       <motion.button
-        className="mt-8 px-10 py-3 rounded-full border border-primary/40 text-primary text-sm tracking-widest uppercase hover:bg-primary/10 transition-all duration-300"
+        className="mt-6 px-10 py-3 rounded-full border border-primary/40 text-primary text-sm tracking-widest uppercase hover:bg-primary/10 transition-all duration-300"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}

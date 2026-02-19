@@ -10,6 +10,7 @@ import { QuantumMelodicSummary } from '@/components/QuantumMelodicSummary';
 import { PlanetChoirMixer } from '@/components/PlanetChoirMixer';
 import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
+import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
 import type { ComputedAspect } from '@/types/quantumMelodic';
 
@@ -21,7 +22,12 @@ interface LocationState {
 const ChartExplorer = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = location.state as LocationState | null;
+  const cosmicCtx = useCosmicReadingContext();
+  const locState = location.state as LocationState | null;
+  
+  // Prefer context reading over location state so chart persists across navigation
+  const chartData = cosmicCtx.reading?.chartData ?? locState?.chartData ?? null;
+  const chartName = cosmicCtx.reading?.birthData.name ?? locState?.name ?? '';
   
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetPosition | null>(null);
   const [selectedAspect, setSelectedAspect] = useState<ComputedAspect | null>(null);
@@ -36,15 +42,15 @@ const ChartExplorer = () => {
 
   // Redirect if no chart data
   useEffect(() => {
-    if (!state?.chartData) {
+    if (!chartData) {
       navigate('/');
     }
-  }, [state, navigate]);
+  }, [chartData, navigate]);
 
   const reading = useMemo(() => {
-    if (!state?.chartData?.planets) return null;
-    return buildReading(state.chartData.planets);
-  }, [state?.chartData?.planets, buildReading]);
+    if (!chartData?.planets) return null;
+    return buildReading(chartData.planets);
+  }, [chartData?.planets, buildReading]);
 
   // Initialize all planets as enabled once reading is available
   useEffect(() => {
@@ -104,7 +110,7 @@ const ChartExplorer = () => {
     });
   }, [reading]);
 
-  if (!state?.chartData) {
+  if (!chartData) {
     return null;
   }
 
@@ -149,7 +155,7 @@ const ChartExplorer = () => {
           
           <div className="text-center">
             <h1 className="font-display text-lg font-light tracking-wide text-foreground">
-              {state.name}'s Chart
+              {chartName}'s Chart
             </h1>
             <p className="text-xs text-muted-foreground tracking-widest uppercase">
               Interactive Explorer
@@ -185,7 +191,7 @@ const ChartExplorer = () => {
               transition={{ duration: 0.6 }}
             >
               <InteractiveZodiacWheel
-                planets={state.chartData.planets}
+                planets={chartData.planets}
                 aspects={reading?.aspects || []}
                 onPlanetClick={handlePlanetClick}
                 onAspectClick={handleAspectClick}
@@ -220,7 +226,7 @@ const ChartExplorer = () => {
               <AudioReactiveGradient
                 idleIntensity={0.35}
                 borderRadius={0}
-                palette={paletteFromSign(state.chartData.sunSign)}
+                palette={paletteFromSign(chartData.sunSign)}
               />
             </motion.div>
 
