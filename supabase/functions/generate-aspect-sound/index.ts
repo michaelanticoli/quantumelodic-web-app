@@ -52,13 +52,13 @@ function validateAspectSoundRequest(data: unknown): { valid: true; data: AspectS
     return { valid: false, error: 'Invalid planet2' };
   }
   
-  // Validate prompt (max 500 chars to prevent abuse)
-  if (typeof obj.prompt !== 'string' || obj.prompt.length === 0 || obj.prompt.length > 500) {
-    return { valid: false, error: 'Prompt must be 1-500 characters' };
+  // Validate prompt exists, truncate if over 500 chars (choir/pattern prompts can be long)
+  if (typeof obj.prompt !== 'string' || obj.prompt.trim().length === 0) {
+    return { valid: false, error: 'Prompt is required' };
   }
   
-  // Sanitize prompt - remove potentially dangerous characters
-  const sanitizedPrompt = obj.prompt.replace(/[<>\"'&;]/g, '').trim().substring(0, 500);
+  // Sanitize prompt - remove dangerous characters and truncate to stay within ElevenLabs SFX limit
+  const sanitizedPrompt = obj.prompt.replace(/[<>\"'&;]/g, '').trim().substring(0, 480);
   
   return {
     valid: true,
@@ -125,10 +125,11 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error('ElevenLabs SFX error:', response.status);
+      const errorBody = await response.text();
+      console.error('ElevenLabs SFX error:', response.status, errorBody);
 
       // Handle auth errors, rate limiting, and billing gracefully
-      if (response.status === 401 || response.status === 429 || response.status === 402) {
+      if (response.status === 401 || response.status === 429 || response.status === 402 || response.status === 400) {
         return new Response(
           JSON.stringify({ 
             error: 'Sound generation temporarily unavailable',
