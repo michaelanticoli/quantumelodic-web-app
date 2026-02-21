@@ -6,11 +6,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PixelPerfectOverlay } from "@/components/PixelPerfectOverlay";
 import { CosmicReadingProvider } from "@/contexts/CosmicReadingContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Learn from "./pages/Learn";
 import Guide from "./pages/Guide";
 import ChartExplorer from "./pages/ChartExplorer";
+import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
+import Academy from "./pages/Academy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,24 +37,29 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CosmicReadingProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/learn" element={<Learn />} />
-              <Route path="/guide" element={<Guide />} />
-              <Route path="/explore" element={<ChartExplorer />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <PixelPerfectOverlay 
-            isOpen={pixelPerfectMode} 
-            onClose={() => setPixelPerfectMode(false)} 
-          />
-        </CosmicReadingProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <CosmicReadingProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/learn" element={<Learn />} />
+                <Route path="/guide" element={<Guide />} />
+                <Route path="/explore" element={<ChartExplorer />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/academy" element={<Academy />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <PixelPerfectOverlay 
+                isOpen={pixelPerfectMode} 
+                onClose={() => setPixelPerfectMode(false)} 
+              />
+            </CosmicReadingProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );

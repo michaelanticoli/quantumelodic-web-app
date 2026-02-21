@@ -261,6 +261,40 @@ const About = () => {
             </div>
           </motion.section>
 
+          {/* Academy Promo */}
+          <motion.section
+            className="glass rounded-2xl p-8 mb-8 border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 relative overflow-hidden"
+            {...fadeInUp}
+            transition={{ delay: 0.75 }}
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+                  <span className="text-lg">👑</span>
+                </div>
+                <div>
+                  <h2 className="font-display text-xl text-primary tracking-wide">
+                    Academy of Astro-Musicology
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Premium · $19.99/mo</p>
+                </div>
+              </div>
+              <p className="text-foreground/80 text-sm leading-relaxed mb-4">
+                Immersive courses on planetary harmonics, zodiacal modes, and cosmic composition. 
+                Deepen your practice with the full Astro-Musicology curriculum.
+              </p>
+              <motion.button
+                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-primary to-amber-500 text-primary-foreground text-xs tracking-widest uppercase font-medium shadow-lg shadow-primary/20"
+                onClick={() => navigate('/academy')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Explore Academy →
+              </motion.button>
+            </div>
+          </motion.section>
+
           {/* Mini Course Section */}
           <motion.section
             className="glass rounded-2xl p-8 mb-8 border border-border/20"
