@@ -38,7 +38,9 @@ const ChartExplorer = () => {
   const [enabledPlanets, setEnabledPlanets] = useState<Set<string>>(new Set());
   const [activeElements, setActiveElements] = useState<Set<string>>(new Set());
   
-  const { loading, error, buildReading } = useQuantumMelodicData();
+  const { loading, error, dataReady, buildReading } = useQuantumMelodicData();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  void dataReady; // consumed in useEffect below
 
   // Redirect if no chart data
   useEffect(() => {
@@ -49,11 +51,12 @@ const ChartExplorer = () => {
 
   const [reading, setReading] = useState<ReturnType<typeof buildReading>>(null);
 
+  // Only run once when data becomes ready — avoids infinite loop from unstable deps
   useEffect(() => {
-    if (!chartData?.planets || loading) return;
+    if (!chartData?.planets || !dataReady) return;
     const result = buildReading(chartData.planets);
     if (result) setReading(result);
-  }, [chartData?.planets, buildReading, loading]);
+  }, [dataReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize all planets as enabled once reading is available
   useEffect(() => {
