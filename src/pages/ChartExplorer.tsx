@@ -33,6 +33,7 @@ const ChartExplorer = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetPosition | null>(null);
   const [selectedAspect, setSelectedAspect] = useState<ComputedAspect | null>(null);
   const [selectedAspectPattern, setSelectedAspectPattern] = useState<string | null>(null);
+  const [selectedSign, setSelectedSign] = useState<string | null>(null);
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
 
   // Planet choir mixer state
