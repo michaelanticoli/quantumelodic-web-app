@@ -331,6 +331,20 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
             </section>
           )}
 
+              {/* Live waveform — appears while playing */}
+              <motion.div
+                className="w-full overflow-hidden rounded-xl"
+                animate={{ height: isPlaying ? 64 : 0, opacity: isPlaying ? 1 : 0 }}
+                transition={{ duration: 0.35 }}
+                style={{ border: isPlaying ? '1px solid hsl(43 74% 52% / 0.25)' : 'none' }}
+              >
+                <CosmicWaveform
+                  audioElement={audioElement}
+                  idleIntensity={0.35}
+                  palette={paletteFromSign(position.sign)}
+                />
+              </motion.div>
+
               {/* Play Sound Button */}
               <section className="pt-2">
                 <Button
