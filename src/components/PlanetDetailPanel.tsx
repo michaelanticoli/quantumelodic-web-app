@@ -5,6 +5,7 @@ import type { QMPlanet, QMSign, QMHouse } from '@/types/quantumMelodic';
 import type { PlanetPosition } from '@/types/astrology';
 import { elementInfo, qualityInfo, getFrequencyCategory, houseWisdom } from '@/utils/harmonicWisdom';
 import { Button } from '@/components/ui/button';
+import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
