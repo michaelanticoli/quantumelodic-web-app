@@ -423,24 +423,25 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       >
         <button
           onClick={handleDownloadChart}
-          disabled={isDownloading === 'chart'}
+          disabled={!!isDownloading && isDownloading !== 'share-copied'}
           className="px-5 py-2.5 rounded-full border border-primary/30 text-primary text-xs tracking-widest uppercase hover:bg-primary/10 transition-all disabled:opacity-50"
         >
-          {isDownloading === 'chart' ? '…' : '⬇ Chart Image'}
+          {isDownloading === 'chart' ? '⏳ Saving…' : '⬇ Chart Image'}
         </button>
         <button
           onClick={handleDownloadPdf}
-          disabled={isDownloading === 'pdf'}
+          disabled={!!isDownloading && isDownloading !== 'share-copied'}
           className="px-5 py-2.5 rounded-full border border-accent/30 text-accent text-xs tracking-widest uppercase hover:bg-accent/10 transition-all disabled:opacity-50"
         >
-          {isDownloading === 'pdf' ? '…' : '⬇ PDF Report'}
+          {isDownloading === 'pdf' ? '⏳ Building…' : '⬇ PDF Report'}
         </button>
         {audioUrl && (
           <button
             onClick={handleDownloadMusic}
-            className="px-5 py-2.5 rounded-full border border-foreground/20 text-foreground/80 text-xs tracking-widest uppercase hover:bg-foreground/5 transition-all"
+            disabled={!!isDownloading && isDownloading !== 'share-copied'}
+            className="px-5 py-2.5 rounded-full border border-foreground/20 text-foreground/80 text-xs tracking-widest uppercase hover:bg-foreground/5 transition-all disabled:opacity-50"
           >
-            ⬇ Music
+            {isDownloading === 'music' ? '⏳ Saving…' : '⬇ Music'}
           </button>
         )}
       </motion.div>
@@ -451,10 +452,11 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        whileHover={{ scale: 1.01, borderColor: 'hsl(43 74% 52% / 0.6)' }}
+        whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
+        onClick={handleShare}
       >
-        Share
+        {isDownloading === 'share-copied' ? '✓ Copied!' : '↑ Share'}
       </motion.button>
     </div>
   );
