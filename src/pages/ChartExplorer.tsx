@@ -8,7 +8,7 @@ import { AspectDetailPanel } from '@/components/AspectDetailPanel';
 import { AspectPatternPanel } from '@/components/AspectPatternPanel';
 import { QuantumMelodicSummary } from '@/components/QuantumMelodicSummary';
 import { PlanetChoirMixer } from '@/components/PlanetChoirMixer';
-import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
+import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
