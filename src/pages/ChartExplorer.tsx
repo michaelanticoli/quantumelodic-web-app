@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -12,7 +12,7 @@ import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
-import type { ComputedAspect } from '@/types/quantumMelodic';
+import type { ComputedAspect, QuantumMelodicReading } from '@/types/quantumMelodic';
 
 interface LocationState {
   chartData: ChartData;
@@ -24,23 +24,26 @@ const ChartExplorer = () => {
   const navigate = useNavigate();
   const cosmicCtx = useCosmicReadingContext();
   const locState = location.state as LocationState | null;
-  
+
   // Prefer context reading over location state so chart persists across navigation
   const chartData = cosmicCtx.reading?.chartData ?? locState?.chartData ?? null;
   const chartName = cosmicCtx.reading?.birthData.name ?? locState?.name ?? '';
-  
+
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetPosition | null>(null);
   const [selectedAspect, setSelectedAspect] = useState<ComputedAspect | null>(null);
   const [selectedAspectPattern, setSelectedAspectPattern] = useState<string | null>(null);
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
-  
+
   // Planet choir mixer state
   const [enabledPlanets, setEnabledPlanets] = useState<Set<string>>(new Set());
   const [activeElements, setActiveElements] = useState<Set<string>>(new Set());
-  
-  const { loading, error, dataReady, buildReading } = useQuantumMelodicData();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  void dataReady; // consumed in useEffect below
+
+  // Choir audio element state — lifted so CosmicWaveform can react to it
+  const [choirAudio, setChoirAudio] = useState<HTMLAudioElement | null>(null);
+
+  const { error, dataReady, buildReading } = useQuantumMelodicData();
+  const [reading, setReading] = useState<QuantumMelodicReading | null>(null);
+  const readingBuilt = useRef(false);
 
   // Redirect if no chart data
   useEffect(() => {
@@ -49,14 +52,15 @@ const ChartExplorer = () => {
     }
   }, [chartData, navigate]);
 
-  const [reading, setReading] = useState<ReturnType<typeof buildReading>>(null);
-
-  // Only run once when data becomes ready — avoids infinite loop from unstable deps
+  // Build reading as soon as data is ready — guard against double-fire
   useEffect(() => {
-    if (!chartData?.planets || !dataReady) return;
+    if (!dataReady || !chartData?.planets || readingBuilt.current) return;
     const result = buildReading(chartData.planets);
-    if (result) setReading(result);
-  }, [dataReady]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (result) {
+      setReading(result);
+      readingBuilt.current = true;
+    }
+  }, [dataReady, buildReading, chartData]);
 
   // Initialize all planets as enabled once reading is available
   useEffect(() => {
@@ -84,34 +88,31 @@ const ChartExplorer = () => {
 
   const handleToggleElement = useCallback((element: string) => {
     if (!reading) return;
-    
+
     setActiveElements(prev => {
       const next = new Set(prev);
       const isActive = next.has(element);
-      
+
       if (isActive) {
         next.delete(element);
       } else {
         next.add(element);
       }
-      
-      // Get planets of this element
+
       const elementPlanets = reading.planets
         .filter(p => p.signData?.element === element && p.position.name !== 'Ascendant')
         .map(p => p.position.name);
-      
+
       setEnabledPlanets(prevEnabled => {
         const nextEnabled = new Set(prevEnabled);
         if (isActive) {
-          // Turning element OFF - disable those planets
           elementPlanets.forEach(name => nextEnabled.delete(name));
         } else {
-          // Turning element ON - enable those planets
           elementPlanets.forEach(name => nextEnabled.add(name));
         }
         return nextEnabled;
       });
-      
+
       return next;
     });
   }, [reading]);
@@ -147,7 +148,7 @@ const ChartExplorer = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <CosmicBackground />
-      
+
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 px-6 py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -158,7 +159,7 @@ const ChartExplorer = () => {
           >
             ‹ Back
           </motion.button>
-          
+
           <div className="text-center">
             <h1 className="font-display text-lg font-light tracking-wide text-foreground">
               {chartName}'s Chart
@@ -167,28 +168,20 @@ const ChartExplorer = () => {
               Interactive Explorer
             </p>
           </div>
-          
-          <div className="w-12" /> {/* Spacer */}
+
+          <div className="w-12" />
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content — shown immediately, QM data loads progressively */}
       <main className="relative z-10 pt-20 pb-8 px-4">
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <motion.div
-              className="w-8 h-8 border border-primary/60 border-t-transparent rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-            />
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center text-destructive py-20">
             <p>{error}</p>
           </div>
         ) : (
           <div className="max-w-7xl mx-auto">
-            {/* Interactive Wheel */}
+            {/* Interactive Wheel — renders immediately with planets data */}
             <motion.div
               className="relative mx-auto mb-8"
               style={{ maxWidth: '90vmin', maxHeight: '70vh' }}
@@ -207,7 +200,7 @@ const ChartExplorer = () => {
                 selectedAspect={selectedAspect}
                 enabledPlanets={enabledPlanets}
               />
-              
+
               {/* Hover tooltip */}
               <AnimatePresence>
                 {hoveredElement && (
@@ -223,7 +216,7 @@ const ChartExplorer = () => {
               </AnimatePresence>
             </motion.div>
 
-            {/* Audio Visualizer */}
+            {/* Audio Visualizer — reacts to choir audio when playing */}
             <motion.div
               className="w-full h-24 rounded-xl overflow-hidden mb-4"
               style={{ border: '1px solid hsl(43 74% 52% / 0.12)' }}
@@ -232,10 +225,27 @@ const ChartExplorer = () => {
               transition={{ delay: 0.4 }}
             >
               <CosmicWaveform
+                audioElement={choirAudio}
                 idleIntensity={0.5}
                 palette={paletteFromSign(chartData.sunSign)}
               />
             </motion.div>
+
+            {/* QM loading indicator — only shown while QM data is loading */}
+            {!reading && !error && (
+              <motion.div
+                className="flex items-center justify-center gap-3 py-4 mb-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <motion.div
+                  className="w-4 h-4 border border-primary/60 border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                />
+                <span className="text-xs text-muted-foreground tracking-wide">Loading harmonic data…</span>
+              </motion.div>
+            )}
 
             {/* Planet Choir Mixer */}
             {reading && (
@@ -245,6 +255,7 @@ const ChartExplorer = () => {
                 onTogglePlanet={handleTogglePlanet}
                 activeElements={activeElements}
                 onToggleElement={handleToggleElement}
+                onAudioChange={setChoirAudio}
               />
             )}
 
@@ -279,7 +290,7 @@ const ChartExplorer = () => {
             onClose={handleClose}
           />
         )}
-        
+
         {selectedAspect && (
           <AspectDetailPanel
             aspect={selectedAspect}

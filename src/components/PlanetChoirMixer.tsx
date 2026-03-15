@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Flame, Droplets, Wind, Mountain, Music2 } from 'lucide-react';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
-import { Button } from '@/components/ui/button';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -29,6 +28,8 @@ interface Props {
   onTogglePlanet: (name: string) => void;
   activeElements: Set<string>;
   onToggleElement: (element: string) => void;
+  /** Callback so the parent can connect the live audio element to CosmicWaveform */
+  onAudioChange: Dispatch<SetStateAction<HTMLAudioElement | null>>;
 }
 
 export const PlanetChoirMixer = ({
@@ -37,6 +38,7 @@ export const PlanetChoirMixer = ({
   onTogglePlanet,
   activeElements,
   onToggleElement,
+  onAudioChange,
 }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,23 +55,33 @@ export const PlanetChoirMixer = ({
     return () => {
       audioRef.current?.pause();
       audioRef.current = null;
+      onAudioChange(null);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Stop current playback when selection changes
+  // Stop playback when selection changes
   useEffect(() => {
     if (isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
+      onAudioChange(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabledPlanets]);
 
   const stopAudio = () => {
     audioRef.current?.pause();
     setIsPlaying(false);
+    onAudioChange(null);
   };
 
+  /**
+   * Build a descriptive prompt from the active planets and call
+   * generate-planet-sound for a solo, or generate-aspect-sound for 2+ planets.
+   * The resulting audio element is passed up via onAudioChange so the
+   * CosmicWaveform visualiser can react to it.
+   */
   const playChoir = async () => {
     if (isLoading) return;
     if (isPlaying) { stopAudio(); return; }
@@ -79,75 +91,130 @@ export const PlanetChoirMixer = ({
     setIsLoading(true);
 
     try {
-      const planetDescriptions = activePlanets.map(p => {
-        const freq = p.qmData?.frequency_hz ?? 220;
-        const instrument = p.qmData?.instrument ?? 'synthesizer';
-        const timbre = p.qmData?.timbre ?? 'warm';
-        const note = p.qmData?.note ?? '';
-        return `${p.position.name}(${note} ${freq}Hz ${instrument} ${timbre})`;
-      }).join(', ');
+      let audioBlob: Blob;
 
-      const label = choirLabel.toLowerCase();
-      const prompt = `Celestial ${label} for ${reading.overallKey} key at ${reading.overallTempo}BPM. Planets: ${planetDescriptions}. Ambient space music, resonant harmonics, 5 seconds`.substring(0, 480);
+      if (activePlanets.length === 1) {
+        // ── Solo: use generate-planet-sound ─────────────────────
+        const planet = activePlanets[0];
+        const freq    = planet.qmData?.frequency_hz ?? 220;
+        const instrument = planet.qmData?.instrument ?? 'synthesizer';
+        const timbre  = planet.qmData?.timbre ?? 'warm';
+        const note    = planet.qmData?.note ?? '';
+        const element = planet.signData?.element ?? 'Cosmic';
 
-      const planet2Name = activePlanets[1]?.position.name ?? activePlanets[0]?.position.name ?? 'Moon';
-      // map choir size → a valid aspect name
-      const aspectMap: Record<string, string> = {
-        solo: 'solo-mix', duet: 'duet-mix', trio: 'trio-mix', choir: 'choir-mix',
-      };
-      const aspectName = aspectMap[label] ?? 'choir-mix';
+        const prompt = `Celestial solo for ${planet.position.name} in ${planet.position.sign}. ${note} at ${freq}Hz. ${instrument}, ${timbre} tone, ${element} element. Ambient cosmic resonance, 5 seconds.`.substring(0, 480);
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-aspect-sound`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-        },
-        body: JSON.stringify({
-          aspectName,
-          planet1: activePlanets[0]?.position.name ?? 'Sun',
-          planet2: planet2Name,
-          prompt,
-        }),
-      });
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-planet-sound`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+          },
+          body: JSON.stringify({
+            planetName: planet.position.name,
+            prompt,
+          }),
+        });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`HTTP ${response.status}: ${text.substring(0, 120)}`);
+        if (!response.ok) {
+          const text = await response.text().catch(() => '');
+          const json = JSON.parse(text || '{}');
+          if (json.unavailable) {
+            setError('Audio generation temporarily unavailable — check your ElevenLabs credits');
+            return;
+          }
+          throw new Error(`HTTP ${response.status}: ${text.substring(0, 120)}`);
+        }
+
+        const contentType = response.headers.get('content-type') ?? '';
+        if (contentType.includes('application/json')) {
+          const json = await response.json();
+          if (json.unavailable) {
+            setError('Audio generation temporarily unavailable — check your ElevenLabs credits');
+          } else {
+            setError(json.error ?? 'Unknown error from server');
+          }
+          return;
+        }
+
+        audioBlob = await response.blob();
+
+      } else {
+        // ── Choir (2+): use generate-aspect-sound ───────────────
+        const planetDescriptions = activePlanets.map(p => {
+          const freq = p.qmData?.frequency_hz ?? 220;
+          const instrument = p.qmData?.instrument ?? 'synthesizer';
+          const timbre = p.qmData?.timbre ?? 'warm';
+          const note = p.qmData?.note ?? '';
+          return `${p.position.name}(${note} ${freq}Hz ${instrument} ${timbre})`;
+        }).join(', ');
+
+        const label = choirLabel.toLowerCase();
+        const prompt = `Celestial ${label} for ${reading.overallKey} key at ${reading.overallTempo}BPM. Planets: ${planetDescriptions}. Ambient space music, resonant harmonics, 5 seconds`.substring(0, 480);
+
+        const planet2Name = activePlanets[1]?.position.name ?? activePlanets[0]?.position.name ?? 'Moon';
+        const aspectMap: Record<string, string> = {
+          solo: 'solo-mix', duet: 'duet-mix', trio: 'trio-mix', choir: 'choir-mix',
+        };
+        const aspectName = aspectMap[label] ?? 'choir-mix';
+
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-aspect-sound`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+          },
+          body: JSON.stringify({
+            aspectName,
+            planet1: activePlanets[0]?.position.name ?? 'Sun',
+            planet2: planet2Name,
+            prompt,
+          }),
+        });
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => '');
+          throw new Error(`HTTP ${response.status}: ${text.substring(0, 120)}`);
+        }
+
+        const contentType = response.headers.get('content-type') ?? '';
+        if (contentType.includes('application/json')) {
+          const json = await response.json();
+          if (json.unavailable) {
+            setError('Audio generation temporarily unavailable — check your ElevenLabs credits');
+          } else {
+            setError(json.error ?? 'Unknown error from server');
+          }
+          return;
+        }
+
+        audioBlob = await response.blob();
       }
 
-      const contentType = response.headers.get('content-type') ?? '';
-
-      if (contentType.includes('application/json')) {
-        // Edge fn returned JSON (unavailable flag or error)
-        const json = await response.json();
-        if (json.unavailable) {
-          setError('Audio generation temporarily unavailable — check your credits');
-        } else {
-          setError(json.error ?? 'Unknown error from server');
-        }
+      // ── Play the audio blob ──────────────────────────────────
+      if (audioBlob.size < 100) {
+        setError('Received empty audio — please try again');
         return;
       }
 
-      if (contentType.includes('audio/')) {
-        const blob = await response.blob();
-        if (blob.size < 100) {
-          setError('Received empty audio — please try again');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        await audio.play();
-        setIsPlaying(true);
-        audio.onended = () => {
-          setIsPlaying(false);
-          URL.revokeObjectURL(url);
-        };
-      } else {
-        setError('Unexpected response type from server');
-      }
+      const url = URL.createObjectURL(audioBlob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      // Pass the audio element up so CosmicWaveform can connect to it
+      onAudioChange(audio);
+
+      await audio.play();
+      setIsPlaying(true);
+
+      audio.onended = () => {
+        setIsPlaying(false);
+        onAudioChange(null);
+        URL.revokeObjectURL(url);
+      };
+
     } catch (err) {
       console.error('PlanetChoirMixer error:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate choir audio');
