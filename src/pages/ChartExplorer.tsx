@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -47,10 +47,13 @@ const ChartExplorer = () => {
     }
   }, [chartData, navigate]);
 
-  const reading = useMemo(() => {
-    if (!chartData?.planets) return null;
-    return buildReading(chartData.planets);
-  }, [chartData?.planets, buildReading]);
+  const [reading, setReading] = useState<ReturnType<typeof buildReading>>(null);
+
+  useEffect(() => {
+    if (!chartData?.planets || loading) return;
+    const result = buildReading(chartData.planets);
+    if (result) setReading(result);
+  }, [chartData?.planets, buildReading, loading]);
 
   // Initialize all planets as enabled once reading is available
   useEffect(() => {
