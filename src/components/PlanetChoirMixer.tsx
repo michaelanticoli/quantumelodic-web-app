@@ -1,33 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Flame, Droplets, Wind, Mountain } from 'lucide-react';
+import { Volume2, VolumeX, Flame, Droplets, Wind, Mountain, Music2 } from 'lucide-react';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { Button } from '@/components/ui/button';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const ELEMENT_CONFIG: Record<string, { icon: typeof Flame; activeClass: string; bgClass: string }> = {
-  Fire: { 
-    icon: Flame, 
-    activeClass: 'bg-gradient-to-r from-red-500/30 to-orange-500/30 border-orange-500/50 text-orange-300',
-    bgClass: 'hover:bg-red-500/10 text-muted-foreground border-border/30'
-  },
-  Earth: { 
-    icon: Mountain, 
-    activeClass: 'bg-gradient-to-r from-green-600/30 to-emerald-500/30 border-emerald-500/50 text-emerald-300',
-    bgClass: 'hover:bg-green-500/10 text-muted-foreground border-border/30'
-  },
-  Air: { 
-    icon: Wind, 
-    activeClass: 'bg-gradient-to-r from-cyan-500/30 to-blue-500/30 border-cyan-500/50 text-cyan-300',
-    bgClass: 'hover:bg-cyan-500/10 text-muted-foreground border-border/30'
-  },
-  Water: { 
-    icon: Droplets, 
-    activeClass: 'bg-gradient-to-r from-violet-500/30 to-purple-500/30 border-violet-500/50 text-violet-300',
-    bgClass: 'hover:bg-violet-500/10 text-muted-foreground border-border/30'
-  },
+// Element colours aligned to design tokens (HSL only)
+const ELEMENT_CONFIG: Record<string, {
+  icon: typeof Flame;
+  hue: number;
+  label: string;
+}> = {
+  Fire:  { icon: Flame,    hue: 15,  label: 'Fire'  },
+  Earth: { icon: Mountain, hue: 100, label: 'Earth' },
+  Air:   { icon: Wind,     hue: 195, label: 'Air'   },
+  Water: { icon: Droplets, hue: 220, label: 'Water' },
+};
+
+const CHOIR_LABELS: Record<number, string> = {
+  1: 'Solo', 2: 'Duet', 3: 'Trio',
 };
 
 interface Props {
@@ -38,46 +31,71 @@ interface Props {
   onToggleElement: (element: string) => void;
 }
 
-export const PlanetChoirMixer = ({ reading, enabledPlanets, onTogglePlanet, activeElements, onToggleElement }: Props) => {
+export const PlanetChoirMixer = ({
+  reading,
+  enabledPlanets,
+  onTogglePlanet,
+  activeElements,
+  onToggleElement,
+}: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const activePlanets = reading.planets.filter(
     p => p.position.name !== 'Ascendant' && enabledPlanets.has(p.position.name)
   );
+  const nonAscPlanets = reading.planets.filter(p => p.position.name !== 'Ascendant');
+  const choirLabel = CHOIR_LABELS[activePlanets.length] ?? 'Choir';
 
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audioRef.current?.pause();
+      audioRef.current = null;
     };
   }, []);
 
-  const playChoir = async () => {
-    if (isLoading || activePlanets.length === 0) return;
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
+  // Stop current playback when selection changes
+  useEffect(() => {
+    if (isPlaying) {
+      audioRef.current?.pause();
       setIsPlaying(false);
-      return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledPlanets]);
 
+  const stopAudio = () => {
+    audioRef.current?.pause();
+    setIsPlaying(false);
+  };
+
+  const playChoir = async () => {
+    if (isLoading) return;
+    if (isPlaying) { stopAudio(); return; }
+    if (activePlanets.length === 0) { setError('Select at least one planet'); return; }
+
+    setError(null);
     setIsLoading(true);
+
     try {
       const planetDescriptions = activePlanets.map(p => {
-        const freq = p.qmData?.frequency_hz || 220;
-        const instrument = p.qmData?.instrument || 'synthesizer';
-        const timbre = p.qmData?.timbre || 'warm';
-        return `${p.position.name} at ${freq}Hz on ${instrument} (${timbre})`;
+        const freq = p.qmData?.frequency_hz ?? 220;
+        const instrument = p.qmData?.instrument ?? 'synthesizer';
+        const timbre = p.qmData?.timbre ?? 'warm';
+        const note = p.qmData?.note ?? '';
+        return `${p.position.name}(${note} ${freq}Hz ${instrument} ${timbre})`;
       }).join(', ');
 
-      const choirSize = activePlanets.length === 1 ? 'solo' : 
-                       activePlanets.length === 2 ? 'duet' : 
-                       activePlanets.length === 3 ? 'trio' : 'choir';
+      const label = choirLabel.toLowerCase();
+      const prompt = `Celestial ${label} for ${reading.overallKey} key at ${reading.overallTempo}BPM. Planets: ${planetDescriptions}. Ambient space music, resonant harmonics, 5 seconds`.substring(0, 480);
 
-      const prompt = `Planetary ${choirSize}: ${planetDescriptions}, layered harmony in ${reading.overallKey}, ${reading.overallTempo} BPM, ambient space music, 5 seconds`;
+      const planet2Name = activePlanets[1]?.position.name ?? activePlanets[0]?.position.name ?? 'Moon';
+      // map choir size → a valid aspect name
+      const aspectMap: Record<string, string> = {
+        solo: 'solo-mix', duet: 'duet-mix', trio: 'trio-mix', choir: 'choir-mix',
+      };
+      const aspectName = aspectMap[label] ?? 'choir-mix';
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-aspect-sound`, {
         method: 'POST',
@@ -87,131 +105,202 @@ export const PlanetChoirMixer = ({ reading, enabledPlanets, onTogglePlanet, acti
           'Authorization': `Bearer ${SUPABASE_KEY}`,
         },
         body: JSON.stringify({
-          aspectName: `${choirSize}-mix`,
-          planet1: activePlanets[0]?.position.name || 'Sun',
-          planet2: activePlanets[1]?.position.name || 'Moon',
+          aspectName,
+          planet1: activePlanets[0]?.position.name ?? 'Sun',
+          planet2: planet2Name,
           prompt,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate choir');
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status}: ${text.substring(0, 120)}`);
+      }
 
-      const contentType = response.headers.get('content-type') || '';
+      const contentType = response.headers.get('content-type') ?? '';
+
+      if (contentType.includes('application/json')) {
+        // Edge fn returned JSON (unavailable flag or error)
+        const json = await response.json();
+        if (json.unavailable) {
+          setError('Audio generation temporarily unavailable — check your credits');
+        } else {
+          setError(json.error ?? 'Unknown error from server');
+        }
+        return;
+      }
+
       if (contentType.includes('audio/')) {
         const blob = await response.blob();
+        if (blob.size < 100) {
+          setError('Received empty audio — please try again');
+          return;
+        }
         const url = URL.createObjectURL(blob);
-        audioRef.current = new Audio(url);
-        audioRef.current.play();
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        await audio.play();
         setIsPlaying(true);
-        audioRef.current.onended = () => {
+        audio.onended = () => {
           setIsPlaying(false);
           URL.revokeObjectURL(url);
         };
+      } else {
+        setError('Unexpected response type from server');
       }
     } catch (err) {
-      console.error('Error playing choir:', err);
+      console.error('PlanetChoirMixer error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate choir audio');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const nonAscPlanets = reading.planets.filter(p => p.position.name !== 'Ascendant');
-
   return (
     <motion.div
-      className="glass rounded-xl p-5 space-y-4"
+      className="rounded-xl p-5 space-y-4"
+      style={{ background: 'hsl(0 0% 4%)', border: '1px solid hsl(43 74% 52% / 0.15)' }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
     >
-      <h3 className="text-xs uppercase tracking-widest text-primary flex items-center gap-2">
-        <span className="text-lg">🎵</span> Planet Choir Mixer
-      </h3>
+      {/* Title */}
+      <div className="flex items-center gap-2">
+        <Music2 className="w-4 h-4" style={{ color: 'hsl(43 74% 52%)' }} />
+        <h3 className="text-xs uppercase tracking-widest" style={{ color: 'hsl(43 74% 52%)' }}>
+          Planet Choir Mixer
+        </h3>
+        <span className="ml-auto text-xs" style={{ color: 'hsl(43 74% 52% / 0.5)' }}>
+          {reading.overallKey} · {reading.overallTempo} BPM
+        </span>
+      </div>
 
-      {/* Element Filter Buttons */}
+      {/* Element Filters */}
       <div className="flex gap-2">
-        {Object.entries(ELEMENT_CONFIG).map(([element, config]) => {
-          const Icon = config.icon;
+        {Object.entries(ELEMENT_CONFIG).map(([element, cfg]) => {
+          const Icon = cfg.icon;
           const isActive = activeElements.has(element);
           return (
             <button
               key={element}
               onClick={() => onToggleElement(element)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-sm font-medium transition-all ${
-                isActive ? config.activeClass : config.bgClass
-              }`}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg border text-xs font-medium transition-all duration-200"
+              style={{
+                background: isActive ? `hsl(${cfg.hue} 55% 30% / 0.35)` : 'transparent',
+                borderColor: isActive ? `hsl(${cfg.hue} 65% 50% / 0.6)` : 'hsl(0 0% 100% / 0.08)',
+                color: isActive ? `hsl(${cfg.hue} 80% 70%)` : 'hsl(0 0% 60%)',
+              }}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="hidden sm:inline">{element}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Planet Toggle Grid */}
+      {/* Planet Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {nonAscPlanets.map(p => {
           const isEnabled = enabledPlanets.has(p.position.name);
-          const element = p.signData?.element || '';
+          const element = p.signData?.element ?? '';
+          const hue = ELEMENT_CONFIG[element]?.hue ?? 43;
           return (
-            <button
+            <motion.button
               key={p.position.name}
               onClick={() => onTogglePlanet(p.position.name)}
-              className={`flex items-center gap-2 p-3 rounded-lg border text-sm transition-all ${
-                isEnabled
-                  ? 'glass border-primary/50 text-foreground'
-                  : 'bg-muted/10 border-border/20 text-muted-foreground/40'
-              }`}
+              className="flex items-center gap-2 p-3 rounded-lg border text-sm transition-all duration-200 text-left"
+              style={{
+                background: isEnabled ? `hsl(${hue} 40% 18% / 0.45)` : 'transparent',
+                borderColor: isEnabled ? `hsl(${hue} 60% 45% / 0.5)` : 'hsl(0 0% 100% / 0.07)',
+              }}
+              whileTap={{ scale: 0.96 }}
             >
-              <span className={`text-lg ${isEnabled ? 'opacity-100' : 'opacity-30'}`}>
+              <span
+                className="text-lg flex-shrink-0 leading-none"
+                style={{
+                  color: isEnabled ? `hsl(${hue} 70% 65%)` : 'hsl(0 0% 35%)',
+                  transition: 'color 0.2s',
+                }}
+              >
                 {p.position.symbol}
               </span>
-              <div className="text-left">
-                <p className="font-medium text-xs">{p.position.name}</p>
-                <p className="text-[10px] text-muted-foreground">
-                  {element} · {p.qmData?.note || '—'}
+              <div className="min-w-0">
+                <p className="font-medium text-xs truncate" style={{ color: isEnabled ? 'hsl(0 0% 92%)' : 'hsl(0 0% 40%)' }}>
+                  {p.position.name}
+                </p>
+                <p className="text-[10px] truncate" style={{ color: 'hsl(0 0% 50%)' }}>
+                  {element} · {p.qmData?.note ?? '—'}
                 </p>
               </div>
-            </button>
+            </motion.button>
           );
         })}
       </div>
 
-      {/* Active count + Play */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          {activePlanets.length} planet{activePlanets.length !== 1 ? 's' : ''} selected
-          {activePlanets.length === 2 && ' · Duet'}
-          {activePlanets.length === 3 && ' · Trio'}
-          {activePlanets.length >= 4 && ' · Choir'}
-        </p>
+      {/* Status row */}
+      <div className="flex items-center justify-between text-xs" style={{ color: 'hsl(0 0% 50%)' }}>
+        <span>
+          {activePlanets.length} selected
+          {activePlanets.length >= 2 && ` · ${choirLabel}`}
+        </span>
+        {isPlaying && (
+          <motion.span
+            animate={{ opacity: [1, 0.4, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+            style={{ color: 'hsl(43 74% 52%)' }}
+          >
+            ♪ Playing
+          </motion.span>
+        )}
       </div>
 
-      <Button
-        variant="cosmic"
-        size="lg"
-        className="w-full"
+      {/* Error */}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            className="text-xs rounded-lg px-3 py-2"
+            style={{ background: 'hsl(0 60% 20% / 0.4)', color: 'hsl(0 70% 70%)' }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Play Button */}
+      <button
         onClick={playChoir}
         disabled={isLoading || activePlanets.length === 0}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium tracking-wide transition-all duration-200 disabled:opacity-40"
+        style={{
+          background: isPlaying
+            ? 'hsl(0 0% 12%)'
+            : 'hsl(43 74% 52% / 0.15)',
+          border: `1px solid hsl(43 74% 52% / ${isPlaying ? '0.6' : '0.35'})`,
+          color: 'hsl(43 74% 62%)',
+        }}
       >
         {isLoading ? (
           <motion.div
+            className="w-4 h-4 rounded-full border"
+            style={{ borderColor: 'hsl(43 74% 52% / 0.8)', borderTopColor: 'transparent' }}
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-5 h-5 border border-primary-foreground border-t-transparent rounded-full"
+            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
           />
         ) : isPlaying ? (
           <>
-            <VolumeX className="w-4 h-4 mr-2" />
+            <VolumeX className="w-4 h-4" />
             Stop
           </>
         ) : (
           <>
-            <Volume2 className="w-4 h-4 mr-2" />
+            <Volume2 className="w-4 h-4" />
             Play {activePlanets.length === 1 ? 'Solo' : activePlanets.length === 2 ? 'Duet' : activePlanets.length === 3 ? 'Trio' : 'Choir'}
           </>
         )}
-      </Button>
+      </button>
     </motion.div>
   );
 };
