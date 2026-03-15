@@ -5,29 +5,86 @@ import type { CosmicReading } from '@/types/astrology';
 // ── Download chart wheel as PNG ───────────────────────────────────
 export async function downloadChartImage(elementId: string, filename = 'quantumelodic-chart.png') {
   const el = document.getElementById(elementId);
-  if (!el) return;
+  if (!el) throw new Error('Chart element not found');
 
+  // First try: find the SVG inside and export it directly (most reliable for SVG charts)
+  const svgEl = el.querySelector('svg');
+  if (svgEl) {
+    try {
+      const svgData = new XMLSerializer().serializeToString(svgEl);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      // Draw onto canvas for PNG export
+      const img = new Image();
+      const svgWidth = svgEl.viewBox?.baseVal?.width || svgEl.clientWidth || 600;
+      const svgHeight = svgEl.viewBox?.baseVal?.height || svgEl.clientHeight || 600;
+      const scale = 2;
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = url;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = svgWidth * scale;
+      canvas.height = svgHeight * scale;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#0a0a12';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+
+      triggerDownload(canvas.toDataURL('image/png'), filename);
+      return;
+    } catch {
+      // fall through to html2canvas
+    }
+  }
+
+  // Fallback: html2canvas
   const canvas = await html2canvas(el, {
     backgroundColor: '#0a0a12',
     scale: 2,
     useCORS: true,
+    allowTaint: true,
     logging: false,
+    foreignObjectRendering: false,
   });
 
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  triggerDownload(canvas.toDataURL('image/png'), filename);
 }
 
-// ── Download the music audio ──────────────────────────────────────
-export function downloadAudio(audioUrl: string, filename = 'quantumelodic-composition.mp3') {
+function triggerDownload(dataUrl: string, filename: string) {
   const link = document.createElement('a');
-  link.href = audioUrl;
   link.download = filename;
+  link.href = dataUrl;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// ── Download the music audio ──────────────────────────────────────
+export async function downloadAudio(audioUrl: string, filename = 'quantumelodic-composition.mp3') {
+  // Blob URLs (procedural audio) download directly; remote URLs need fetching
+  if (audioUrl.startsWith('blob:')) {
+    triggerDownload(audioUrl, filename);
+    return;
+  }
+
+  // Fetch remote audio and re-blob it to bypass cross-origin download restrictions
+  try {
+    const response = await fetch(audioUrl);
+    if (!response.ok) throw new Error('Fetch failed');
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    triggerDownload(blobUrl, filename);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+  } catch {
+    // Last resort: open in new tab so user can save manually
+    window.open(audioUrl, '_blank');
+  }
 }
 
 // ── Generate & download QuantumMelodic PDF report ─────────────────
