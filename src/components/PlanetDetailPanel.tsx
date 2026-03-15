@@ -58,6 +58,7 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
+      setAudioElement(null);
       return;
     }
 
