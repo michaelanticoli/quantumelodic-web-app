@@ -8,7 +8,7 @@ import { PlanetDetailsTable } from '@/components/PlanetDetailsTable';
 import { BirthDataForm } from '@/components/BirthDataForm';
 import { BottomNav } from '@/components/BottomNav';
 import { GeneratingState } from '@/components/GeneratingState';
-import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
+import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { useCosmicReading } from '@/hooks/useCosmicReading';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import { useToast } from '@/hooks/use-toast';
@@ -309,12 +309,11 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        {/* Gradient Shader Visualizer */}
-        <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-4 shadow-lg shadow-primary/10">
-          <AudioReactiveGradient
+        {/* Cosmic Waveform Visualizer */}
+        <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-4" style={{ border: '1px solid hsl(43 74% 52% / 0.12)' }}>
+          <CosmicWaveform
             audioElement={audioEl}
-            idleIntensity={isPlaying ? 0.5 : 0.25}
-            borderRadius={0}
+            idleIntensity={isPlaying ? 0.8 : 0.3}
             palette={paletteFromSign(chartData.sunSign)}
           />
           {audioUrl && (

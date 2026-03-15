@@ -8,7 +8,7 @@ import { AspectDetailPanel } from '@/components/AspectDetailPanel';
 import { AspectPatternPanel } from '@/components/AspectPatternPanel';
 import { QuantumMelodicSummary } from '@/components/QuantumMelodicSummary';
 import { PlanetChoirMixer } from '@/components/PlanetChoirMixer';
-import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
+import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
@@ -199,6 +199,7 @@ const ChartExplorer = () => {
                 onPlanetClick={handlePlanetClick}
                 onAspectClick={handleAspectClick}
                 onPlanetHover={setHoveredElement}
+                onSignClick={(sign) => setHoveredElement(`${sign} — tap a planet or aspect to explore`)}
                 selectedPlanet={selectedPlanet}
                 selectedAspect={selectedAspect}
                 enabledPlanets={enabledPlanets}
@@ -221,14 +222,14 @@ const ChartExplorer = () => {
 
             {/* Audio Visualizer */}
             <motion.div
-              className="w-full h-28 rounded-2xl overflow-hidden mb-4 shadow-lg shadow-primary/10"
+              className="w-full h-24 rounded-xl overflow-hidden mb-4"
+              style={{ border: '1px solid hsl(43 74% 52% / 0.12)' }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <AudioReactiveGradient
-                idleIntensity={0.35}
-                borderRadius={0}
+              <CosmicWaveform
+                idleIntensity={0.5}
                 palette={paletteFromSign(chartData.sunSign)}
               />
             </motion.div>
