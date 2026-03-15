@@ -5,6 +5,7 @@ import type { QMPlanet, QMSign, QMHouse } from '@/types/quantumMelodic';
 import type { PlanetPosition } from '@/types/astrology';
 import { elementInfo, qualityInfo, getFrequencyCategory, houseWisdom } from '@/utils/harmonicWisdom';
 import { Button } from '@/components/ui/button';
+import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -26,6 +27,7 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
   const { position, qmData, signData, houseData, houseNumber } = planet;
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const formatDegree = (deg: number): string => {
@@ -56,6 +58,7 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
     if (isPlaying && audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
+      setAudioElement(null);
       return;
     }
 
@@ -86,12 +89,15 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
       if (contentType.includes('audio/')) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        audioRef.current = new Audio(url);
-        audioRef.current.play();
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        setAudioElement(audio);
+        audio.play();
         setIsPlaying(true);
 
-        audioRef.current.onended = () => {
+        audio.onended = () => {
           setIsPlaying(false);
+          setAudioElement(null);
           URL.revokeObjectURL(url);
         };
       }
@@ -324,6 +330,20 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
               </div>
             </section>
           )}
+
+              {/* Live waveform — appears while playing */}
+              <motion.div
+                className="w-full overflow-hidden rounded-xl"
+                animate={{ height: isPlaying ? 64 : 0, opacity: isPlaying ? 1 : 0 }}
+                transition={{ duration: 0.35 }}
+                style={{ border: isPlaying ? '1px solid hsl(43 74% 52% / 0.25)' : 'none' }}
+              >
+                <CosmicWaveform
+                  audioElement={audioElement}
+                  idleIntensity={0.35}
+                  palette={paletteFromSign(position.sign)}
+                />
+              </motion.div>
 
               {/* Play Sound Button */}
               <section className="pt-2">

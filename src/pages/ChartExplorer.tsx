@@ -9,6 +9,7 @@ import { AspectPatternPanel } from '@/components/AspectPatternPanel';
 import { QuantumMelodicSummary } from '@/components/QuantumMelodicSummary';
 import { PlanetChoirMixer } from '@/components/PlanetChoirMixer';
 import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
+import { ZodiacSignDetailPanel } from '@/components/ZodiacSignDetailPanel';
 import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
@@ -32,6 +33,7 @@ const ChartExplorer = () => {
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetPosition | null>(null);
   const [selectedAspect, setSelectedAspect] = useState<ComputedAspect | null>(null);
   const [selectedAspectPattern, setSelectedAspectPattern] = useState<string | null>(null);
+  const [selectedSign, setSelectedSign] = useState<string | null>(null);
   const [hoveredElement, setHoveredElement] = useState<string | null>(null);
 
   // Planet choir mixer state
@@ -124,25 +126,36 @@ const ChartExplorer = () => {
   const handlePlanetClick = (planet: PlanetPosition) => {
     setSelectedAspect(null);
     setSelectedAspectPattern(null);
+    setSelectedSign(null);
     setSelectedPlanet(planet);
   };
 
   const handleAspectClick = (aspect: ComputedAspect) => {
     setSelectedPlanet(null);
     setSelectedAspectPattern(null);
+    setSelectedSign(null);
     setSelectedAspect(aspect);
   };
 
   const handleAspectPatternClick = (aspectName: string) => {
     setSelectedPlanet(null);
     setSelectedAspect(null);
+    setSelectedSign(null);
     setSelectedAspectPattern(aspectName);
+  };
+
+  const handleSignClick = (signName: string) => {
+    setSelectedPlanet(null);
+    setSelectedAspect(null);
+    setSelectedAspectPattern(null);
+    setSelectedSign(signName);
   };
 
   const handleClose = () => {
     setSelectedPlanet(null);
     setSelectedAspect(null);
     setSelectedAspectPattern(null);
+    setSelectedSign(null);
   };
 
   return (
@@ -195,7 +208,7 @@ const ChartExplorer = () => {
                 onPlanetClick={handlePlanetClick}
                 onAspectClick={handleAspectClick}
                 onPlanetHover={setHoveredElement}
-                onSignClick={(sign) => setHoveredElement(`${sign} — tap a planet or aspect to explore`)}
+                onSignClick={handleSignClick}
                 selectedPlanet={selectedPlanet}
                 selectedAspect={selectedAspect}
                 enabledPlanets={enabledPlanets}
@@ -303,6 +316,14 @@ const ChartExplorer = () => {
             aspectName={selectedAspectPattern}
             aspects={reading.aspects}
             reading={reading}
+            onClose={handleClose}
+          />
+        )}
+
+        {selectedSign && (
+          <ZodiacSignDetailPanel
+            signName={selectedSign}
+            signData={reading?.planets.find(p => p.position.sign === selectedSign)?.signData ?? null}
             onClose={handleClose}
           />
         )}
