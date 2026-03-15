@@ -199,6 +199,7 @@ const ChartExplorer = () => {
                 onPlanetClick={handlePlanetClick}
                 onAspectClick={handleAspectClick}
                 onPlanetHover={setHoveredElement}
+                onSignClick={(sign) => setHoveredElement(`${sign} — tap a planet or aspect to explore`)}
                 selectedPlanet={selectedPlanet}
                 selectedAspect={selectedAspect}
                 enabledPlanets={enabledPlanets}
