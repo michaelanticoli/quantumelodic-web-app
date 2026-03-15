@@ -218,6 +218,8 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
     setIsDownloading('chart');
     try {
       await downloadChartImage('chart-wheel-container', `${name.replace(/\s+/g, '-').toLowerCase()}-chart.png`);
+    } catch (e) {
+      console.error('Chart download failed:', e);
     } finally {
       setIsDownloading(null);
     }
@@ -227,14 +229,41 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
     setIsDownloading('pdf');
     try {
       await downloadPdfReport(reading, 'chart-wheel-container');
+    } catch (e) {
+      console.error('PDF download failed:', e);
     } finally {
       setIsDownloading(null);
     }
   };
 
-  const handleDownloadMusic = () => {
+  const handleDownloadMusic = async () => {
     if (audioUrl) {
-      downloadAudio(audioUrl, `${name.replace(/\s+/g, '-').toLowerCase()}-composition.mp3`);
+      setIsDownloading('music');
+      try {
+        await downloadAudio(audioUrl, `${name.replace(/\s+/g, '-').toLowerCase()}-composition.mp3`);
+      } finally {
+        setIsDownloading(null);
+      }
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'QuantumMelodic — My Cosmic Symphony',
+      text: `✨ My cosmic chart has been translated into music! Check out QuantumMelodic to discover yours.`,
+      url: 'https://quantumelodic.lovable.app',
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+        // brief visual feedback handled via state
+        setIsDownloading('share-copied');
+        setTimeout(() => setIsDownloading(null), 2000);
+      }
+    } catch {
+      // user cancelled or clipboard unavailable — silently ignore
     }
   };
 
