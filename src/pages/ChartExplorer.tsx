@@ -48,9 +48,10 @@ const ChartExplorer = () => {
   }, [chartData, navigate]);
 
   const reading = useMemo(() => {
-    if (!chartData?.planets) return null;
+    if (!chartData?.planets || loading) return null;
     return buildReading(chartData.planets);
-  }, [chartData?.planets, buildReading]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartData?.planets, buildReading, loading]);
 
   // Initialize all planets as enabled once reading is available
   useEffect(() => {
