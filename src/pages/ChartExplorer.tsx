@@ -319,6 +319,14 @@ const ChartExplorer = () => {
             onClose={handleClose}
           />
         )}
+
+        {selectedSign && (
+          <ZodiacSignDetailPanel
+            signName={selectedSign}
+            signData={reading?.planets.find(p => p.position.sign === selectedSign)?.signData ?? null}
+            onClose={handleClose}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
