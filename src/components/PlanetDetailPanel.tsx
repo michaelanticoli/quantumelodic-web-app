@@ -26,6 +26,7 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
   const { position, qmData, signData, houseData, houseNumber } = planet;
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const formatDegree = (deg: number): string => {
