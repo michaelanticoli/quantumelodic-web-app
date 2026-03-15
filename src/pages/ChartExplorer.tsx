@@ -126,25 +126,36 @@ const ChartExplorer = () => {
   const handlePlanetClick = (planet: PlanetPosition) => {
     setSelectedAspect(null);
     setSelectedAspectPattern(null);
+    setSelectedSign(null);
     setSelectedPlanet(planet);
   };
 
   const handleAspectClick = (aspect: ComputedAspect) => {
     setSelectedPlanet(null);
     setSelectedAspectPattern(null);
+    setSelectedSign(null);
     setSelectedAspect(aspect);
   };
 
   const handleAspectPatternClick = (aspectName: string) => {
     setSelectedPlanet(null);
     setSelectedAspect(null);
+    setSelectedSign(null);
     setSelectedAspectPattern(aspectName);
+  };
+
+  const handleSignClick = (signName: string) => {
+    setSelectedPlanet(null);
+    setSelectedAspect(null);
+    setSelectedAspectPattern(null);
+    setSelectedSign(signName);
   };
 
   const handleClose = () => {
     setSelectedPlanet(null);
     setSelectedAspect(null);
     setSelectedAspectPattern(null);
+    setSelectedSign(null);
   };
 
   return (
