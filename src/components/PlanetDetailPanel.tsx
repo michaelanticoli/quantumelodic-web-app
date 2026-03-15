@@ -88,12 +88,15 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
       if (contentType.includes('audio/')) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-        audioRef.current = new Audio(url);
-        audioRef.current.play();
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        setAudioElement(audio);
+        audio.play();
         setIsPlaying(true);
 
-        audioRef.current.onended = () => {
+        audio.onended = () => {
           setIsPlaying(false);
+          setAudioElement(null);
           URL.revokeObjectURL(url);
         };
       }
