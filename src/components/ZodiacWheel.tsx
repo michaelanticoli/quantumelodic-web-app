@@ -185,8 +185,8 @@ export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
           return (
             <motion.g 
               key={sign.name}
-              initial={animate && !planets ? { opacity: 0 } : undefined}
-              animate={animate && !planets ? { opacity: 0.9 } : { opacity: 0.9 }}
+              initial={{ opacity: animate && !planets ? 0 : 0.9 }}
+              animate={{ opacity: 0.9 }}
             >
               <text
                 x={x}
