@@ -39,6 +39,8 @@ const ChartExplorer = () => {
   const [activeElements, setActiveElements] = useState<Set<string>>(new Set());
   
   const { loading, error, dataReady, buildReading } = useQuantumMelodicData();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  void dataReady; // consumed in useEffect below
 
   // Redirect if no chart data
   useEffect(() => {
