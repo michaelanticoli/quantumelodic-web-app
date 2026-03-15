@@ -17,7 +17,8 @@ export const BirthDataForm = ({ onSubmit, isLoading }: BirthDataFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Default to solar noon if no birth time entered (avoids HH:MM validation failure)
+    onSubmit({ ...formData, time: formData.time || '12:00' });
   };
 
   const inputClasses = `

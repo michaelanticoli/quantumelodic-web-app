@@ -76,7 +76,7 @@ export function useCosmicReading() {
       let url: string | null = null;
       let source: 'elevenlabs' | 'procedural' | null = null;
 
-      // Attempt ElevenLabs generation
+      // Attempt ElevenLabs generation — pass full planet array for QuantumMelodic prompt
       try {
         const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
           method: 'POST',
@@ -86,6 +86,7 @@ export function useCosmicReading() {
             moonSign: chart.moonSign,
             ascendant: chart.ascendant,
             name: birthData.name,
+            planets: chart.planets,          // ← full planet positions for QM translation
           }),
         });
 

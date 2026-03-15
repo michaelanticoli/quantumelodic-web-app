@@ -5,21 +5,258 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ChartData {
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface PlanetPosition {
+  name: string;
+  symbol: string;
+  degree: number;
+  sign: string;
+  signNumber: number;
+  isRetrograde: boolean;
+}
+
+interface RequestBody {
   sunSign: string;
   moonSign: string;
   ascendant?: string;
   name: string;
+  planets?: PlanetPosition[];
 }
 
-// Valid zodiac signs whitelist
+interface QMSign {
+  name: string;
+  element: string;
+  modality: string;
+  musical_mode: string;
+  key_signature: string;
+  tempo_bpm: number;
+  texture: string;
+  emotional_quality: string;
+  sonic_palette: string;
+}
+
+interface QMPlanet {
+  name: string;
+  note: string;
+  instrument: string;
+  timbre: string;
+  harmonic_quality: string;
+  archetypal_energy: string;
+  sonic_character: string;
+  frequency_hz: number;
+}
+
+interface QMAspect {
+  name: string;
+  angle: number;
+  orb: number;
+  harmonic_interval: string;
+  consonance: string;
+  tension_level: number;
+  sonic_expression: string;
+  musical_effect: string;
+}
+
+interface ComputedAspect {
+  planet1: string;
+  planet2: string;
+  aspectType: QMAspect;
+  orb: number;
+}
+
+// ── Valid signs whitelist ─────────────────────────────────────────────────────
+
 const VALID_SIGNS = [
   'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
-// Musical modes associated with each zodiac sign
-const signModes: Record<string, { mode: string; mood: string; tempo: string }> = {
+// ── Input validation ──────────────────────────────────────────────────────────
+
+function validateRequest(data: unknown): { valid: true; data: RequestBody } | { valid: false; error: string } {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Invalid request body' };
+  }
+  const obj = data as Record<string, unknown>;
+
+  if (typeof obj.sunSign !== 'string' || !VALID_SIGNS.includes(obj.sunSign)) {
+    return { valid: false, error: 'Invalid sun sign' };
+  }
+  if (typeof obj.moonSign !== 'string' || !VALID_SIGNS.includes(obj.moonSign)) {
+    return { valid: false, error: 'Invalid moon sign' };
+  }
+  if (obj.ascendant !== undefined && obj.ascendant !== null) {
+    if (typeof obj.ascendant !== 'string' || !VALID_SIGNS.includes(obj.ascendant as string)) {
+      return { valid: false, error: 'Invalid ascendant sign' };
+    }
+  }
+  if (typeof obj.name !== 'string' || obj.name.length === 0 || obj.name.length > 100) {
+    return { valid: false, error: 'Name must be 1-100 characters' };
+  }
+
+  const sanitizedName = obj.name.replace(/[<>"'&;]/g, '').trim();
+
+  return {
+    valid: true,
+    data: {
+      sunSign: obj.sunSign as string,
+      moonSign: obj.moonSign as string,
+      ascendant: obj.ascendant as string | undefined,
+      name: sanitizedName,
+      planets: Array.isArray(obj.planets) ? obj.planets as PlanetPosition[] : undefined,
+    },
+  };
+}
+
+// ── Supabase REST helper ──────────────────────────────────────────────────────
+
+async function fetchQMTable<T>(supabaseUrl: string, supabaseKey: string, table: string): Promise<T[]> {
+  const res = await fetch(`${supabaseUrl}/rest/v1/${table}?select=*`, {
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`,
+    },
+  });
+  if (!res.ok) {
+    console.warn(`Failed to fetch ${table}:`, res.status);
+    return [];
+  }
+  return res.json() as Promise<T[]>;
+}
+
+// ── Aspect calculator ─────────────────────────────────────────────────────────
+
+function calculateTopAspects(planets: PlanetPosition[], qmAspects: QMAspect[], limit = 4): ComputedAspect[] {
+  const results: ComputedAspect[] = [];
+  const relevant = planets.filter(p => p.name !== 'Ascendant');
+
+  for (let i = 0; i < relevant.length; i++) {
+    for (let j = i + 1; j < relevant.length; j++) {
+      const p1 = relevant[i];
+      const p2 = relevant[j];
+      let angle = Math.abs(p1.degree - p2.degree);
+      if (angle > 180) angle = 360 - angle;
+
+      for (const aspect of qmAspects) {
+        const orb = Math.abs(angle - aspect.angle);
+        if (orb <= aspect.orb) {
+          results.push({ planet1: p1.name, planet2: p2.name, aspectType: aspect, orb });
+          break;
+        }
+      }
+    }
+  }
+
+  // Most exact aspects first
+  return results.sort((a, b) => a.orb - b.orb).slice(0, limit);
+}
+
+// ── QuantumMelodic prompt builder ─────────────────────────────────────────────
+
+function buildQMPrompt(
+  req: RequestBody,
+  qmSigns: QMSign[],
+  qmPlanets: QMPlanet[],
+  qmAspects: QMAspect[],
+): string {
+  const { sunSign, moonSign, ascendant, planets } = req;
+
+  const sunSignData = qmSigns.find(s => s.name === sunSign);
+  const moonSignData = qmSigns.find(s => s.name === moonSign);
+  const ascSignData = ascendant ? qmSigns.find(s => s.name === ascendant) : null;
+
+  // ── Dominant element from full planet list ──
+  const elementCounts: Record<string, number> = {};
+  if (planets?.length) {
+    planets.forEach(p => {
+      const sd = qmSigns.find(s => s.name === p.sign);
+      if (sd?.element) elementCounts[sd.element] = (elementCounts[sd.element] || 0) + 1;
+    });
+  }
+  const dominantElement = Object.entries(elementCounts).sort((a, b) => b[1] - a[1])[0]?.[0]
+    || sunSignData?.element || 'Fire';
+
+  // ── Average tempo from inner planets ──
+  const innerNames = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'];
+  const tempoSource = planets?.filter(p => innerNames.includes(p.name)) || [];
+  const tempos = tempoSource.map(p => qmSigns.find(s => s.name === p.sign)?.tempo_bpm || 90);
+  const avgTempo = tempos.length
+    ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length)
+    : sunSignData?.tempo_bpm || 90;
+
+  // ── Key and mode from Sun sign (with Ascendant colour if available) ──
+  const mode = sunSignData?.musical_mode || 'Dorian';
+  const key = sunSignData?.key_signature || 'D minor';
+  const texture = sunSignData?.texture || 'ethereal';
+  const emotionalQuality = sunSignData?.emotional_quality || 'mysterious';
+  const moonEmotion = moonSignData?.emotional_quality || '';
+  const ascPalette = ascSignData?.sonic_palette || '';
+
+  // ── Planetary instrumentation (key voices) ──
+  const primaryVoices: string[] = [];
+  const vocalPlanets = ['Sun', 'Moon', 'Venus', 'Mars', 'Mercury'];
+  for (const pName of vocalPlanets) {
+    const pos = planets?.find(p => p.name === pName);
+    const qmP = qmPlanets.find(p => p.name === pName);
+    if (qmP) {
+      const signLabel = pos ? ` in ${pos.sign}` : '';
+      const retroLabel = pos?.isRetrograde ? ' ℞' : '';
+      primaryVoices.push(`${qmP.instrument} (${pName}${signLabel}${retroLabel})`);
+    }
+  }
+
+  // ── Outer planet colours ──
+  const outerColors: string[] = [];
+  for (const pName of ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']) {
+    const qmP = qmPlanets.find(p => p.name === pName);
+    if (qmP) outerColors.push(qmP.sonic_character);
+  }
+
+  // ── Top aspects → harmonic narrative ──
+  const topAspects = planets?.length ? calculateTopAspects(planets, qmAspects, 4) : [];
+  const aspectNarrative = topAspects.length
+    ? topAspects.map(a =>
+        `${a.planet1}–${a.planet2} ${a.aspectType.name} (${a.aspectType.harmonic_interval}): ${a.aspectType.sonic_expression}`
+      ).join('; ')
+    : 'fluid harmonic movement throughout';
+
+  // ── Element sonic descriptions ──
+  const elementSound: Record<string, string> = {
+    Fire: 'fast, initiating, passionate percussion',
+    Earth: 'slow, grounded, sustaining bass tones',
+    Air: 'light, airy, melodic and connecting',
+    Water: 'flowing, emotional, reverb-drenched pads',
+  };
+
+  // ── Retrograde colouring ──
+  const retrogrades = planets?.filter(p => p.isRetrograde && p.name !== 'Ascendant') || [];
+  const retroNote = retrogrades.length
+    ? `Retrograde planets (${retrogrades.map(p => p.name).join(', ')}) add introspective, inverted harmonic tension.`
+    : '';
+
+  // ── Assemble prompt ──
+  const parts = [
+    `Compose a ${avgTempo}BPM ${mode} cosmic ambient instrumental in ${key}.`,
+    primaryVoices.length ? `Instrumentation: ${primaryVoices.join(', ')}.` : '',
+    outerColors.length ? `Outer planet colours: ${outerColors.slice(0, 3).join(', ')}.` : '',
+    `Dominant ${dominantElement} element energy: ${elementSound[dominantElement] || 'expressive tones'}.`,
+    `Texture: ${texture}. Emotional quality: ${emotionalQuality}${moonEmotion && moonEmotion !== emotionalQuality ? ', ' + moonEmotion : ''}.`,
+    ascPalette ? `Ascendant palette: ${ascPalette}.` : '',
+    `Harmonic aspects: ${aspectNarrative}.`,
+    retroNote,
+    `Style: cosmic, celestial, new age electronic, space music.`,
+  ].filter(Boolean);
+
+  const prompt = parts.join(' ');
+
+  // ElevenLabs music API — keep under 1000 chars for safety
+  return prompt.length > 950 ? prompt.substring(0, 947) + '...' : prompt;
+}
+
+// ── Fallback prompt (when QM data unavailable) ────────────────────────────────
+
+const fallbackModes: Record<string, { mode: string; mood: string; tempo: string }> = {
   'Aries': { mode: 'Phrygian', mood: 'fierce, energetic, bold', tempo: 'fast' },
   'Taurus': { mode: 'Ionian', mood: 'grounded, sensual, luxurious', tempo: 'slow' },
   'Gemini': { mode: 'Mixolydian', mood: 'playful, curious, mercurial', tempo: 'upbeat' },
@@ -34,49 +271,13 @@ const signModes: Record<string, { mode: string; mood: string; tempo: string }> =
   'Pisces': { mode: 'Phrygian', mood: 'dreamy, spiritual, otherworldly', tempo: 'flowing' },
 };
 
-// Input validation
-function validateChartData(data: unknown): { valid: true; data: ChartData } | { valid: false; error: string } {
-  if (!data || typeof data !== 'object') {
-    return { valid: false, error: 'Invalid request body' };
-  }
-  
-  const obj = data as Record<string, unknown>;
-  
-  // Validate sunSign
-  if (typeof obj.sunSign !== 'string' || !VALID_SIGNS.includes(obj.sunSign)) {
-    return { valid: false, error: 'Invalid sun sign' };
-  }
-  
-  // Validate moonSign
-  if (typeof obj.moonSign !== 'string' || !VALID_SIGNS.includes(obj.moonSign)) {
-    return { valid: false, error: 'Invalid moon sign' };
-  }
-  
-  // Validate ascendant if provided
-  if (obj.ascendant !== undefined && obj.ascendant !== null) {
-    if (typeof obj.ascendant !== 'string' || !VALID_SIGNS.includes(obj.ascendant)) {
-      return { valid: false, error: 'Invalid ascendant sign' };
-    }
-  }
-  
-  // Validate name (required, max 100 chars, sanitize)
-  if (typeof obj.name !== 'string' || obj.name.length === 0 || obj.name.length > 100) {
-    return { valid: false, error: 'Name must be 1-100 characters' };
-  }
-  
-  // Sanitize name - remove potentially dangerous characters
-  const sanitizedName = obj.name.replace(/[<>\"'&;]/g, '').trim();
-  
-  return {
-    valid: true,
-    data: {
-      sunSign: obj.sunSign,
-      moonSign: obj.moonSign,
-      ascendant: obj.ascendant as string | undefined,
-      name: sanitizedName,
-    }
-  };
+function buildFallbackPrompt(sunSign: string, moonSign: string): string {
+  const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
+  const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
+  return `Create a ${sun.tempo} instrumental ambient electronic track that blends ${sun.mood} energy with ${moon.mood} undertones. The composition should feel cosmic and celestial, like floating through space among the stars. Use synthesizers, ethereal pads, and subtle rhythmic elements. The overall mood should be mystical and introspective, evoking a sense of personal destiny and cosmic connection. Style: ambient electronic, new age, space music.`;
 }
+
+// ── Main handler ──────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -93,7 +294,6 @@ serve(async (req) => {
       );
     }
 
-    // Parse and validate input
     let rawData: unknown;
     try {
       rawData = await req.json();
@@ -103,54 +303,69 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    const validation = validateChartData(rawData);
+
+    const validation = validateRequest(rawData);
     if (!validation.valid) {
       return new Response(
         JSON.stringify({ error: validation.error }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    const { sunSign, moonSign, ascendant, name } = validation.data;
 
-    console.log("Generating music for:", { sunSign, moonSign, ascendant });
+    const { sunSign, moonSign } = validation.data;
 
-    // Get musical attributes from signs
-    const sunMode = signModes[sunSign] || signModes['Leo'];
-    const moonMode = signModes[moonSign] || signModes['Cancer'];
+    // ── Attempt to fetch QuantumMelodic translation data ──
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
 
-    // Create a cosmic music prompt
-    const prompt = `Create a ${sunMode.tempo} instrumental ambient electronic track that blends ${sunMode.mood} energy with ${moonMode.mood} undertones. The composition should feel cosmic and celestial, like floating through space among the stars. Use synthesizers, ethereal pads, and subtle rhythmic elements. The overall mood should be mystical and introspective, evoking a sense of personal destiny and cosmic connection. Style: ambient electronic, new age, space music.`;
+    let prompt: string;
 
-    console.log("Music prompt length:", prompt.length);
+    if (supabaseUrl && supabaseKey) {
+      try {
+        console.log('Fetching QuantumMelodic translation tables...');
+        const [qmSigns, qmPlanets, qmAspects] = await Promise.all([
+          fetchQMTable<QMSign>(supabaseUrl, supabaseKey, 'qm_signs'),
+          fetchQMTable<QMPlanet>(supabaseUrl, supabaseKey, 'qm_planets'),
+          fetchQMTable<QMAspect>(supabaseUrl, supabaseKey, 'qm_aspects'),
+        ]);
 
-    // Call ElevenLabs Music API
+        if (qmSigns.length > 0 && qmPlanets.length > 0) {
+          prompt = buildQMPrompt(validation.data, qmSigns, qmPlanets, qmAspects);
+          console.log('Built QuantumMelodic prompt. Length:', prompt.length);
+        } else {
+          console.warn('QM tables empty — using fallback prompt');
+          prompt = buildFallbackPrompt(sunSign, moonSign);
+        }
+      } catch (dbErr) {
+        console.warn('QM DB fetch failed, using fallback prompt:', dbErr);
+        prompt = buildFallbackPrompt(sunSign, moonSign);
+      }
+    } else {
+      console.warn('Supabase env vars missing — using fallback prompt');
+      prompt = buildFallbackPrompt(sunSign, moonSign);
+    }
+
+    console.log('Final music prompt:', prompt);
+
+    // ── Call ElevenLabs Music API ──
     const response = await fetch('https://api.elevenlabs.io/v1/music', {
       method: 'POST',
       headers: {
         'xi-api-key': ELEVENLABS_API_KEY,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        prompt,
-        duration_seconds: 30,
-      }),
+      body: JSON.stringify({ prompt, duration_seconds: 30 }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("ElevenLabs API error:", response.status);
+      console.error('ElevenLabs API error:', response.status, errorText);
 
-      // Treat known "expected" conditions as non-fatal for the app UI.
       if (response.status === 429 || response.status === 402) {
         const fallback =
           response.status === 429
-            ? "Rate limited. Please try again in a moment."
-            : "Music generation is temporarily unavailable.";
-
-        console.warn("ElevenLabs music unavailable:", response.status);
-
+            ? 'Rate limited. Please try again in a moment.'
+            : 'Music generation is temporarily unavailable.';
         return new Response(
           JSON.stringify({
             unavailable: true,
@@ -158,41 +373,35 @@ serve(async (req) => {
             status: response.status,
             retryAfter: response.status === 429 ? 30 : undefined,
           }),
-          {
-            // Return 200 to avoid surfacing this as a hard runtime error in the preview.
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Generic error for other failures
       return new Response(
         JSON.stringify({ error: 'Unable to generate music. Please try again later.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Get audio as array buffer
     const audioBuffer = await response.arrayBuffer();
+    console.log('Music generated successfully, size:', audioBuffer.byteLength, 'bytes');
 
-    console.log("Music generated successfully, size:", audioBuffer.byteLength);
+    // Determine musical mode for header
+    const modeForHeader = fallbackModes[sunSign]?.mode || 'Dorian';
 
-    // Return the audio directly as binary
     return new Response(audioBuffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'audio/mpeg',
         'X-Sun-Sign': sunSign,
         'X-Moon-Sign': moonSign,
-        'X-Mode': sunMode.mode,
+        'X-Mode': modeForHeader,
+        'X-QM-Enhanced': supabaseUrl ? 'true' : 'false',
       },
     });
 
   } catch (error) {
-    // Log detailed error server-side only
     console.error('Error generating music:', error);
-    // Return generic error to client
     return new Response(
       JSON.stringify({ error: 'Unable to generate music. Please try again later.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
