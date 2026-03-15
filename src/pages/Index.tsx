@@ -8,7 +8,7 @@ import { PlanetDetailsTable } from '@/components/PlanetDetailsTable';
 import { BirthDataForm } from '@/components/BirthDataForm';
 import { BottomNav } from '@/components/BottomNav';
 import { GeneratingState } from '@/components/GeneratingState';
-import { AudioReactiveGradient, paletteFromSign } from '@/components/AudioReactiveGradient';
+import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { useCosmicReading } from '@/hooks/useCosmicReading';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import { useToast } from '@/hooks/use-toast';
