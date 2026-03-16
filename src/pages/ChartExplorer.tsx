@@ -277,6 +277,8 @@ const ChartExplorer = () => {
               <div className="mt-4">
                 <QuantumMelodicSummary
                   reading={reading}
+                  chartData={chartData}
+                  subjectName={chartName}
                   onAspectPatternClick={handleAspectPatternClick}
                 />
               </div>
