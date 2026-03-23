@@ -30,4 +30,5 @@ export interface CosmicReading {
   chartData: ChartData;
   audioUrl?: string;
   musicalMode: string;
+  audioSource?: 'elevenlabs' | 'procedural';
 }
