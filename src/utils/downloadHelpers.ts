@@ -67,22 +67,34 @@ function triggerDownload(dataUrl: string, filename: string) {
 
 // ── Download the music audio ──────────────────────────────────────
 export async function downloadAudio(audioUrl: string, filename = 'quantumelodic-composition.mp3') {
-  // Blob URLs (procedural audio) download directly; remote URLs need fetching
-  if (audioUrl.startsWith('blob:')) {
-    triggerDownload(audioUrl, filename);
+  if (!audioUrl) throw new Error('No audio URL');
+
+  // Blob URLs (local audio like procedural WAV) — create a temporary anchor
+  if (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:')) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = audioUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     return;
   }
 
-  // Fetch remote audio and re-blob it to bypass cross-origin download restrictions
+  // Remote URLs — fetch and re-blob to force download across origins
   try {
     const response = await fetch(audioUrl);
     if (!response.ok) throw new Error('Fetch failed');
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
-    triggerDownload(blobUrl, filename);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = blobUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
   } catch {
-    // Last resort: open in new tab so user can save manually
+    // Last resort: open in new tab
     window.open(audioUrl, '_blank');
   }
 }
