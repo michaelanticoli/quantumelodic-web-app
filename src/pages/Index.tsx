@@ -189,7 +189,7 @@ interface ResultsViewProps {
   };
   musicalMode: string;
   audioUrl?: string | null;
-  audioSource?: 'elevenlabs' | 'procedural' | null;
+  audioSource?: 'elevenlabs' | 'procedural' | 'tone' | null;
   reading: import('@/types/astrology').CosmicReading;
   onBack: () => void;
   onExplore: () => void;
