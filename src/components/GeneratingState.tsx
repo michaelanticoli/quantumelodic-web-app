@@ -94,7 +94,7 @@ export const GeneratingState = ({
 
   return (
     <motion.div
-      className="flex flex-col items-center justify-center min-h-screen gap-0"
+      className="flex flex-col items-center justify-center min-h-screen gap-0 relative z-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.4 } }}
