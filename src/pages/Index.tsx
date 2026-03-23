@@ -30,15 +30,15 @@ const Index = () => {
   } = useCosmicReading();
 
   const reading = cosmicCtx.reading || hookReading;
-  const audioUrl = cosmicCtx.audioUrl || null;
-  const audioSource = cosmicCtx.audioSource || hookAudioSource;
+  const audioUrl = cosmicCtx.audioUrl || hookReading?.audioUrl || null;
+  const audioSource = cosmicCtx.audioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
 
   const handleFormSubmit = async (data: BirthData) => {
     setAppState('generating');
     try {
       const result = await generateReading(data);
       if (result) {
-        cosmicCtx.setReadingData(result, result.audioUrl ?? null, hookAudioSource);
+        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? null);
       }
       setAppState('result');
     } catch (err) {
