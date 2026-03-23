@@ -56,7 +56,6 @@ export const GeneratingState = ({
   const progress = externalProgress ?? smoothProgress;
   const messages = stageMessages[stage] ?? stageMessages.calculating;
 
-  // Smooth progress
   useEffect(() => {
     if (externalProgress !== undefined) {
       const interval = setInterval(() => {
@@ -80,17 +79,17 @@ export const GeneratingState = ({
     }
   }, [stage, externalProgress, onComplete]);
 
-  // Rotate messages
   useEffect(() => {
     setMessageIndex(0);
     const id = setInterval(() => setMessageIndex(p => (p + 1) % messages.length), 2800);
     return () => clearInterval(id);
   }, [stage, messages.length]);
 
-  // Completion
   useEffect(() => {
     if (externalProgress !== undefined && externalProgress >= 100) onComplete?.();
   }, [externalProgress, onComplete]);
+
+  const GLYPH_FONT = "'Noto Sans Symbols 2','Segoe UI Symbol','Apple Symbols',serif";
 
   return (
     <motion.div
@@ -104,17 +103,9 @@ export const GeneratingState = ({
 
         {/* Orbital rings */}
         {PLANETS.map((p, i) => (
-          <svg
-            key={`ring-${i}`}
-            className="absolute inset-0"
-            width={340}
-            height={340}
-            style={{ pointerEvents: 'none' }}
-          >
+          <svg key={`ring-${i}`} className="absolute inset-0" width={340} height={340} style={{ pointerEvents: 'none' }}>
             <circle
-              cx={170}
-              cy={170}
-              r={p.radius}
+              cx={170} cy={170} r={p.radius}
               fill="none"
               stroke="hsl(43 88% 58% / 0.1)"
               strokeWidth={0.75}
@@ -131,16 +122,8 @@ export const GeneratingState = ({
             const x = 170 + r * Math.cos(angle);
             const y = 170 + r * Math.sin(angle);
             return (
-              <text
-                key={g}
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize="10"
-                fill="hsl(43 88% 58% / 0.35)"
-                fontFamily="'Noto Sans Symbols 2','Segoe UI Symbol',serif"
-              >
+              <text key={g} x={x} y={y} textAnchor="middle" dominantBaseline="central"
+                fontSize="10" fill="hsl(43 88% 58% / 0.32)" fontFamily={GLYPH_FONT}>
                 {g}
               </text>
             );
@@ -152,56 +135,27 @@ export const GeneratingState = ({
           <motion.div
             key={`planet-${i}`}
             className="absolute"
-            style={{
-              width: 340,
-              height: 340,
-              top: 0,
-              left: 0,
-            }}
+            style={{ width: 340, height: 340, top: 0, left: 0 }}
             animate={{ rotate: 360 }}
-            transition={{
-              duration: p.duration,
-              ease: 'linear',
-              repeat: Infinity,
-              delay: p.delay,
-            }}
+            transition={{ duration: p.duration, ease: 'linear', repeat: Infinity, delay: p.delay }}
           >
-            {/* planet dot + glyph */}
             <div
               className="absolute flex items-center justify-center"
-              style={{
-                top: 170 - p.radius - p.size / 2,
-                left: 170 - p.size / 2,
-                width: p.size,
-                height: p.size,
-              }}
+              style={{ top: 170 - p.radius - p.size / 2, left: 170 - p.size / 2, width: p.size, height: p.size }}
             >
               <div
                 className="rounded-full"
                 style={{
-                  width: 6,
-                  height: 6,
-                  background: 'hsl(43 74% 62%)',
-                  boxShadow: '0 0 8px 2px hsl(43 74% 52% / 0.55)',
+                  width: 6, height: 6,
+                  background: 'hsl(43 88% 62%)',
+                  boxShadow: '0 0 10px 3px hsl(43 88% 58% / 0.6)',
                 }}
               />
-              {/* counter-rotate so glyph stays upright */}
               <motion.span
-                className="absolute text-[9px] font-light select-none"
-                style={{
-                  color: 'hsl(43 74% 62% / 0.7)',
-                  top: 8,
-                  left: '50%',
-                  translateX: '-50%',
-                  fontFamily: 'serif',
-                }}
+                className="absolute text-[9px] select-none"
+                style={{ color: 'hsl(43 88% 65% / 0.75)', top: 8, left: '50%', translateX: '-50%', fontFamily: GLYPH_FONT }}
                 animate={{ rotate: -360 }}
-                transition={{
-                  duration: p.duration,
-                  ease: 'linear',
-                  repeat: Infinity,
-                  delay: p.delay,
-                }}
+                transition={{ duration: p.duration, ease: 'linear', repeat: Infinity, delay: p.delay }}
               >
                 {p.glyph}
               </motion.span>
@@ -214,41 +168,39 @@ export const GeneratingState = ({
           <motion.div
             key={`inner-${r}`}
             className="absolute rounded-full border"
-            style={{
-              width: r * 2,
-              height: r * 2,
-              borderColor: `hsl(43 74% 52% / ${0.18 - i * 0.06})`,
-            }}
+            style={{ width: r * 2, height: r * 2, borderColor: `hsl(43 88% 58% / ${0.22 - i * 0.08})` }}
             animate={{ scale: [1, 1.06, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 3 + i, ease: 'easeInOut', repeat: Infinity, delay: i * 0.8 }}
           />
         ))}
 
+        {/* Accent ring — violet */}
+        <motion.div
+          className="absolute rounded-full"
+          style={{ width: 90, height: 90, border: '1px solid hsl(292 70% 62% / 0.1)' }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 5, ease: 'easeInOut', repeat: Infinity, delay: 1.5 }}
+        />
+
         {/* Central node */}
         <motion.div
           className="relative flex items-center justify-center rounded-full z-10"
           style={{
-            width: 56,
-            height: 56,
-            background: 'radial-gradient(circle, hsl(43 74% 12% / 0.9) 60%, transparent 100%)',
-            border: '1px solid hsl(43 74% 52% / 0.45)',
-            boxShadow: '0 0 24px 4px hsl(43 74% 52% / 0.15), inset 0 0 12px hsl(43 74% 52% / 0.1)',
+            width: 58, height: 58,
+            background: 'radial-gradient(circle, hsl(228 35% 10% / 0.92) 60%, transparent 100%)',
+            border: '1px solid hsl(43 88% 58% / 0.5)',
+            boxShadow: '0 0 28px 6px hsl(43 88% 58% / 0.18), inset 0 0 14px hsl(43 88% 58% / 0.08)',
           }}
           animate={{ scale: [1, 1.04, 1] }}
           transition={{ duration: 4, ease: 'easeInOut', repeat: Infinity }}
         >
-          <span
-            className="text-2xl select-none"
-            style={{ color: 'hsl(43 74% 62%)', fontFamily: 'serif', lineHeight: 1 }}
-          >
-            ✦
-          </span>
+          <span className="text-2xl select-none" style={{ color: 'hsl(43 88% 65%)', fontFamily: 'serif', lineHeight: 1 }}>✦</span>
         </motion.div>
 
         {/* Stardust particles */}
-        {[...Array(10)].map((_, i) => {
-          const angle = (i / 10) * 360;
-          const dist = 60 + (i % 3) * 20;
+        {[...Array(12)].map((_, i) => {
+          const angle = (i / 12) * 360;
+          const dist = 55 + (i % 4) * 18;
           const x = 170 + dist * Math.cos((angle * Math.PI) / 180);
           const y = 170 + dist * Math.sin((angle * Math.PI) / 180);
           return (
@@ -256,19 +208,12 @@ export const GeneratingState = ({
               key={`star-${i}`}
               className="absolute rounded-full"
               style={{
-                width: 2,
-                height: 2,
-                left: x,
-                top: y,
-                background: 'hsl(43 74% 72%)',
+                width: i % 3 === 0 ? 3 : 2, height: i % 3 === 0 ? 3 : 2,
+                left: x, top: y,
+                background: i % 4 === 0 ? 'hsl(292 70% 72%)' : i % 4 === 1 ? 'hsl(180 90% 70%)' : 'hsl(43 88% 75%)',
               }}
-              animate={{ opacity: [0, 0.8, 0], scale: [0.5, 1.2, 0.5] }}
-              transition={{
-                duration: 2.5 + i * 0.3,
-                ease: 'easeInOut',
-                repeat: Infinity,
-                delay: i * 0.25,
-              }}
+              animate={{ opacity: [0, 0.9, 0], scale: [0.5, 1.4, 0.5] }}
+              transition={{ duration: 2.2 + i * 0.28, ease: 'easeInOut', repeat: Infinity, delay: i * 0.22 }}
             />
           );
         })}
@@ -279,8 +224,8 @@ export const GeneratingState = ({
         <AnimatePresence mode="wait">
           <motion.p
             key={`${stage}-${messageIndex}`}
-            className="text-center text-sm tracking-widest uppercase"
-            style={{ color: 'hsl(43 74% 52% / 0.7)', letterSpacing: '0.12em' }}
+            className="text-center text-xs tracking-[0.15em] uppercase font-display font-medium"
+            style={{ color: 'hsl(43 88% 58% / 0.65)' }}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
@@ -292,30 +237,21 @@ export const GeneratingState = ({
       </div>
 
       {/* ── Progress bar ── */}
-      <div className="mt-8 w-56 flex flex-col gap-2">
-        <div
-          className="h-px rounded-full overflow-hidden"
-          style={{ background: 'hsl(43 74% 52% / 0.12)' }}
-        >
+      <div className="mt-8 w-52 flex flex-col gap-2">
+        <div className="h-px rounded-full overflow-hidden" style={{ background: 'hsl(43 88% 58% / 0.1)' }}>
           <motion.div
             className="h-full rounded-full"
-            style={{ background: 'hsl(43 74% 52%)' }}
+            style={{ background: 'linear-gradient(90deg, hsl(43 88% 58%), hsl(292 70% 62%))' }}
             initial={{ width: 0 }}
             animate={{ width: `${Math.round(progress)}%` }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
           />
         </div>
         <div className="flex justify-between items-center">
-          <span
-            className="text-xs tabular-nums tracking-widest"
-            style={{ color: 'hsl(43 74% 52% / 0.45)', fontSize: '10px' }}
-          >
+          <span className="tabular-nums font-display font-medium" style={{ color: 'hsl(43 88% 58% / 0.5)', fontSize: '10px' }}>
             {Math.round(progress)}%
           </span>
-          <span
-            className="text-xs uppercase tracking-widest"
-            style={{ color: 'hsl(43 74% 52% / 0.35)', fontSize: '10px' }}
-          >
+          <span className="uppercase tracking-widest" style={{ color: 'hsl(43 88% 58% / 0.3)', fontSize: '9px' }}>
             {stage}
           </span>
         </div>
