@@ -116,9 +116,9 @@ export const GeneratingState = ({
               cy={170}
               r={p.radius}
               fill="none"
-              stroke="hsl(43 74% 52% / 0.12)"
+              stroke="hsl(43 88% 58% / 0.1)"
               strokeWidth={0.75}
-              strokeDasharray="2 6"
+              strokeDasharray="2 8"
             />
           </svg>
         ))}
