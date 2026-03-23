@@ -202,24 +202,63 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState(false);
 
   useEffect(() => {
-    if (audioUrl) {
-      const audio = new Audio(audioUrl);
+    if (!audioUrl) return;
+    setAudioError(false);
+
+    const audio = new Audio();
+    // Only set crossOrigin for non-blob URLs to avoid CORS issues with blob URLs
+    if (!audioUrl.startsWith('blob:')) {
       audio.crossOrigin = 'anonymous';
-      audioRef.current = audio;
-      setAudioEl(audio);
-      audio.addEventListener('loadedmetadata', () => setDuration(audio.duration || 0));
-      audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime || 0));
-      audio.addEventListener('ended', () => { setIsPlaying(false); setCurrentTime(0); });
-      return () => { audio.pause(); audioRef.current = null; setAudioEl(null); };
     }
+    audio.preload = 'metadata';
+    audio.src = audioUrl;
+
+    audioRef.current = audio;
+    setAudioEl(audio);
+
+    const onMeta = () => setDuration(audio.duration || 0);
+    const onTime = () => setCurrentTime(audio.currentTime || 0);
+    const onEnd = () => { setIsPlaying(false); setCurrentTime(0); };
+    const onErr = () => {
+      console.warn('Audio load error for URL:', audioUrl);
+      setAudioError(true);
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener('loadedmetadata', onMeta);
+    audio.addEventListener('timeupdate', onTime);
+    audio.addEventListener('ended', onEnd);
+    audio.addEventListener('error', onErr);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('loadedmetadata', onMeta);
+      audio.removeEventListener('timeupdate', onTime);
+      audio.removeEventListener('ended', onEnd);
+      audio.removeEventListener('error', onErr);
+      audioRef.current = null;
+      setAudioEl(null);
+      setIsPlaying(false);
+    };
   }, [audioUrl]);
 
-  const togglePlayPause = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) audioRef.current.pause(); else audioRef.current.play();
-    setIsPlaying(!isPlaying);
+  const togglePlayPause = async () => {
+    if (!audioRef.current || audioError) return;
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.warn('Playback error:', err);
+      setIsPlaying(false);
+    }
   };
 
   const formatTime = (t: number) => `${Math.floor(t / 60)}:${Math.floor(t % 60).toString().padStart(2, '0')}`;
@@ -343,7 +382,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
             idleIntensity={isPlaying ? 0.85 : 0.28}
             palette={paletteFromSign(chartData.sunSign)}
           />
-          {audioUrl && (
+          {audioUrl && !audioError && (
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
                 className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
@@ -366,6 +405,11 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
                   </svg>
                 )}
               </motion.button>
+            </div>
+          )}
+          {audioError && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-[10px] text-destructive/60 tracking-wider">Audio unavailable</p>
             </div>
           )}
         </div>
