@@ -141,6 +141,7 @@ export function useCosmicReading() {
         chartData: chart,
         audioUrl: url ?? undefined,
         musicalMode,
+        audioSource: source ?? undefined,
       };
 
       setReading(cosmicReading);
