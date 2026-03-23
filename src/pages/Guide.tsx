@@ -41,19 +41,18 @@ const Guide = () => {
       <main className="relative z-10">
         {/* Header */}
         <motion.header
-          className="px-6 pt-6 pb-4 flex items-center justify-between"
-          initial={{ opacity: 0, y: -20 }}
+          className="px-5 pt-6 pb-3 flex items-center justify-between"
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <motion.button
-            className="text-muted-foreground hover:text-foreground transition-colors text-sm tracking-wide"
+            className="text-muted-foreground/60 hover:text-foreground transition-colors text-sm tracking-wide flex items-center gap-1.5"
             onClick={() => navigate('/')}
             whileHover={{ x: -2 }}
-            whileTap={{ scale: 0.98 }}
           >
-            ‹ Back
+            <span className="text-lg leading-none">‹</span> Back
           </motion.button>
-          <h1 className="font-display text-lg text-gold-gradient tracking-wide">
+          <h1 className="font-display font-semibold text-sm text-gold-gradient tracking-wide">
             Guide
           </h1>
           <div className="w-12" />
@@ -61,39 +60,42 @@ const Guide = () => {
 
         {/* Hero */}
         <motion.section
-          className="px-6 pt-16 pb-24 max-w-2xl mx-auto text-center"
+          className="px-6 pt-12 pb-16 max-w-2xl mx-auto text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 1 }}
+          transition={{ delay: 0.15, duration: 0.8 }}
         >
-          <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60 mb-8">
+          <p className="text-[9px] uppercase tracking-[0.45em] text-muted-foreground/45 mb-6">
             Cosmic User's Guide
           </p>
-          <h2 className="font-sans font-light text-3xl sm:text-4xl md:text-5xl leading-[1.15] tracking-tight text-foreground mb-6">
-            The Quantumelodic<br />System
+          <h2 className="font-display font-semibold text-3xl sm:text-4xl md:text-5xl leading-tight tracking-tight text-foreground mb-4">
+            The Quantumelodic<br />
+            <span className="text-aurora-gradient">System</span>
           </h2>
-          <p className="font-sans font-light text-sm text-muted-foreground tracking-wide max-w-sm mx-auto leading-relaxed">
+          <div className="divider-gold max-w-[160px] mx-auto my-5" />
+          <p className="font-serif italic text-muted-foreground text-sm tracking-wide max-w-sm mx-auto leading-relaxed">
             A harmonic interface for navigating the multiverse
           </p>
         </motion.section>
 
         {/* Chapter Nav */}
         <motion.div
-          className="sticky top-0 z-30 backdrop-blur-xl bg-background/60 border-b border-border/10"
+          className="sticky top-0 z-30 border-b"
+          style={{ backdropFilter: 'blur(24px)', background: 'hsl(228 35% 4% / 0.8)', borderColor: 'hsl(var(--border) / 0.3)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
         >
-          <div className="max-w-3xl mx-auto px-6 py-3 flex gap-1 overflow-x-auto scrollbar-hide">
+          <div className="max-w-3xl mx-auto px-5 py-2.5 flex gap-1 overflow-x-auto scrollbar-hide">
             {chapters.map((ch) => (
               <button
                 key={ch.id}
                 onClick={() => scrollTo(ch.id)}
                 className={cn(
-                  "text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap transition-all duration-300",
+                  "text-[9px] uppercase tracking-[0.25em] px-3 py-1.5 rounded-full whitespace-nowrap transition-all duration-300",
                   activeChapter === ch.id
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground/50 hover:text-muted-foreground"
+                    ? "text-primary bg-primary/12"
+                    : "text-muted-foreground/45 hover:text-muted-foreground/70"
                 )}
               >
                 {ch.label}
