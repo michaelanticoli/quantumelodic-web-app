@@ -38,13 +38,7 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        // Use audioUrl and audioSource from the returned reading object directly
-        // (hookAudioSource state may be stale at this point due to async batching)
-        const resolvedAudioUrl = result.audioUrl ?? null;
-        const resolvedAudioSource = resolvedAudioUrl
-          ? (result.audioUrl?.startsWith('blob:') ? 'procedural' : 'elevenlabs') as 'elevenlabs' | 'procedural'
-          : null;
-        cosmicCtx.setReadingData(result, resolvedAudioUrl, resolvedAudioSource);
+        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? null);
       }
       setAppState('result');
     } catch (err) {
