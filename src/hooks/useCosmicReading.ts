@@ -86,7 +86,7 @@ export function useCosmicReading() {
             moonSign: chart.moonSign,
             ascendant: chart.ascendant,
             name: birthData.name,
-            planets: chart.planets,          // ← full planet positions for QM translation
+            planets: chart.planets,
           }),
         });
 
@@ -100,17 +100,23 @@ export function useCosmicReading() {
           source = 'elevenlabs';
           setProgress(90);
         } else {
-          // ElevenLabs unavailable — fall back to procedural
+          // Parse the error to check if it's a credit issue vs a real failure
           const data = await musicResponse.json().catch(() => null);
-          console.warn('ElevenLabs unavailable, using procedural fallback:', data?.error);
+          const isCredits = data?.status === 402 || data?.unavailable;
+          console.warn(
+            isCredits
+              ? 'ElevenLabs credits exhausted — using procedural synthesis'
+              : 'ElevenLabs unavailable, using procedural fallback:',
+            data?.error
+          );
           setProgress(70);
         }
       } catch (musicErr) {
-        console.warn('Music generation error, using procedural fallback:', musicErr);
+        console.warn('Music generation network error, using procedural fallback:', musicErr);
         setProgress(70);
       }
 
-      // Procedural fallback if ElevenLabs didn't produce audio
+      // Procedural fallback — always runs if ElevenLabs didn't produce audio
       if (!url) {
         try {
           setProgress(75);
@@ -126,10 +132,9 @@ export function useCosmicReading() {
         }
       }
 
-      if (url) {
-        setAudioUrl(url);
-        setAudioSource(source);
-      }
+      // Always store URL and source regardless of which path succeeded
+      setAudioUrl(url);
+      setAudioSource(source);
 
       setProgress(100);
 
