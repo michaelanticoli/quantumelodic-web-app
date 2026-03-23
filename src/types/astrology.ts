@@ -31,5 +31,4 @@ export interface CosmicReading {
   audioUrl?: string;
   musicalMode: string;
   audioSource?: 'tone' | 'elevenlabs' | 'procedural';
-  score?: import('./chartToScore').Score;
 }
