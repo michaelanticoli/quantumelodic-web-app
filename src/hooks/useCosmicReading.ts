@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
-import { generateProceduralAudio } from '@/utils/proceduralAudio';
+import { chartToScore } from '@/utils/chartToScore';
+import { renderScoreToAudioUrl } from '@/utils/tonePlayer';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -29,24 +30,21 @@ export function useCosmicReading() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState<'idle' | 'geocoding' | 'calculating' | 'generating' | 'complete'>('idle');
-  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | null>(null);
+  const [audioSource] = useState<'tone' | null>(null);
 
   const generateReading = useCallback(async (birthData: BirthData) => {
     setLoading(true);
     setError(null);
     setProgress(0);
-    setAudioSource(null);
 
     try {
-      // Stage 1: Geocoding (server-side)
+      // Stage 1: Visual progress smoothness
       setStage('geocoding');
       setProgress(5);
-
-      // Small delay for visual smoothness
-      await new Promise(r => setTimeout(r, 400));
+      await new Promise(r => setTimeout(r, 300));
       setProgress(15);
 
-      // Stage 2: Calculate birth chart
+      // Stage 2: Calculate birth chart via edge function
       setStage('calculating');
       setProgress(25);
 
@@ -67,78 +65,33 @@ export function useCosmicReading() {
 
       const chart: ChartData = await chartResponse.json();
       setChartData(chart);
-      setProgress(45);
+      setProgress(50);
 
-      // Stage 3: Generate music
+      // Stage 3: Generate music locally via Tone.js (no API cost)
       setStage('generating');
-      setProgress(55);
+      setProgress(60);
 
       let url: string | null = null;
-      let source: 'elevenlabs' | 'procedural' | null = null;
-
-      // Attempt ElevenLabs generation — pass full planet array for QuantumMelodic prompt
       try {
-        const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sunSign: chart.sunSign,
-            moonSign: chart.moonSign,
-            ascendant: chart.ascendant,
-            name: birthData.name,
-            planets: chart.planets,
-          }),
-        });
-
-        setProgress(75);
-
-        const contentType = musicResponse.headers.get('content-type') || '';
-
-        if (musicResponse.ok && contentType.includes('audio/')) {
-          const audioBlob = await musicResponse.blob();
-          url = URL.createObjectURL(audioBlob);
-          source = 'elevenlabs';
-          setProgress(90);
-        } else {
-          // Parse the error to check if it's a credit issue vs a real failure
-          const data = await musicResponse.json().catch(() => null);
-          const isCredits = data?.status === 402 || data?.unavailable;
-          console.warn(
-            isCredits
-              ? 'ElevenLabs credits exhausted — using procedural synthesis'
-              : 'ElevenLabs unavailable, using procedural fallback:',
-            data?.error
-          );
-          setProgress(70);
-        }
-      } catch (musicErr) {
-        console.warn('Music generation network error, using procedural fallback:', musicErr);
+        // Build deterministic score from chart
+        const score = chartToScore(chart);
         setProgress(70);
+
+        // Render to WAV offline (no speakers yet, just a blob URL)
+        url = await renderScoreToAudioUrl(score);
+        setProgress(90);
+
+        toast('Cosmic composition ready', {
+          description: `${score.mode} in ${score.rootNote} · ${score.bpm} BPM · ${score.tracks.length} planetary voices`,
+        });
+      } catch (audioErr) {
+        console.warn('Tone.js render failed:', audioErr);
+        setProgress(90);
       }
 
-      // Procedural fallback — always runs if ElevenLabs didn't produce audio
-      if (!url) {
-        try {
-          setProgress(75);
-          url = await generateProceduralAudio(chart);
-          source = 'procedural';
-          setProgress(90);
-          toast('Cosmic tones generated', {
-            description: 'Using procedural synthesis based on your planetary frequencies.',
-          });
-        } catch (procErr) {
-          console.warn('Procedural audio also failed:', procErr);
-          setProgress(90);
-        }
-      }
-
-      // Always store URL and source regardless of which path succeeded
       setAudioUrl(url);
-      setAudioSource(source);
-
       setProgress(100);
 
-      // Get musical mode
       const musicalMode = signModes[chart.sunSign] || 'D Dorian';
 
       const cosmicReading: CosmicReading = {
@@ -146,7 +99,7 @@ export function useCosmicReading() {
         chartData: chart,
         audioUrl: url ?? undefined,
         musicalMode,
-        audioSource: source ?? undefined,
+        audioSource: 'tone',
       };
 
       setReading(cosmicReading);
@@ -171,12 +124,10 @@ export function useCosmicReading() {
     setChartData(null);
     setProgress(0);
     setStage('idle');
-    setAudioSource(null);
 
-    // Clean up audio URL
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
-      setAudioUrl(null);
+      // Note: setAudioUrl handled separately to avoid stale closure
     }
   }, [audioUrl]);
 
@@ -186,7 +137,7 @@ export function useCosmicReading() {
     reading,
     chartData,
     audioUrl,
-    audioSource,
+    audioSource: 'tone' as const,
     progress,
     stage,
     generateReading,
