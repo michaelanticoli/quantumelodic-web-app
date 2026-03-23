@@ -433,46 +433,46 @@ const Guide = () => {
 /* ─── Sub-components ─── */
 
 const Section = ({ id, children }: { id: string; children: React.ReactNode }) => (
-  <motion.section id={id} className="pt-24 first:pt-12" {...fadeUp}>
+  <motion.section id={id} className="pt-20 first:pt-10" {...fadeUp}>
     {children}
   </motion.section>
 );
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] uppercase tracking-[0.4em] text-primary/50 mb-4">{children}</p>
+  <p className="text-[9px] uppercase tracking-[0.45em] mb-3" style={{ color: 'hsl(var(--primary) / 0.5)' }}>{children}</p>
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="font-sans font-normal text-2xl sm:text-3xl tracking-tight text-foreground mb-8 leading-tight">{children}</h2>
+  <h2 className="font-display font-semibold text-2xl sm:text-3xl tracking-tight text-foreground mb-6 leading-tight">{children}</h2>
 );
 
 const H3 = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="font-sans font-normal text-lg text-foreground mt-14 mb-4 tracking-tight">{children}</h3>
+  <h3 className="font-display font-medium text-base text-foreground/90 mt-10 mb-3 tracking-tight">{children}</h3>
 );
 
 const H4 = ({ children }: { children: React.ReactNode }) => (
-  <h4 className="font-sans font-normal text-base text-foreground/90 mt-10 mb-3 tracking-tight">{children}</h4>
+  <h4 className="font-display font-medium text-sm text-foreground/80 mt-7 mb-2 tracking-wide uppercase" style={{ color: 'hsl(var(--primary) / 0.8)' }}>{children}</h4>
 );
 
 const P = ({ children }: { children: React.ReactNode }) => (
-  <p className="font-sans font-light text-sm text-muted-foreground leading-[1.8] mb-4 tracking-wide">{children}</p>
+  <p className="text-sm text-muted-foreground leading-[1.85] mb-4 tracking-wide">{children}</p>
 );
 
 const Keywords = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground/40 mb-8">{children}</p>
+  <p className="text-[9px] uppercase tracking-[0.35em] text-muted-foreground/35 mb-6">{children}</p>
 );
 
 const Callout = ({ children }: { children: React.ReactNode }) => (
-  <div className="border-l border-primary/20 pl-6 my-8">
-    <p className="font-sans font-light text-base text-foreground/80 italic leading-relaxed">{children}</p>
+  <div className="my-7 px-5 py-4 rounded-xl" style={{ borderLeft: '2px solid hsl(var(--primary) / 0.3)', background: 'hsl(var(--primary) / 0.04)' }}>
+    <p className="font-serif italic text-sm text-foreground/75 leading-relaxed">{children}</p>
   </div>
 );
 
 const BulletList = ({ items }: { items: string[] }) => (
-  <ul className="space-y-2 my-4 ml-4">
+  <ul className="space-y-2 my-4">
     {items.map((item, i) => (
-      <li key={i} className="font-sans font-light text-sm text-muted-foreground leading-relaxed flex gap-3">
-        <span className="text-primary/30 mt-0.5">·</span>
+      <li key={i} className="text-sm text-muted-foreground leading-relaxed flex gap-3">
+        <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'hsl(var(--primary) / 0.4)' }} />
         <span>{item}</span>
       </li>
     ))}
@@ -480,10 +480,10 @@ const BulletList = ({ items }: { items: string[] }) => (
 );
 
 const NumberedList = ({ items }: { items: string[] }) => (
-  <ol className="space-y-2 my-4 ml-4">
+  <ol className="space-y-2 my-4">
     {items.map((item, i) => (
-      <li key={i} className="font-sans font-light text-sm text-muted-foreground leading-relaxed flex gap-3">
-        <span className="text-primary/50 tabular-nums text-xs mt-0.5 min-w-[1rem]">{i + 1}.</span>
+      <li key={i} className="text-sm text-muted-foreground leading-relaxed flex gap-3">
+        <span className="tabular-nums text-[10px] mt-0.5 min-w-[1.2rem] font-display font-medium" style={{ color: 'hsl(var(--primary) / 0.5)' }}>{i + 1}.</span>
         <span>{item}</span>
       </li>
     ))}
@@ -491,20 +491,20 @@ const NumberedList = ({ items }: { items: string[] }) => (
 );
 
 const DataTable = ({ headers, rows }: { headers: string[]; rows: string[][] }) => (
-  <div className="my-6 overflow-x-auto">
+  <div className="my-5 overflow-x-auto rounded-xl" style={{ border: '1px solid hsl(var(--border) / 0.4)', background: 'hsl(228 30% 7% / 0.5)' }}>
     <table className="w-full text-left">
       <thead>
-        <tr className="border-b border-border/20">
+        <tr style={{ borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
           {headers.map((h, i) => (
-            <th key={i} className="font-sans font-normal text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40 pb-3 pr-4">{h}</th>
+            <th key={i} className="text-[9px] uppercase tracking-[0.25em] pb-2.5 pt-3 px-4" style={{ color: 'hsl(var(--muted-foreground) / 0.5)' }}>{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {rows.map((row, ri) => (
-          <tr key={ri} className="border-b border-border/10">
+          <tr key={ri} style={{ borderBottom: ri < rows.length - 1 ? '1px solid hsl(var(--border) / 0.15)' : 'none' }}>
             {row.map((cell, ci) => (
-              <td key={ci} className="font-sans font-light text-xs text-muted-foreground py-3 pr-4 whitespace-nowrap">{cell}</td>
+              <td key={ci} className="text-xs text-muted-foreground py-2.5 px-4 whitespace-nowrap">{cell}</td>
             ))}
           </tr>
         ))}
@@ -514,39 +514,40 @@ const DataTable = ({ headers, rows }: { headers: string[]; rows: string[][] }) =
 );
 
 const ArchetypeCard = ({ title, quote, entry, goal }: { title: string; quote: string; entry: string; goal: string }) => (
-  <div className="mt-10 p-6 rounded-xl border border-border/10 bg-card/20">
-    <h4 className="font-sans font-normal text-base text-foreground mb-2">{title}</h4>
-    <p className="font-sans font-light text-xs text-foreground/60 italic mb-4">"{quote}"</p>
+  <div className="glass-card mt-6 p-5">
+    <h4 className="font-display font-medium text-sm text-foreground mb-1.5">{title}</h4>
+    <p className="font-serif italic text-xs text-foreground/55 mb-3">"{quote}"</p>
     <div className="flex flex-col gap-1">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40">
-        Entry: <span className="text-muted-foreground/60">{entry}</span>
+      <p className="text-[9px] uppercase tracking-[0.2em]" style={{ color: 'hsl(var(--muted-foreground) / 0.45)' }}>
+        Entry · <span style={{ color: 'hsl(var(--muted-foreground) / 0.65)' }}>{entry}</span>
       </p>
-      <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40">
-        Goal: <span className="text-muted-foreground/60">{goal}</span>
+      <p className="text-[9px] uppercase tracking-[0.2em]" style={{ color: 'hsl(var(--muted-foreground) / 0.45)' }}>
+        Goal · <span style={{ color: 'hsl(var(--muted-foreground) / 0.65)' }}>{goal}</span>
       </p>
     </div>
   </div>
 );
 
 const RitualBlock = ({ title, items }: { title: string; items: string[] }) => (
-  <div className="p-4 rounded-xl border border-border/10 bg-card/10">
-    <p className="text-[10px] uppercase tracking-[0.3em] text-primary/50 mb-3">{title}</p>
+  <div className="p-4 rounded-xl" style={{ border: '1px solid hsl(var(--border) / 0.25)', background: 'hsl(228 30% 7% / 0.4)' }}>
+    <p className="text-[9px] uppercase tracking-[0.3em] mb-3" style={{ color: 'hsl(var(--primary) / 0.5)' }}>{title}</p>
     <ul className="space-y-1.5">
       {items.map((item, i) => (
-        <li key={i} className="font-sans font-light text-xs text-muted-foreground leading-relaxed">{item}</li>
+        <li key={i} className="text-xs text-muted-foreground leading-relaxed">{item}</li>
       ))}
     </ul>
   </div>
 );
 
 const MovementTier = ({ number, title, description }: { number: string; title: string; description: string }) => (
-  <div className="flex gap-5">
-    <span className="font-sans font-light text-3xl text-primary/30 tabular-nums mt-[-4px]">{number}</span>
+  <div className="flex gap-4">
+    <span className="font-display font-bold text-2xl leading-none mt-0.5 min-w-[2rem]" style={{ color: 'hsl(var(--primary) / 0.22)' }}>{number}</span>
     <div>
-      <h4 className="font-sans font-normal text-base text-foreground mb-1">{title}</h4>
+      <h4 className="font-display font-medium text-sm text-foreground mb-1">{title}</h4>
       <P>{description}</P>
     </div>
   </div>
 );
 
 export default Guide;
+
