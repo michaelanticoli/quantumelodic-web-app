@@ -138,8 +138,8 @@ export const GeneratingState = ({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize="10"
-                fill="hsl(43 74% 52% / 0.28)"
-                fontFamily="serif"
+                fill="hsl(43 88% 58% / 0.35)"
+                fontFamily="'Noto Sans Symbols 2','Segoe UI Symbol',serif"
               >
                 {g}
               </text>
