@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { CosmicReading } from '@/types/astrology';
 
+type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
+
 interface CosmicReadingContextValue {
   reading: CosmicReading | null;
-  audioSource: 'elevenlabs' | 'procedural' | null;
+  audioSource: AudioSource;
   audioUrl: string | null;
-  setReadingData: (reading: CosmicReading, audioUrl: string | null, audioSource: 'elevenlabs' | 'procedural' | null) => void;
+  setReadingData: (reading: CosmicReading, audioUrl: string | null, audioSource: AudioSource) => void;
   clearReading: () => void;
 }
 
@@ -13,11 +15,11 @@ const CosmicReadingContext = createContext<CosmicReadingContextValue | null>(nul
 
 export function CosmicReadingProvider({ children }: { children: ReactNode }) {
   const [reading, setReading] = useState<CosmicReading | null>(null);
-  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | null>(null);
+  const [audioSource, setAudioSource] = useState<AudioSource>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const setReadingData = useCallback(
-    (r: CosmicReading, url: string | null, source: 'elevenlabs' | 'procedural' | null) => {
+    (r: CosmicReading, url: string | null, source: AudioSource) => {
       setReading(r);
       setAudioUrl(url);
       setAudioSource(source);

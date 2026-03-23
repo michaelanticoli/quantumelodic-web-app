@@ -189,7 +189,7 @@ interface ResultsViewProps {
   };
   musicalMode: string;
   audioUrl?: string | null;
-  audioSource?: 'elevenlabs' | 'procedural' | null;
+  audioSource?: 'elevenlabs' | 'procedural' | 'tone' | null;
   reading: import('@/types/astrology').CosmicReading;
   onBack: () => void;
   onExplore: () => void;
@@ -416,9 +416,9 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
 
         {audioUrl ? (
           <>
-            {audioSource === 'procedural' && (
+            {(audioSource === 'procedural' || audioSource === 'tone') && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
-                Procedural synthesis · chart-derived frequencies
+                {audioSource === 'tone' ? 'Tone.js synthesis · planetary composition' : 'Procedural synthesis · chart-derived frequencies'}
               </p>
             )}
             <div className="w-full max-w-xs mx-auto mb-2">

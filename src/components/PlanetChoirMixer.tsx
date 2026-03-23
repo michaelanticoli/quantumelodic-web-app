@@ -1,26 +1,19 @@
 import { useState, useRef, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Flame, Droplets, Wind, Mountain, Music2 } from 'lucide-react';
+import * as Tone from 'tone';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+import { PLANET_SYNTH, SIGN_MUSIC, MODES, NOTE_NAMES, type NoteName } from '@/utils/chartToScore';
 
 // Element colours aligned to design tokens (HSL only)
-const ELEMENT_CONFIG: Record<string, {
-  icon: typeof Flame;
-  hue: number;
-  label: string;
-}> = {
+const ELEMENT_CONFIG: Record<string, { icon: typeof Flame; hue: number; label: string }> = {
   Fire:  { icon: Flame,    hue: 15,  label: 'Fire'  },
   Earth: { icon: Mountain, hue: 100, label: 'Earth' },
   Air:   { icon: Wind,     hue: 195, label: 'Air'   },
   Water: { icon: Droplets, hue: 220, label: 'Water' },
 };
 
-const CHOIR_LABELS: Record<number, string> = {
-  1: 'Solo', 2: 'Duet', 3: 'Trio',
-};
+const CHOIR_LABELS: Record<number, string> = { 1: 'Solo', 2: 'Duet', 3: 'Trio' };
 
 interface Props {
   reading: QuantumMelodicReading;
@@ -28,9 +21,145 @@ interface Props {
   onTogglePlanet: (name: string) => void;
   activeElements: Set<string>;
   onToggleElement: (element: string) => void;
-  /** Callback so the parent can connect the live audio element to CosmicWaveform */
   onAudioChange: Dispatch<SetStateAction<HTMLAudioElement | null>>;
 }
+
+// ── Tone.js helpers ───────────────────────────────────────────────────────
+
+interface ActiveSynths {
+  synths: Tone.PolySynth[];
+  reverbs: Tone.Reverb[];
+  choruses: Tone.Chorus[];
+  transport: typeof Tone.getTransport extends () => infer T ? T : never;
+  parts: Tone.Part[];
+}
+
+let activeSynthsRef: ActiveSynths | null = null;
+
+async function stopAllSynths() {
+  if (!activeSynthsRef) return;
+  try {
+    Tone.getTransport().stop();
+    Tone.getTransport().cancel();
+    for (const part of activeSynthsRef.parts) { part.stop(); part.dispose(); }
+    for (const synth of activeSynthsRef.synths) { synth.releaseAll(); synth.dispose(); }
+    for (const chorus of activeSynthsRef.choruses) { chorus.dispose(); }
+    for (const reverb of activeSynthsRef.reverbs) { reverb.dispose(); }
+  } catch {}
+  activeSynthsRef = null;
+}
+
+function noteNameToMidi(name: NoteName, octave: number): number {
+  return NOTE_NAMES.indexOf(name) + (octave + 1) * 12;
+}
+
+async function playPlanetChoir(
+  reading: QuantumMelodicReading,
+  activePlanetNames: string[],
+): Promise<void> {
+  await stopAllSynths();
+  await Tone.start();
+
+  const transport = Tone.getTransport();
+  const sunSign = reading.planets.find(p => p.position.name === 'Sun')?.position.sign ?? 'Leo';
+  const signMusic = SIGN_MUSIC[sunSign] ?? SIGN_MUSIC['Leo'];
+  const root = signMusic.root as NoteName;
+  const modeIntervals = MODES[signMusic.mode] ?? MODES['Dorian'];
+  const bpm = signMusic.tempo;
+  transport.bpm.value = bpm;
+  transport.stop();
+  transport.cancel();
+
+  const synths: Tone.PolySynth[] = [];
+  const reverbs: Tone.Reverb[] = [];
+  const choruses: Tone.Chorus[] = [];
+  const parts: Tone.Part[] = [];
+
+  for (const planetName of activePlanetNames) {
+    const planetData = reading.planets.find(p => p.position.name === planetName);
+    if (!planetData) continue;
+
+    const synthParams = PLANET_SYNTH[planetName];
+    if (!synthParams) continue;
+
+    const qmFreq = planetData.qmData?.frequency_hz ?? 440;
+    const signOfPlanet = planetData.position.sign;
+    const elementOfSign = planetData.signData?.element ?? 'Fire';
+    const elementOctaveOffset: Record<string, number> = { Fire: 1, Air: 1, Earth: 0, Water: -1 };
+    const octave = Math.max(2, Math.min(5, synthParams.octave + (elementOctaveOffset[elementOfSign] ?? 0)));
+
+    // Build note sequence from scale + planet's degree
+    const startDegree = Math.floor((planetData.position.degree % 30) / 30 * modeIntervals.length);
+    const rootMidi = noteNameToMidi(root, octave);
+    const scaleNotes = modeIntervals.map(iv => rootMidi + iv);
+
+    // Reverb
+    const reverb = new Tone.Reverb({ decay: 3 + synthParams.reverbWet * 5, wet: synthParams.reverbWet }).toDestination();
+    await reverb.generate();
+
+    // Chorus
+    const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.5, wet: synthParams.chorusWet }).connect(reverb);
+    chorus.start();
+
+    // Synth
+    const synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: synthParams.oscillatorType as OscillatorType },
+      envelope: {
+        attack: synthParams.attackTime,
+        decay: synthParams.decayTime,
+        sustain: synthParams.sustainLevel,
+        release: synthParams.releaseTime,
+      },
+      volume: Tone.gainToDb(synthParams.weight * 0.5),
+    }).connect(chorus);
+
+    // Build a simple 8-beat looping phrase for this planet
+    const secondsPerBeat = 60 / bpm;
+    const isRetro = planetData.position.isRetrograde;
+    const noteEvents: Array<[number, { pitch: number; duration: number; velocity: number }]> = [];
+
+    const beatsToPlay = 8;
+    const roleDurations: Record<string, number> = {
+      bass: secondsPerBeat * 2, drone: secondsPerBeat * 4,
+      pad: secondsPerBeat * 1.5, lead: secondsPerBeat * 0.75, arp: secondsPerBeat * 0.4,
+    };
+    const noteDur = roleDurations[synthParams.role] ?? secondsPerBeat;
+
+    for (let beat = 0; beat < beatsToPlay; beat++) {
+      // Skip some beats based on role and retrograde
+      if (synthParams.role === 'bass' && beat % 2 !== 0) continue;
+      if (synthParams.role === 'drone' && beat % 4 !== 0) continue;
+      if (isRetro && beat % 3 === 2) continue;
+
+      const direction = isRetro ? -1 : 1;
+      const scaleIdx = Math.abs(startDegree + beat * direction) % scaleNotes.length;
+      noteEvents.push([beat * secondsPerBeat, {
+        pitch: scaleNotes[scaleIdx],
+        duration: noteDur,
+        velocity: synthParams.velocityRange[0] + Math.random() * (synthParams.velocityRange[1] - synthParams.velocityRange[0]),
+      }]);
+    }
+
+    const part = new Tone.Part((time, ev: { pitch: number; duration: number; velocity: number }) => {
+      const freq = Tone.Frequency(ev.pitch, 'midi').toFrequency();
+      synth.triggerAttackRelease(freq, ev.duration, time, ev.velocity / 127);
+    }, noteEvents);
+
+    part.loop = true;
+    part.loopEnd = beatsToPlay * secondsPerBeat;
+    part.start(0);
+
+    synths.push(synth);
+    reverbs.push(reverb);
+    choruses.push(chorus);
+    parts.push(part);
+  }
+
+  activeSynthsRef = { synths, reverbs, choruses, transport, parts };
+  transport.start();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const PlanetChoirMixer = ({
   reading,
@@ -43,7 +172,6 @@ export const PlanetChoirMixer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const activePlanets = reading.planets.filter(
     p => p.position.name !== 'Ascendant' && enabledPlanets.has(p.position.name)
@@ -51,173 +179,45 @@ export const PlanetChoirMixer = ({
   const nonAscPlanets = reading.planets.filter(p => p.position.name !== 'Ascendant');
   const choirLabel = CHOIR_LABELS[activePlanets.length] ?? 'Choir';
 
+  // Stop on unmount
   useEffect(() => {
-    return () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
-      onAudioChange(null);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { stopAllSynths(); onAudioChange(null); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Stop playback when selection changes
+  // Stop when selection changes
   useEffect(() => {
     if (isPlaying) {
-      audioRef.current?.pause();
+      stopAllSynths();
       setIsPlaying(false);
       onAudioChange(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabledPlanets]);
 
-  const stopAudio = () => {
-    audioRef.current?.pause();
+  const stopChoir = async () => {
+    await stopAllSynths();
     setIsPlaying(false);
     onAudioChange(null);
   };
 
-  /**
-   * Build a descriptive prompt from the active planets and call
-   * generate-planet-sound for a solo, or generate-aspect-sound for 2+ planets.
-   * The resulting audio element is passed up via onAudioChange so the
-   * CosmicWaveform visualiser can react to it.
-   */
   const playChoir = async () => {
     if (isLoading) return;
-    if (isPlaying) { stopAudio(); return; }
+    if (isPlaying) { await stopChoir(); return; }
     if (activePlanets.length === 0) { setError('Select at least one planet'); return; }
 
     setError(null);
     setIsLoading(true);
 
     try {
-      let audioBlob: Blob;
-
-      if (activePlanets.length === 1) {
-        // ── Solo: use generate-planet-sound ─────────────────────
-        const planet = activePlanets[0];
-        const freq    = planet.qmData?.frequency_hz ?? 220;
-        const instrument = planet.qmData?.instrument ?? 'synthesizer';
-        const timbre  = planet.qmData?.timbre ?? 'warm';
-        const note    = planet.qmData?.note ?? '';
-        const element = planet.signData?.element ?? 'Cosmic';
-
-        const prompt = `Celestial solo for ${planet.position.name} in ${planet.position.sign}. ${note} at ${freq}Hz. ${instrument}, ${timbre} tone, ${element} element. Ambient cosmic resonance, 5 seconds.`.substring(0, 480);
-
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-planet-sound`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-          },
-          body: JSON.stringify({
-            planetName: planet.position.name,
-            prompt,
-          }),
-        });
-
-        if (!response.ok) {
-          const text = await response.text().catch(() => '');
-          const json = JSON.parse(text || '{}');
-          if (json.unavailable) {
-            setError('Audio generation temporarily unavailable — check your ElevenLabs credits');
-            return;
-          }
-          throw new Error(`HTTP ${response.status}: ${text.substring(0, 120)}`);
-        }
-
-        const contentType = response.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-          const json = await response.json();
-          if (json.unavailable) {
-            setError('Audio generation temporarily unavailable — check your ElevenLabs credits');
-          } else {
-            setError(json.error ?? 'Unknown error from server');
-          }
-          return;
-        }
-
-        audioBlob = await response.blob();
-
-      } else {
-        // ── Choir (2+): use generate-aspect-sound ───────────────
-        const planetDescriptions = activePlanets.map(p => {
-          const freq = p.qmData?.frequency_hz ?? 220;
-          const instrument = p.qmData?.instrument ?? 'synthesizer';
-          const timbre = p.qmData?.timbre ?? 'warm';
-          const note = p.qmData?.note ?? '';
-          return `${p.position.name}(${note} ${freq}Hz ${instrument} ${timbre})`;
-        }).join(', ');
-
-        const label = choirLabel.toLowerCase();
-        const prompt = `Celestial ${label} for ${reading.overallKey} key at ${reading.overallTempo}BPM. Planets: ${planetDescriptions}. Ambient space music, resonant harmonics, 5 seconds`.substring(0, 480);
-
-        const planet2Name = activePlanets[1]?.position.name ?? activePlanets[0]?.position.name ?? 'Moon';
-        const aspectMap: Record<string, string> = {
-          solo: 'solo-mix', duet: 'duet-mix', trio: 'trio-mix', choir: 'choir-mix',
-        };
-        const aspectName = aspectMap[label] ?? 'choir-mix';
-
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-aspect-sound`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-          },
-          body: JSON.stringify({
-            aspectName,
-            planet1: activePlanets[0]?.position.name ?? 'Sun',
-            planet2: planet2Name,
-            prompt,
-          }),
-        });
-
-        if (!response.ok) {
-          const text = await response.text().catch(() => '');
-          throw new Error(`HTTP ${response.status}: ${text.substring(0, 120)}`);
-        }
-
-        const contentType = response.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-          const json = await response.json();
-          if (json.unavailable) {
-            setError('Audio generation temporarily unavailable — check your ElevenLabs credits');
-          } else {
-            setError(json.error ?? 'Unknown error from server');
-          }
-          return;
-        }
-
-        audioBlob = await response.blob();
-      }
-
-      // ── Play the audio blob ──────────────────────────────────
-      if (audioBlob.size < 100) {
-        setError('Received empty audio — please try again');
-        return;
-      }
-
-      const url = URL.createObjectURL(audioBlob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
-
-      // Pass the audio element up so CosmicWaveform can connect to it
-      onAudioChange(audio);
-
-      await audio.play();
+      const planetNames = activePlanets.map(p => p.position.name);
+      await playPlanetChoir(reading, planetNames);
       setIsPlaying(true);
-
-      audio.onended = () => {
-        setIsPlaying(false);
-        onAudioChange(null);
-        URL.revokeObjectURL(url);
-      };
-
+      // Tone.js doesn't use HTMLAudioElement — pass null to clear waveform binding
+      onAudioChange(null);
     } catch (err) {
       console.error('PlanetChoirMixer error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate choir audio');
+      setError(err instanceof Error ? err.message : 'Failed to synthesize choir');
     } finally {
       setIsLoading(false);
     }
@@ -271,6 +271,7 @@ export const PlanetChoirMixer = ({
           const isEnabled = enabledPlanets.has(p.position.name);
           const element = p.signData?.element ?? '';
           const hue = ELEMENT_CONFIG[element]?.hue ?? 43;
+          const sp = PLANET_SYNTH[p.position.name];
           return (
             <motion.button
               key={p.position.name}
@@ -284,10 +285,7 @@ export const PlanetChoirMixer = ({
             >
               <span
                 className="text-lg flex-shrink-0 leading-none"
-                style={{
-                  color: isEnabled ? `hsl(${hue} 70% 65%)` : 'hsl(0 0% 35%)',
-                  transition: 'color 0.2s',
-                }}
+                style={{ color: isEnabled ? `hsl(${hue} 70% 65%)` : 'hsl(0 0% 35%)', transition: 'color 0.2s' }}
               >
                 {p.position.symbol}
               </span>
@@ -296,7 +294,7 @@ export const PlanetChoirMixer = ({
                   {p.position.name}
                 </p>
                 <p className="text-[10px] truncate" style={{ color: 'hsl(0 0% 50%)' }}>
-                  {element} · {p.qmData?.note ?? '—'}
+                  {element} · {sp?.role ?? '—'}
                 </p>
               </div>
             </motion.button>
@@ -316,7 +314,7 @@ export const PlanetChoirMixer = ({
             transition={{ duration: 1.2, repeat: Infinity }}
             style={{ color: 'hsl(43 74% 52%)' }}
           >
-            ♪ Playing
+            ♪ Live synthesis
           </motion.span>
         )}
       </div>
@@ -342,9 +340,7 @@ export const PlanetChoirMixer = ({
         disabled={isLoading || activePlanets.length === 0}
         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium tracking-wide transition-all duration-200 disabled:opacity-40"
         style={{
-          background: isPlaying
-            ? 'hsl(0 0% 12%)'
-            : 'hsl(43 74% 52% / 0.15)',
+          background: isPlaying ? 'hsl(0 0% 12%)' : 'hsl(43 74% 52% / 0.15)',
           border: `1px solid hsl(43 74% 52% / ${isPlaying ? '0.6' : '0.35'})`,
           color: 'hsl(43 74% 62%)',
         }}
@@ -357,15 +353,9 @@ export const PlanetChoirMixer = ({
             transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
           />
         ) : isPlaying ? (
-          <>
-            <VolumeX className="w-4 h-4" />
-            Stop
-          </>
+          <><VolumeX className="w-4 h-4" /> Stop</>
         ) : (
-          <>
-            <Volume2 className="w-4 h-4" />
-            Play {activePlanets.length === 1 ? 'Solo' : activePlanets.length === 2 ? 'Duet' : activePlanets.length === 3 ? 'Trio' : 'Choir'}
-          </>
+          <><Volume2 className="w-4 h-4" /> Play {activePlanets.length === 1 ? 'Solo' : activePlanets.length === 2 ? 'Duet' : activePlanets.length === 3 ? 'Trio' : 'Choir'}</>
         )}
       </button>
     </motion.div>
