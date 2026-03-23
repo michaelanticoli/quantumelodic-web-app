@@ -8,14 +8,13 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -65,18 +64,17 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Planetary colors
         cosmic: {
-          sun: "hsl(43 90% 55%)",
-          moon: "hsl(210 30% 80%)",
-          mercury: "hsl(186 60% 50%)",
-          venus: "hsl(140 50% 45%)",
-          mars: "hsl(0 70% 55%)",
-          jupiter: "hsl(35 70% 50%)",
-          saturn: "hsl(220 30% 40%)",
-          uranus: "hsl(180 70% 50%)",
-          neptune: "hsl(240 60% 55%)",
-          pluto: "hsl(280 50% 40%)",
+          sun: "hsl(43 92% 60%)",
+          moon: "hsl(210 35% 82%)",
+          mercury: "hsl(186 65% 55%)",
+          venus: "hsl(140 55% 50%)",
+          mars: "hsl(4 78% 60%)",
+          jupiter: "hsl(35 75% 55%)",
+          saturn: "hsl(220 32% 45%)",
+          uranus: "hsl(180 75% 55%)",
+          neptune: "hsl(245 65% 60%)",
+          pluto: "hsl(282 55% 45%)",
         },
       },
       borderRadius: {
@@ -106,8 +104,15 @@ export default {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(43 74% 52% / 0.3)" },
-          "50%": { boxShadow: "0 0 40px hsl(43 74% 52% / 0.6)" },
+          "0%, 100%": { boxShadow: "0 0 20px hsl(43 88% 58% / 0.3)" },
+          "50%": { boxShadow: "0 0 50px hsl(43 88% 58% / 0.65)" },
+        },
+        "rotate-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        "ping-slow": {
+          "75%, 100%": { transform: "scale(1.5)", opacity: "0" },
         },
       },
       animation: {
@@ -116,13 +121,19 @@ export default {
         "fade-in": "fade-in 0.5s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
         "slide-up": "slide-up 0.6s ease-out",
-        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 2.5s ease-in-out infinite",
+        "rotate-slow": "rotate-slow 25s linear infinite",
+        "ping-slow": "ping-slow 2s cubic-bezier(0,0,0.2,1) infinite",
       },
       backgroundImage: {
-        "cosmic-gradient": "linear-gradient(135deg, hsl(255 60% 15%) 0%, hsl(222 47% 6%) 50%, hsl(280 50% 12%) 100%)",
-        "celestial-gradient": "linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(255 50% 15%) 100%)",
-        "gold-gradient": "linear-gradient(135deg, hsl(43 74% 52%) 0%, hsl(35 80% 45%) 100%)",
-        "aurora-gradient": "linear-gradient(135deg, hsl(186 95% 48% / 0.2) 0%, hsl(291 64% 55% / 0.2) 50%, hsl(43 74% 52% / 0.2) 100%)",
+        "cosmic-gradient": "linear-gradient(135deg, hsl(262 55% 14%) 0%, hsl(228 35% 5%) 50%, hsl(292 40% 12%) 100%)",
+        "celestial-gradient": "linear-gradient(180deg, hsl(228 35% 6%) 0%, hsl(262 45% 12%) 100%)",
+        "gold-gradient": "linear-gradient(135deg, hsl(43 88% 58%) 0%, hsl(35 90% 50%) 100%)",
+        "aurora-gradient": "linear-gradient(135deg, hsl(180 90% 52% / 0.2) 0%, hsl(292 70% 62% / 0.2) 50%, hsl(43 88% 58% / 0.2) 100%)",
+        "card-gradient": "linear-gradient(135deg, hsl(228 30% 8% / 0.8) 0%, hsl(262 40% 10% / 0.6) 100%)",
+      },
+      backdropBlur: {
+        xs: "2px",
       },
     },
   },

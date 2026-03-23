@@ -22,28 +22,19 @@ const Index = () => {
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
 
-  // If we already have a reading in context, start in result state
   const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? 'result' : 'input');
 
   const {
-    loading,
-    error,
-    reading: hookReading,
-    audioSource: hookAudioSource,
-    progress,
-    stage,
-    generateReading,
-    reset: hookReset,
+    loading, error, reading: hookReading, audioSource: hookAudioSource,
+    progress, stage, generateReading, reset: hookReset,
   } = useCosmicReading();
 
-  // Use context reading if available, otherwise hook reading
   const reading = cosmicCtx.reading || hookReading;
   const audioUrl = cosmicCtx.audioUrl || null;
   const audioSource = cosmicCtx.audioSource || hookAudioSource;
 
   const handleFormSubmit = async (data: BirthData) => {
     setAppState('generating');
-    
     try {
       const result = await generateReading(data);
       if (result) {
@@ -52,19 +43,13 @@ const Index = () => {
       setAppState('result');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to generate your cosmic reading';
-      toast({
-        title: 'Error',
-        description: message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: message, variant: 'destructive' });
       setAppState('input');
     }
   };
 
   const handleGenerationComplete = () => {
-    if (!error) {
-      setAppState('result');
-    }
+    if (!error) setAppState('result');
   };
 
   const handleBack = () => {
@@ -75,8 +60,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <title>QuantumMelodies - Your Cosmic Symphony Awaits</title>
-      <meta name="description" content="Transform your birth chart into a unique musical composition. Discover your cosmic symphony through advanced astrological and harmonic principles." />
+      <title>QuantumMelodic — Your Cosmic Symphony</title>
+      <meta name="description" content="Transform your birth chart into a unique musical composition. Discover your cosmic symphony." />
 
       <CosmicBackground />
 
@@ -84,36 +69,74 @@ const Index = () => {
         {appState === 'input' && (
           <motion.main
             key="input"
-            className="relative z-10 min-h-screen flex flex-col items-center px-6 pt-12 pb-32"
+            className="relative z-10 min-h-screen flex flex-col items-center px-6 pt-10 pb-32"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.4 }}
           >
+            {/* Hero Header */}
             <motion.div
-              className="text-center mb-8"
-              initial={{ opacity: 0, y: -20 }}
+              className="text-center mb-6"
+              initial={{ opacity: 0, y: -24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
-              <h1 className="font-display text-3xl md:text-4xl font-light tracking-wide">
-                <span className="text-gold-gradient">Quantum</span>
-                <span className="text-foreground/90">Melodic</span>
+              {/* Sigil above title */}
+              <motion.div
+                className="flex items-center justify-center gap-3 mb-4"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.05 }}
+              >
+                <div className="h-px w-10 bg-gradient-to-r from-transparent to-primary/40" />
+                <span
+                  className="text-primary/70 text-sm"
+                  style={{ fontFamily: "'Noto Sans Symbols 2','Segoe UI Symbol','Apple Symbols',sans-serif" }}
+                >
+                  ✦
+                </span>
+                <div className="h-px w-10 bg-gradient-to-l from-transparent to-primary/40" />
+              </motion.div>
+
+              <h1 className="font-display font-semibold tracking-tight leading-none mb-2">
+                <span className="block text-4xl md:text-6xl text-gold-gradient">Quantum</span>
+                <span className="block text-4xl md:text-6xl text-foreground/85">Melodic</span>
               </h1>
-              <p className="text-muted-foreground text-xs tracking-widest uppercase mt-3">
+              <p className="font-serif italic text-muted-foreground/70 text-sm md:text-base tracking-wide mt-3">
                 Find yourself in the frequency
               </p>
             </motion.div>
 
+            {/* Zodiac Wheel */}
             <motion.div
-              className="mb-10"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+              className="mb-8"
+              initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 80, damping: 16 }}
             >
               <ZodiacWheel />
             </motion.div>
 
-            <BirthDataForm onSubmit={handleFormSubmit} isLoading={loading} />
+            {/* Form */}
+            <motion.div
+              className="w-full max-w-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <BirthDataForm onSubmit={handleFormSubmit} isLoading={loading} />
+            </motion.div>
+
+            {/* Subtle scroll hint */}
+            <motion.p
+              className="mt-8 text-[10px] text-muted-foreground/30 tracking-[0.3em] uppercase"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              Natal chart · Musical composition · Soul resonance
+            </motion.p>
           </motion.main>
         )}
 
@@ -129,12 +152,13 @@ const Index = () => {
         {appState === 'result' && reading && (
           <motion.main
             key="result"
-            className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pb-32"
-            initial={{ opacity: 0, scale: 0.95 }}
+            className="relative z-10 min-h-screen flex flex-col items-center px-4 pt-8 pb-32"
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
           >
-            <ResultsView 
-              name={reading.birthData.name} 
+            <ResultsView
+              name={reading.birthData.name}
               chartData={reading.chartData}
               musicalMode={reading.musicalMode}
               audioUrl={audioUrl ?? reading.audioUrl}
@@ -152,18 +176,12 @@ const Index = () => {
   );
 };
 
-// Results View Component
+// ─── Results View ──────────────────────────────────────────────
+
 interface ResultsViewProps {
   name: string;
   chartData: {
-    planets: Array<{
-      name: string;
-      symbol: string;
-      degree: number;
-      sign: string;
-      signNumber: number;
-      isRetrograde: boolean;
-    }>;
+    planets: Array<{ name: string; symbol: string; degree: number; sign: string; signNumber: number; isRetrograde: boolean }>;
     sunSign: string;
     moonSign: string;
     ascendant: string;
@@ -191,11 +209,9 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       audio.crossOrigin = 'anonymous';
       audioRef.current = audio;
       setAudioEl(audio);
-      
       audio.addEventListener('loadedmetadata', () => setDuration(audio.duration || 0));
       audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime || 0));
       audio.addEventListener('ended', () => { setIsPlaying(false); setCurrentTime(0); });
-
       return () => { audio.pause(); audioRef.current = null; setAudioEl(null); };
     }
   }, [audioUrl]);
@@ -206,45 +222,28 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
     setIsPlaying(!isPlaying);
   };
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
+  const formatTime = (t: number) => `${Math.floor(t / 60)}:${Math.floor(t % 60).toString().padStart(2, '0')}`;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleDownloadChart = async () => {
     setIsDownloading('chart');
-    try {
-      await downloadChartImage('chart-wheel-container', `${name.replace(/\s+/g, '-').toLowerCase()}-chart.png`);
-    } catch (e) {
-      console.error('Chart download failed:', e);
-    } finally {
-      setIsDownloading(null);
-    }
+    try { await downloadChartImage('chart-wheel-container', `${name.replace(/\s+/g, '-').toLowerCase()}-chart.png`); }
+    catch (e) { console.error(e); }
+    finally { setIsDownloading(null); }
   };
 
   const handleDownloadPdf = async () => {
     setIsDownloading('pdf');
-    try {
-      await downloadPdfReport(reading, 'chart-wheel-container');
-    } catch (e) {
-      console.error('PDF download failed:', e);
-    } finally {
-      setIsDownloading(null);
-    }
+    try { await downloadPdfReport(reading, 'chart-wheel-container'); }
+    catch (e) { console.error(e); }
+    finally { setIsDownloading(null); }
   };
 
   const handleDownloadMusic = async () => {
-    if (audioUrl) {
-      setIsDownloading('music');
-      try {
-        await downloadAudio(audioUrl, `${name.replace(/\s+/g, '-').toLowerCase()}-composition.mp3`);
-      } finally {
-        setIsDownloading(null);
-      }
-    }
+    if (!audioUrl) return;
+    setIsDownloading('music');
+    try { await downloadAudio(audioUrl, `${name.replace(/\s+/g, '-').toLowerCase()}-composition.mp3`); }
+    finally { setIsDownloading(null); }
   };
 
   const handleShare = async () => {
@@ -254,111 +253,115 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       url: 'https://quantumelodic.lovable.app',
     };
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-        // brief visual feedback handled via state
-        setIsDownloading('share-copied');
-        setTimeout(() => setIsDownloading(null), 2000);
-      }
-    } catch {
-      // user cancelled or clipboard unavailable — silently ignore
-    }
+      if (navigator.share) { await navigator.share(shareData); }
+      else { await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`); setIsDownloading('share-copied'); setTimeout(() => setIsDownloading(null), 2000); }
+    } catch {}
   };
 
   return (
-    <div className="text-center w-full max-w-2xl mx-auto">
-      {/* Back button */}
+    <div className="w-full max-w-2xl mx-auto">
+      {/* Back */}
       <motion.button
-        className="absolute top-6 left-6 text-muted-foreground hover:text-foreground transition-colors text-sm tracking-wide"
+        className="fixed top-5 left-5 z-50 text-muted-foreground/60 hover:text-foreground transition-colors text-sm tracking-wide flex items-center gap-1.5"
         onClick={onBack}
         whileHover={{ x: -2 }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.97 }}
       >
-        ‹ New Reading
+        <span className="text-lg leading-none">‹</span>
+        <span>New Reading</span>
       </motion.button>
 
-      {/* Zodiac wheel with real planetary positions */}
+      {/* Name + Sign header */}
+      <motion.div
+        className="text-center mb-4"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground leading-tight">
+          {name}
+        </h2>
+        <p className="text-xs tracking-[0.3em] text-primary/70 uppercase mt-1.5">
+          {chartData.sunSign} ☉ · {chartData.moonSign} ☽ · {musicalMode}
+        </p>
+        {chartData.source === 'approximate' && (
+          <p className="text-[10px] text-muted-foreground/40 mt-1 italic">approximate positions</p>
+        )}
+      </motion.div>
+
+      {/* Zodiac wheel */}
       <motion.div
         id="chart-wheel-container"
-        className="mb-4 flex justify-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-center mb-4"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
       >
         <ZodiacWheel planets={chartData.planets} animate={false} />
       </motion.div>
 
       {/* Aspect Legend */}
-      <div className="mb-6">
+      <div className="mb-5 px-2">
         <AspectLegend />
       </div>
 
-      {/* Track info */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+      {/* Explore button — prominent */}
+      <motion.button
+        className="w-full mb-6 py-3.5 rounded-xl border font-display font-medium tracking-wider text-sm uppercase transition-all duration-300"
+        style={{
+          borderColor: 'hsl(292 70% 62% / 0.4)',
+          color: 'hsl(292 70% 72%)',
+          background: 'hsl(292 70% 62% / 0.06)',
+        }}
+        onClick={onExplore}
+        whileHover={{ scale: 1.01, boxShadow: '0 0 20px hsl(292 70% 62% / 0.2)' }}
+        whileTap={{ scale: 0.99 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="font-display text-2xl font-light tracking-wide text-foreground mb-2">
-          Cosmic Symphony
-        </h2>
-        <p className="text-muted-foreground text-sm mb-2">
-          A unique composition for {name}
-        </p>
-        <p className="text-xs tracking-widest text-primary/80">
-          {chartData.sunSign} ☉ · {chartData.moonSign} ☽ · {musicalMode}
-        </p>
-        {chartData.source === 'approximate' && (
-          <p className="text-xs text-muted-foreground/50 mt-2 italic">
-            approximate positions
-          </p>
-        )}
-      </motion.div>
+        ✦ Explore Interactive Chart ✦
+      </motion.button>
 
       {/* Planet Details Table */}
-      <div className="my-6">
+      <div className="mb-6">
         <PlanetDetailsTable planets={chartData.planets} />
       </div>
 
-      {/* Explore Chart Button */}
-      <motion.button
-        className="mb-4 px-6 py-2 rounded-full border border-accent/40 text-accent text-xs tracking-widest uppercase hover:bg-accent/10 transition-all"
-        onClick={onExplore}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        Explore Full Chart
-      </motion.button>
-
-      {/* Audio Visualizer + Controls */}
+      {/* Audio Visualizer */}
       <motion.div
-        className="mt-8 w-full max-w-md mx-auto"
-        initial={{ opacity: 0, y: 20 }}
+        className="w-full"
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        {/* Cosmic Waveform Visualizer */}
-        <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-4" style={{ border: '1px solid hsl(43 74% 52% / 0.12)' }}>
+        <div
+          className="relative w-full h-36 rounded-2xl overflow-hidden mb-3"
+          style={{ border: '1px solid hsl(43 88% 58% / 0.14)' }}
+        >
           <CosmicWaveform
             audioElement={audioEl}
-            idleIntensity={isPlaying ? 0.8 : 0.3}
+            idleIntensity={isPlaying ? 0.85 : 0.28}
             palette={paletteFromSign(chartData.sunSign)}
           />
           {audioUrl && (
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
-                className="w-14 h-14 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10 flex items-center justify-center"
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.95 }}
+                className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
+                style={{
+                  background: 'hsl(228 35% 6% / 0.5)',
+                  border: '1px solid hsl(43 88% 58% / 0.3)',
+                  boxShadow: '0 0 20px hsl(43 88% 58% / 0.15)',
+                }}
+                whileHover={{ scale: 1.08, boxShadow: '0 0 30px hsl(43 88% 58% / 0.35)' }}
+                whileTap={{ scale: 0.93 }}
                 onClick={togglePlayPause}
               >
                 {isPlaying ? (
-                  <svg className="w-6 h-6 text-foreground" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                   </svg>
                 ) : (
-                  <svg className="w-6 h-6 text-foreground ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-primary ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -370,93 +373,97 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
         {audioUrl ? (
           <>
             {audioSource === 'procedural' && (
-              <p className="text-xs text-muted-foreground/50 tracking-wide mb-2 text-center">
-                ✦ Procedural synthesis from your chart
+              <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
+                Procedural synthesis · chart-derived frequencies
               </p>
             )}
-
-            <div className="w-full max-w-[280px] mx-auto">
-              <div className="h-1 bg-muted rounded-full overflow-hidden">
+            <div className="w-full max-w-xs mx-auto mb-2">
+              <div
+                className="h-0.5 rounded-full overflow-hidden cursor-pointer"
+                style={{ background: 'hsl(255 25% 18%)' }}
+                onClick={(e) => {
+                  if (!audioRef.current || !duration) return;
+                  const rect = (e.target as HTMLElement).getBoundingClientRect();
+                  audioRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+                }}
+              >
                 <motion.div
-                  className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
-                  style={{ width: `${progressPercent}%` }}
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${progressPercent}%`,
+                    background: 'linear-gradient(90deg, hsl(43 88% 58%), hsl(292 70% 62%))',
+                  }}
                 />
               </div>
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <div className="flex justify-between text-[10px] text-muted-foreground/40 mt-1">
                 <span>{formatTime(currentTime)}</span>
                 <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-center gap-8">
-              <button 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, currentTime - 10); }}
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                </svg>
+            <div className="flex items-center justify-center gap-8">
+              <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, currentTime - 10); }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
               </button>
-              <button 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(duration, currentTime + 10); }}
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                </svg>
+              <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(duration, currentTime + 10); }}>
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
               </button>
             </div>
           </>
         ) : (
-          <p className="text-xs text-muted-foreground/40 italic text-center">
-            Audio unavailable — explore your chart data below
+          <p className="text-[10px] text-muted-foreground/30 italic text-center">
+            Audio unavailable — explore your chart data above
           </p>
         )}
       </motion.div>
 
-      {/* Download Actions */}
+      {/* Actions row */}
       <motion.div
-        className="mt-8 flex flex-wrap items-center justify-center gap-3"
-        initial={{ opacity: 0, y: 20 }}
+        className="mt-6 grid grid-cols-3 gap-2"
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
         <button
           onClick={handleDownloadChart}
           disabled={!!isDownloading && isDownloading !== 'share-copied'}
-          className="px-5 py-2.5 rounded-full border border-primary/30 text-primary text-xs tracking-widest uppercase hover:bg-primary/10 transition-all disabled:opacity-50"
+          className="py-2.5 rounded-xl border border-primary/25 text-primary/80 text-[10px] tracking-widest uppercase hover:bg-primary/8 hover:border-primary/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === 'chart' ? '⏳ Saving…' : '⬇ Chart Image'}
+          {isDownloading === 'chart' ? '…' : '⬇ Chart'}
         </button>
         <button
           onClick={handleDownloadPdf}
           disabled={!!isDownloading && isDownloading !== 'share-copied'}
-          className="px-5 py-2.5 rounded-full border border-accent/30 text-accent text-xs tracking-widest uppercase hover:bg-accent/10 transition-all disabled:opacity-50"
+          className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === 'pdf' ? '⏳ Building…' : '⬇ PDF Report'}
+          {isDownloading === 'pdf' ? '…' : '⬇ Report'}
         </button>
-        {audioUrl && (
+        {audioUrl ? (
           <button
             onClick={handleDownloadMusic}
             disabled={!!isDownloading && isDownloading !== 'share-copied'}
-            className="px-5 py-2.5 rounded-full border border-foreground/20 text-foreground/80 text-xs tracking-widest uppercase hover:bg-foreground/5 transition-all disabled:opacity-50"
+            className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
           >
-            {isDownloading === 'music' ? '⏳ Saving…' : '⬇ Music'}
+            {isDownloading === 'music' ? '…' : '⬇ Music'}
           </button>
+        ) : (
+          <div />
         )}
       </motion.div>
 
-      {/* Share button */}
+      {/* Share */}
       <motion.button
-        className="mt-6 px-10 py-3 rounded-full border border-primary/40 text-primary text-sm tracking-widest uppercase hover:bg-primary/10 transition-all duration-300"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="mt-3 w-full py-3 rounded-xl border border-foreground/12 text-foreground/50 text-xs tracking-widest uppercase hover:border-foreground/25 hover:text-foreground/70 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
+        whileHover={{ scale: 1.005 }}
+        whileTap={{ scale: 0.998 }}
         onClick={handleShare}
       >
-        {isDownloading === 'share-copied' ? '✓ Copied!' : '↑ Share'}
+        {isDownloading === 'share-copied' ? '✓ Link Copied' : '↑ Share Your Symphony'}
       </motion.button>
     </div>
   );
