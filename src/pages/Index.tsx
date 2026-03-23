@@ -382,7 +382,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
             idleIntensity={isPlaying ? 0.85 : 0.28}
             palette={paletteFromSign(chartData.sunSign)}
           />
-          {audioUrl && (
+          {audioUrl && !audioError && (
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
                 className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
@@ -405,6 +405,11 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
                   </svg>
                 )}
               </motion.button>
+            </div>
+          )}
+          {audioError && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-[10px] text-destructive/60 tracking-wider">Audio unavailable</p>
             </div>
           )}
         </div>
