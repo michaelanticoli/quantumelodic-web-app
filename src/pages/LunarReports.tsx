@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, Flame, Droplets, Wind, Mountain, Calendar, Sparkles, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -6,23 +6,35 @@ import { BirthDataForm } from '@/components/BirthDataForm';
 import { generateReport, type LunarReport } from '@/lib/reportEngine';
 import { toast } from 'sonner';
 
+const SESSION_KEY = 'moontuner_lunar_report';
+
 const ELEMENT_ICONS: Record<string, typeof Flame> = {
   Fire: Flame, Earth: Mountain, Water: Droplets, Air: Wind,
 };
 
 const ELEMENT_COLORS: Record<string, string> = {
-  Fire: 'text-primary', Earth: 'text-highlight', Water: 'text-accent', Air: 'text-rose',
+  Fire: 'text-primary', Earth: 'text-highlight', Water: 'text-highlight', Air: 'text-foreground',
 };
 
 export default function LunarReports() {
-  const [report, setReport] = useState<LunarReport | null>(null);
+  const [report, setReport] = useState<LunarReport | null>(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [loading, setLoading] = useState(false);
+
+  const saveReport = useCallback((r: LunarReport) => {
+    setReport(r);
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(r)); } catch {}
+  }, []);
 
   const handleSubmit = async (data: { name: string; date: string; time: string; location: string }) => {
     setLoading(true);
     try {
       const result = await generateReport(data.date, data.time || '12:00', data.location);
-      setReport(result);
+      saveReport(result);
       toast.success('Your Lunar Report is ready');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate report');
@@ -207,8 +219,8 @@ export default function LunarReports() {
               {/* Reset */}
               <div className="text-center pt-4 pb-8">
                 <button
-                  onClick={() => setReport(null)}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
+                  onClick={() => { setReport(null); sessionStorage.removeItem(SESSION_KEY); }}
+                  className="text-xs text-muted-foreground hover:text-highlight transition-colors underline underline-offset-4"
                 >
                   Generate another report
                 </button>
