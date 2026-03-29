@@ -52,6 +52,7 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/academy" element={<Academy />} />
+                <Route path="/lunar-reports" element={<LunarReports />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <PixelPerfectOverlay 
