@@ -59,7 +59,7 @@ const Academy = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <title>Academy of Astro-Musicology - QuantumMelodic</title>
+      <title>Academy of Astro-Musicology — MoonTuner</title>
       <meta name="description" content="Unlock the Academy of Astro-Musicology — immersive courses on planetary harmonics, zodiacal modes, and cosmic composition." />
       <CosmicBackground />
 

@@ -60,8 +60,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <title>QuantumMelodic — Your Cosmic Symphony</title>
-      <meta name="description" content="Transform your birth chart into a unique musical composition. Discover your cosmic symphony." />
+      <title>MoonTuner — Your Cosmic Symphony</title>
+      <meta name="description" content="MoonTuner transforms your birth chart into a unique musical composition. Discover your cosmic symphony." />
 
       <CosmicBackground />
 
@@ -100,8 +100,8 @@ const Index = () => {
               </motion.div>
 
               <h1 className="font-display font-semibold tracking-tight leading-none mb-2">
-                <span className="block text-4xl md:text-6xl text-gold-gradient">Quantum</span>
-                <span className="block text-4xl md:text-6xl text-foreground/85">Melodic</span>
+                <span className="block text-4xl md:text-6xl text-gold-gradient">Moon</span>
+                <span className="block text-4xl md:text-6xl text-foreground/85">Tuner</span>
               </h1>
               <p className="font-serif italic text-muted-foreground/70 text-sm md:text-base tracking-wide mt-3">
                 Find yourself in the frequency
@@ -287,8 +287,8 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
 
   const handleShare = async () => {
     const shareData = {
-      title: 'QuantumMelodic — My Cosmic Symphony',
-      text: `✨ My cosmic chart has been translated into music! Check out QuantumMelodic to discover yours.`,
+      title: 'MoonTuner — My Cosmic Symphony',
+      text: `✨ My cosmic chart has been translated into music! Check out MoonTuner to discover yours.`,
       url: 'https://quantumelodic.lovable.app',
     };
     try {

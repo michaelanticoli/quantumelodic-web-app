@@ -9,7 +9,7 @@ const Learn = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <title>Learning Center — Quantumelodic</title>
+      <title>Learning Center — MoonTuner</title>
       <meta name="description" content="Explore the Quantum Vibrations mini-course — harmonizing astrology, music, and the resonant mind." />
 
       <CosmicBackground />

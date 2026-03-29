@@ -14,7 +14,7 @@ const About = () => {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
-      <title>What is Quantumelodics? — The Cosmic Symphony</title>
+      <title>What is Quantumelodics? — MoonTuner</title>
       <meta name="description" content="Discover the Quantumelodic System — a fusion of astrology, music, and science that translates your birth chart into a unique musical composition." />
 
       <CosmicBackground />
