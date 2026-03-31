@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { CosmicReading } from '@/types/astrology';
+import { chartToScore } from '@/utils/chartToScore';
+import { renderScoreToAudioUrl } from '@/utils/tonePlayer';
 
 type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
 
@@ -9,6 +11,7 @@ interface CosmicReadingContextValue {
   reading: CosmicReading | null;
   audioSource: AudioSource;
   audioUrl: string | null;
+  audioReady: boolean;
   setReadingData: (reading: CosmicReading, audioUrl: string | null, audioSource: AudioSource) => void;
   clearReading: () => void;
 }
@@ -17,7 +20,6 @@ const CosmicReadingContext = createContext<CosmicReadingContextValue | null>(nul
 
 function saveToSession(reading: CosmicReading, audioSource: AudioSource) {
   try {
-    // We can't persist blob URLs, so we save everything except audioUrl
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ reading, audioSource }));
   } catch {}
 }
@@ -36,18 +38,30 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
   const [reading, setReading] = useState<CosmicReading | null>(null);
   const [audioSource, setAudioSource] = useState<AudioSource>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
 
-  // Hydrate from sessionStorage on mount
+  // Hydrate from sessionStorage on mount, then re-render audio from chart data
   useEffect(() => {
     const saved = loadFromSession();
     if (saved) {
       setReading(saved.reading);
       setAudioSource(saved.audioSource);
-      // audioUrl (blob) can't be restored — user can re-generate audio
-      setAudioUrl(saved.reading.audioUrl ?? null);
+      // Re-render audio from chart data (blob URLs don't survive navigation)
+      if (saved.reading.chartData && saved.audioSource === 'tone') {
+        const score = chartToScore(saved.reading.chartData);
+        renderScoreToAudioUrl(score)
+          .then((url) => {
+            setAudioUrl(url);
+            setAudioReady(true);
+          })
+          .catch(() => {
+            setAudioUrl(null);
+            setAudioReady(true);
+          });
+      } else {
+        setAudioReady(true);
+      }
     }
-    setHydrated(true);
   }, []);
 
   const setReadingData = useCallback(
@@ -55,6 +69,7 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
       setReading(r);
       setAudioUrl(url);
       setAudioSource(source);
+      setAudioReady(true);
       saveToSession(r, source);
     },
     [],
@@ -65,11 +80,12 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
     setReading(null);
     setAudioUrl(null);
     setAudioSource(null);
+    setAudioReady(false);
     sessionStorage.removeItem(SESSION_KEY);
   }, [audioUrl]);
 
   return (
-    <CosmicReadingContext.Provider value={{ reading, audioSource, audioUrl, setReadingData, clearReading }}>
+    <CosmicReadingContext.Provider value={{ reading, audioSource, audioUrl, audioReady, setReadingData, clearReading }}>
       {children}
     </CosmicReadingContext.Provider>
   );
