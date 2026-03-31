@@ -116,7 +116,7 @@ export async function downloadPdfReport(
   // ── Page 1: Cover + chart image ──
   pdf.setFontSize(28);
   pdf.setTextColor(212, 175, 55);
-  pdf.text('QuantumMelodic', W / 2, y + 10, { align: 'center' });
+  pdf.text('MoonTuner', W / 2, y + 10, { align: 'center' });
 
   pdf.setFontSize(11);
   pdf.setTextColor(160, 160, 180);
