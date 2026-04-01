@@ -109,20 +109,51 @@ function validateRequest(data: unknown): { valid: true; data: RequestBody } | { 
   };
 }
 
+// ── Translation table name fallback lists ─────────────────────────────────────
+// Tried in order; the first table that returns rows is used.
+const SIGN_TABLE_NAMES   = ['qm_signs',   'zodiac_signs', 'zodiac signs'] as const;
+const PLANET_TABLE_NAMES = ['qm_planets', 'planets']                      as const;
+const ASPECT_TABLE_NAMES = ['qm_aspects', 'aspects']                      as const;
+
 // ── Supabase REST helper ──────────────────────────────────────────────────────
 
-async function fetchQMTable<T>(supabaseUrl: string, supabaseKey: string, table: string): Promise<T[]> {
-  const res = await fetch(`${supabaseUrl}/rest/v1/${table}?select=*`, {
+/** Fetch all rows from a single table name (URL-encodes the name). */
+async function fetchTableByName<T>(supabaseUrl: string, supabaseKey: string, table: string): Promise<T[]> {
+  const res = await fetch(`${supabaseUrl}/rest/v1/${encodeURIComponent(table)}?select=*`, {
     headers: {
       'apikey': supabaseKey,
       'Authorization': `Bearer ${supabaseKey}`,
     },
   });
   if (!res.ok) {
-    console.warn(`Failed to fetch ${table}:`, res.status);
+    console.warn(`Failed to fetch '${table}':`, res.status);
     return [];
   }
   return res.json() as Promise<T[]>;
+}
+
+/**
+ * Try each table name in order and return the first non-empty result.
+ * Returns { data, tableUsed } so callers can log which name worked.
+ */
+async function fetchTableWithFallback<T>(
+  supabaseUrl: string,
+  supabaseKey: string,
+  tableNames: string[],
+): Promise<{ data: T[]; tableUsed: string | null }> {
+  for (const table of tableNames) {
+    try {
+      const data = await fetchTableByName<T>(supabaseUrl, supabaseKey, table);
+      if (data.length > 0) {
+        console.log(`Fetched ${data.length} rows from table '${table}'`);
+        return { data, tableUsed: table };
+      }
+      console.log(`Table '${table}' returned 0 rows, trying next fallback...`);
+    } catch (e) {
+      console.warn(`Error fetching table '${table}':`, e);
+    }
+  }
+  return { data: [], tableUsed: null };
 }
 
 // ── Aspect calculator ─────────────────────────────────────────────────────────
@@ -319,21 +350,33 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
 
     let prompt: string;
+    // Track which data source was used for the X-QM-Enhanced response header
+    let promptSource: 'qm-tables' | 'fallback-tables' | 'fallback-prompt' = 'fallback-prompt';
 
     if (supabaseUrl && supabaseKey) {
       try {
-        console.log('Fetching QuantumMelodic translation tables...');
-        const [qmSigns, qmPlanets, qmAspects] = await Promise.all([
-          fetchQMTable<QMSign>(supabaseUrl, supabaseKey, 'qm_signs'),
-          fetchQMTable<QMPlanet>(supabaseUrl, supabaseKey, 'qm_planets'),
-          fetchQMTable<QMAspect>(supabaseUrl, supabaseKey, 'qm_aspects'),
+        console.log('Fetching QuantumMelodic translation tables (with fallbacks)...');
+        // Try qm_* tables first; if empty, try the user's actual table names.
+        // "zodiac signs" (with space) is URL-encoded automatically by fetchTableByName.
+        const [signsResult, planetsResult, aspectsResult] = await Promise.all([
+          fetchTableWithFallback<QMSign>(supabaseUrl, supabaseKey, [...SIGN_TABLE_NAMES]),
+          fetchTableWithFallback<QMPlanet>(supabaseUrl, supabaseKey, [...PLANET_TABLE_NAMES]),
+          fetchTableWithFallback<QMAspect>(supabaseUrl, supabaseKey, [...ASPECT_TABLE_NAMES]),
         ]);
+
+        const qmSigns = signsResult.data;
+        const qmPlanets = planetsResult.data;
+        const qmAspects = aspectsResult.data;
 
         if (qmSigns.length > 0 && qmPlanets.length > 0) {
           prompt = buildQMPrompt(validation.data, qmSigns, qmPlanets, qmAspects);
-          console.log('Built QuantumMelodic prompt. Length:', prompt.length);
+          // Determine if we used the primary qm_* tables or the fallback names
+          const usedPrimary =
+            signsResult.tableUsed === 'qm_signs' && planetsResult.tableUsed === 'qm_planets';
+          promptSource = usedPrimary ? 'qm-tables' : 'fallback-tables';
+          console.log(`Built QuantumMelodic prompt via ${promptSource}. Length:`, prompt.length);
         } else {
-          console.warn('QM tables empty — using fallback prompt');
+          console.warn('All sign/planet table attempts returned 0 rows — using fallback prompt');
           prompt = buildFallbackPrompt(sunSign, moonSign);
         }
       } catch (dbErr) {
@@ -396,7 +439,7 @@ serve(async (req) => {
         'X-Sun-Sign': sunSign,
         'X-Moon-Sign': moonSign,
         'X-Mode': modeForHeader,
-        'X-QM-Enhanced': supabaseUrl ? 'true' : 'false',
+        'X-QM-Enhanced': promptSource,
       },
     });
 
