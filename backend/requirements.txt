@@ -1,0 +1,24 @@
+# Quantumelodic backend Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Web framework
+flask>=3.0.3
+flask-cors>=4.0.1
+
+# WSGI server (production)
+gunicorn>=22.0.0
+
+# Stripe payments
+stripe>=10.12.0
+
+# HTTP client (used by email_service Mailgun provider)
+requests>=2.32.3
+
+# Swiss Ephemeris for accurate planetary calculations
+# Optional – the engines fall back to stub calculations if not installed
+# Uncomment if you need professional-grade ephemeris accuracy:
+# pyswisseph>=2.10.3.2
+
+# Email providers (install the one you use)
+# sendgrid>=6.11.0     # for SendGrid
+# mailchimp3>=3.0.21   # for Mailchimp (transactional via Mandrill)
