@@ -154,7 +154,38 @@ The `backend/Procfile` already contains the gunicorn start command for Heroku/Re
 
 ---
 
-## What technologies are used?
+## Supabase Edge Functions & ElevenLabs Music Generation
+
+The main song generation path calls the `generate-music` Supabase Edge Function, which contacts the ElevenLabs Music API and returns `audio/mpeg`. If ElevenLabs is unavailable or unconfigured, the frontend falls back to a local Tone.js offline render.
+
+### Required Supabase Edge Function Secrets
+
+In your **Supabase Dashboard → Project Settings → Edge Functions → Secrets**, add:
+
+| Secret name | Description |
+|-------------|-------------|
+| `ELEVENLABS_API_KEY` | Your ElevenLabs API key. Without this the function returns `{"unavailable":true}` and the app falls back to Tone.js. |
+
+### Required Supabase Database Tables (for personalised prompts)
+
+The `generate-music` function builds a rich, chart-specific music prompt by reading the QuantumMelodic translation tables. It tries the following table names **in order**, using the first that has rows:
+
+| Data | Primary (preferred) | Fallback 1 | Fallback 2 |
+|------|---------------------|------------|------------|
+| Zodiac sign data | `qm_signs` | `zodiac_signs` | `zodiac signs` *(space in name, not recommended)* |
+| Planet data | `qm_planets` | `planets` | — |
+| Aspect data | `qm_aspects` | `aspects` | — |
+
+**Recommendation:** rename your existing `zodiac signs` table to `zodiac_signs` to avoid the space in the identifier. The function will then pick it up automatically as a fallback.
+
+The `X-QM-Enhanced` response header from the edge function indicates which data source was used:
+- `qm-tables` — primary `qm_*` tables used (full personalisation)
+- `fallback-tables` — fallback table names used (full personalisation)
+- `fallback-prompt` — no table data found; generic sun/moon fallback prompt used
+
+---
+
+
 
 ### Frontend
 - [Vite](https://vitejs.dev/) + [React](https://react.dev/) + TypeScript

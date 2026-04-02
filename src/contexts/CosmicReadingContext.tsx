@@ -46,10 +46,17 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
     if (saved) {
       setReading(saved.reading);
       setAudioSource(saved.audioSource);
-      // Re-render audio from chart data (blob URLs don't survive navigation)
+      // Re-render audio from chart data (blob URLs don't survive navigation).
+      // Only attempt Tone.js re-render for 'tone' source; for 'elevenlabs' the
+      // blob URL is gone and we accept no audio rather than re-calling the API.
       if (saved.reading.chartData && saved.audioSource === 'tone') {
         const score = chartToScore(saved.reading.chartData);
-        renderScoreToAudioUrl(score)
+        // Race against a timeout so Safari can't hang indefinitely on hydration
+        const renderPromise = renderScoreToAudioUrl(score);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Tone.js hydration render timed out')), 45_000)
+        );
+        Promise.race([renderPromise, timeoutPromise])
           .then((url) => {
             setAudioUrl(url);
             setAudioReady(true);
