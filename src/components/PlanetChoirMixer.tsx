@@ -46,10 +46,10 @@ async function stopAllSynths() {
     for (const chorus of activeSynthsRef.choruses) { chorus.dispose(); }
     for (const reverb of activeSynthsRef.reverbs) { reverb.dispose(); }
   } catch {
+    Tone.getTransport().cancel();
+  } finally {
     activeSynthsRef = null;
-    return;
   }
-  activeSynthsRef = null;
 }
 
 function noteNameToMidi(name: NoteName, octave: number): number {
