@@ -33,18 +33,18 @@ interface SignMusic {
 }
 
 export const SIGN_MUSIC: Record<string, SignMusic> = {
-  Aries:       { root: 'A',  mode: 'Phrygian',   tempo: 132, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.85 },
+  Aries:       { root: 'A',  mode: 'Phrygian',   tempo: 140, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.85 },
   Taurus:      { root: 'F',  mode: 'Ionian',      tempo: 72,  element: 'Earth', texture: 'sparse',   rhythmicDensity: 0.35 },
   Gemini:      { root: 'G',  mode: 'Mixolydian',  tempo: 120, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.65 },
-  Cancer:      { root: 'A',  mode: 'Aeolian',     tempo: 76,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.30 },
-  Leo:         { root: 'D',  mode: 'Lydian',      tempo: 104, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.72 },
-  Virgo:       { root: 'D',  mode: 'Dorian',      tempo: 92,  element: 'Earth', texture: 'moderate', rhythmicDensity: 0.55 },
-  Libra:       { root: 'A#', mode: 'Ionian',      tempo: 96,  element: 'Air',   texture: 'moderate', rhythmicDensity: 0.50 },
-  Scorpio:     { root: 'B',  mode: 'Locrian',     tempo: 80,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.40 },
-  Sagittarius: { root: 'E',  mode: 'Mixolydian',  tempo: 126, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.78 },
+  Cancer:      { root: 'A',  mode: 'Aeolian',     tempo: 66,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.30 },
+  Leo:         { root: 'D',  mode: 'Lydian',      tempo: 108, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.72 },
+  Virgo:       { root: 'D',  mode: 'Dorian',      tempo: 96,  element: 'Earth', texture: 'moderate', rhythmicDensity: 0.55 },
+  Libra:       { root: 'A#', mode: 'Ionian',      tempo: 88,  element: 'Air',   texture: 'moderate', rhythmicDensity: 0.50 },
+  Scorpio:     { root: 'B',  mode: 'Locrian',     tempo: 76,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.40 },
+  Sagittarius: { root: 'E',  mode: 'Mixolydian',  tempo: 132, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.78 },
   Capricorn:   { root: 'C',  mode: 'Dorian',      tempo: 84,  element: 'Earth', texture: 'sparse',   rhythmicDensity: 0.42 },
-  Aquarius:    { root: 'F#', mode: 'Lydian',      tempo: 110, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.60 },
-  Pisces:      { root: 'E',  mode: 'Phrygian',    tempo: 78,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.28 },
+  Aquarius:    { root: 'F#', mode: 'Lydian',      tempo: 116, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.60 },
+  Pisces:      { root: 'E',  mode: 'Phrygian',    tempo: 60,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.28 },
 };
 
 // ─── Planet → Synth parameters ────────────────────────────────────────────

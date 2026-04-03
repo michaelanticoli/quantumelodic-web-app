@@ -82,8 +82,6 @@ export const InteractiveZodiacWheel = ({
     const a2 = degToAngle(endDeg);
     const x1o = cx + Math.cos(a1) * r2, y1o = cy + Math.sin(a1) * r2;
     const x2o = cx + Math.cos(a2) * r2, y2o = cy + Math.sin(a2) * r2;
-    const x1i = cx + Math.cos(a1) * r1, y1i = cy + Math.sin(a1) * r1;
-    const x2i = cx + Math.cos(a2) * r2, y2i = cy + Math.sin(a2) * r2;
     // CCW arc (signs go counter-clockwise)
     const sweep = 0;
     return [

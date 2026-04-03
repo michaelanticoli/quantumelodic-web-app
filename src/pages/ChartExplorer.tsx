@@ -43,7 +43,7 @@ const ChartExplorer = () => {
   // Choir audio element state — lifted so CosmicWaveform can react to it
   const [choirAudio, setChoirAudio] = useState<HTMLAudioElement | null>(null);
 
-  const { error, dataReady, buildReading } = useQuantumMelodicData();
+  const { error, dataReady, buildReading, getSignData } = useQuantumMelodicData();
   const [reading, setReading] = useState<QuantumMelodicReading | null>(null);
   const readingBuilt = useRef(false);
 
@@ -325,7 +325,9 @@ const ChartExplorer = () => {
         {selectedSign && (
           <ZodiacSignDetailPanel
             signName={selectedSign}
-            signData={reading?.planets.find(p => p.position.sign === selectedSign)?.signData ?? null}
+            signData={getSignData(selectedSign)}
+            isDataReady={dataReady}
+            dataError={error}
             onClose={handleClose}
           />
         )}

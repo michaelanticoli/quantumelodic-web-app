@@ -45,8 +45,11 @@ async function stopAllSynths() {
     for (const synth of activeSynthsRef.synths) { synth.releaseAll(); synth.dispose(); }
     for (const chorus of activeSynthsRef.choruses) { chorus.dispose(); }
     for (const reverb of activeSynthsRef.reverbs) { reverb.dispose(); }
-  } catch {}
-  activeSynthsRef = null;
+  } catch {
+    return;
+  } finally {
+    activeSynthsRef = null;
+  }
 }
 
 function noteNameToMidi(name: NoteName, octave: number): number {
@@ -74,6 +77,7 @@ async function playPlanetChoir(
   const reverbs: Tone.Reverb[] = [];
   const choruses: Tone.Chorus[] = [];
   const parts: Tone.Part[] = [];
+  const reverbGenerationTasks: Promise<void>[] = [];
 
   for (const planetName of activePlanetNames) {
     const planetData = reading.planets.find(p => p.position.name === planetName);
@@ -95,7 +99,7 @@ async function playPlanetChoir(
 
     // Reverb
     const reverb = new Tone.Reverb({ decay: 3 + synthParams.reverbWet * 5, wet: synthParams.reverbWet }).toDestination();
-    await reverb.generate();
+    reverbGenerationTasks.push(reverb.generate());
 
     // Chorus
     const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.5, wet: synthParams.chorusWet }).connect(reverb);
@@ -155,6 +159,7 @@ async function playPlanetChoir(
     parts.push(part);
   }
 
+  await Promise.all(reverbGenerationTasks);
   activeSynthsRef = { synths, reverbs, choruses, transport, parts };
   transport.start();
 }

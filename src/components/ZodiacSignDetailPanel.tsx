@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, Volume2, VolumeX, Music } from 'lucide-react';
 import type { QMSign } from '@/types/quantumMelodic';
 import { Button } from '@/components/ui/button';
 import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+import { requestGeneratedSound } from '@/lib/supabaseSound';
 
 const ZODIAC_SYMBOLS: Record<string, string> = {
   Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
@@ -42,14 +40,18 @@ const ELEMENT_EMOJI: Record<string, string> = {
 interface Props {
   signName: string;
   signData: QMSign | null;
+  isDataReady: boolean;
+  dataError: string | null;
   onClose: () => void;
 }
 
-export const ZodiacSignDetailPanel = ({ signName, signData, onClose }: Props) => {
+export const ZodiacSignDetailPanel = ({ signName, signData, isDataReady, dataError, onClose }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
 
   const symbol = ZODIAC_SYMBOLS[signName] ?? '✦';
   const element = signData?.element ?? 'Fire';
@@ -57,65 +59,59 @@ export const ZodiacSignDetailPanel = ({ signName, signData, onClose }: Props) =>
   const elemBg = ELEMENT_BG[element] ?? ELEMENT_BG.Fire;
   const elemBorder = ELEMENT_BORDER[element] ?? ELEMENT_BORDER.Fire;
 
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
+  const cleanupAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+    setIsPlaying(false);
+    setAudioElement(null);
   }, []);
+
+  useEffect(() => {
+    return cleanupAudio;
+  }, [cleanupAudio]);
 
   const playSignSound = async () => {
     if (isLoading) return;
 
     if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-      setAudioElement(null);
+      cleanupAudio();
       return;
     }
 
-    if (!signData) return;
+    if (!signData) {
+      setAudioError(dataError ?? `${signName} sound data is unavailable right now.`);
+      return;
+    }
+
+    setAudioError(null);
     setIsLoading(true);
 
     try {
-      // Map sign to a planet name for the endpoint (use Sun as proxy for sign-based sound)
       const prompt = `${signData.musical_mode} mode in ${signData.key_signature}, ${signData.tempo_bpm} BPM, ${signData.texture} texture, ${signData.emotional_quality}, ${element} element, ambient cosmic music, 5 seconds`;
-
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-planet-sound`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-        },
-        body: JSON.stringify({
-          planetName: 'Sun', // closest valid planet for the endpoint
-          prompt,
-        }),
+      const blob = await requestGeneratedSound({
+        planetName: 'Sun',
+        prompt,
       });
 
-      if (!response.ok) throw new Error('Failed to generate sound');
-
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('audio/')) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        setAudioElement(audio);
-        audio.play();
-        setIsPlaying(true);
-
-        audio.onended = () => {
-          setIsPlaying(false);
-          setAudioElement(null);
-          URL.revokeObjectURL(url);
-        };
-      }
+      cleanupAudio();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audioUrlRef.current = url;
+      setAudioElement(audio);
+      audio.onended = cleanupAudio;
+      await audio.play();
+      setIsPlaying(true);
     } catch (err) {
       console.error('Error playing sign sound:', err);
+      cleanupAudio();
+      setAudioError(err instanceof Error ? err.message : 'Unable to play this sign right now.');
     } finally {
       setIsLoading(false);
     }
@@ -251,7 +247,7 @@ export const ZodiacSignDetailPanel = ({ signName, signData, onClose }: Props) =>
                   size="lg"
                   className="w-full"
                   onClick={playSignSound}
-                  disabled={isLoading}
+                  disabled={isLoading || !signData}
                   style={!isLoading ? { borderColor: elemBorder } : undefined}
                 >
                   {isLoading ? (
@@ -269,9 +265,17 @@ export const ZodiacSignDetailPanel = ({ signName, signData, onClose }: Props) =>
                 <p className="text-xs text-center text-muted-foreground/60 mt-2">
                   {signData.musical_mode} in {signData.key_signature} at {signData.tempo_bpm} BPM
                 </p>
+                {audioError && (
+                  <p className="text-xs text-center text-destructive mt-2">{audioError}</p>
+                )}
               </section>
             </>
-          ) : (
+          ) : dataError ? (
+            <div className="py-12 text-center space-y-3">
+              <p className="text-sm text-destructive">{dataError}</p>
+              <p className="text-xs text-muted-foreground">Sign details could not be loaded.</p>
+            </div>
+          ) : !isDataReady ? (
             <div className="py-12 text-center">
               <motion.div
                 className="w-8 h-8 border border-primary/60 border-t-transparent rounded-full mx-auto"
@@ -279,6 +283,13 @@ export const ZodiacSignDetailPanel = ({ signName, signData, onClose }: Props) =>
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               />
               <p className="text-sm text-muted-foreground mt-3">Loading {signName} data…</p>
+            </div>
+          ) : (
+            <div className="py-12 text-center space-y-3">
+              <p className="text-sm text-foreground">{signName} details are unavailable.</p>
+              <p className="text-xs text-muted-foreground">
+                We could not resolve the musical profile for this sign.
+              </p>
             </div>
           )}
         </div>
