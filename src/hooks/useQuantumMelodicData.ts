@@ -17,12 +17,21 @@ export function useQuantumMelodicData() {
 
   useEffect(() => {
     async function fetchData() {
+      let timeoutId: number | undefined;
+
       try {
-        const [planetsRes, signsRes, aspectsRes, housesRes] = await Promise.all([
-          supabase.from('qm_planets').select('*'),
-          supabase.from('qm_signs').select('*'),
-          supabase.from('qm_aspects').select('*'),
-          supabase.from('qm_houses').select('*').order('number'),
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = window.setTimeout(() => reject(new Error('QuantumMelodic data load timed out')), 15_000);
+        });
+
+        const [planetsRes, signsRes, aspectsRes, housesRes] = await Promise.race([
+          Promise.all([
+            supabase.from('qm_planets').select('*'),
+            supabase.from('qm_signs').select('*'),
+            supabase.from('qm_aspects').select('*'),
+            supabase.from('qm_houses').select('*').order('number'),
+          ]),
+          timeoutPromise,
         ]);
 
         if (planetsRes.error) throw planetsRes.error;
@@ -40,6 +49,9 @@ export function useQuantumMelodicData() {
         console.error('Error fetching QM data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load QuantumMelodic data');
       } finally {
+        if (timeoutId !== undefined) {
+          window.clearTimeout(timeoutId);
+        }
         setLoading(false);
       }
     }
@@ -76,6 +88,10 @@ export function useQuantumMelodicData() {
     }
     return computed;
   }, []); // stable – reads from ref
+
+  const getSignData = useCallback((signName: string): QMSign | null => {
+    return signsRef.current.find(sign => sign.name === signName) ?? null;
+  }, []);
 
   // Stable – reads from refs
   const buildReading = useCallback((chartPlanets: PlanetPosition[]): QuantumMelodicReading | null => {
@@ -122,5 +138,5 @@ export function useQuantumMelodicData() {
     return { planets: enrichedPlanets, aspects: computedAspects, dominantElement, dominantModality, overallKey, overallTempo: Math.round(avgTempo) };
   }, [calculateAspects, getHouseNumber]); // stable – only depends on other stable callbacks
 
-  return { loading, error, dataReady, calculateAspects, getHouseNumber, buildReading };
+  return { loading, error, dataReady, calculateAspects, getHouseNumber, getSignData, buildReading };
 }

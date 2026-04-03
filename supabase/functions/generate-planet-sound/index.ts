@@ -52,7 +52,7 @@ serve(async (req) => {
       console.error('ELEVENLABS_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Sound generation is currently unavailable', unavailable: true }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -90,6 +90,7 @@ serve(async (req) => {
         duration_seconds: 5,
         prompt_influence: 0.5,
       }),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) {
@@ -101,7 +102,7 @@ serve(async (req) => {
             error: 'Sound generation temporarily unavailable',
             unavailable: true
           }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -126,7 +127,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error generating planet sound:', error);
     return new Response(
-      JSON.stringify({ error: 'Unable to generate sound. Please try again later.' }),
+      JSON.stringify({
+        error: error instanceof DOMException && error.name === 'TimeoutError'
+          ? 'Sound generation timed out. Please try again.'
+          : 'Unable to generate sound. Please try again later.'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
