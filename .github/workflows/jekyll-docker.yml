@@ -1,4 +1,4 @@
-name: Jekyll site CI
+name: CI
 
 on:
   push:
@@ -6,15 +6,52 @@ on:
   pull_request:
     branches: [ "main" ]
 
-jobs:
-  build:
+permissions:
+  contents: read
 
+jobs:
+  backend:
+    name: Backend – lint & smoke-test
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the site in the jekyll/builder container
-      run: |
-        docker run \
-        -v ${{ github.workspace }}:/srv/jekyll -v ${{ github.workspace }}/_site:/srv/jekyll/_site \
-        jekyll/builder:latest /bin/bash -c "chmod -R 777 /srv/jekyll && jekyll build --future"
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Smoke-test – import Flask app factory
+        run: |
+          PYTHONPATH=backend python - <<'EOF'
+          from api.main import create_app
+          app = create_app()
+          assert app is not None, "create_app() returned None"
+          print("Flask app factory OK")
+          EOF
+
+  frontend:
+    name: Frontend – lint & build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build

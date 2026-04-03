@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import sys
 
@@ -189,7 +190,6 @@ def create_app() -> Flask:
             # Ratio between the two frequencies
             ratio = freq2 / freq1 if freq1 else 1.0
             # Cents difference
-            import math
             cents = 1200 * math.log2(ratio) if ratio > 0 else 0
 
             return jsonify({
