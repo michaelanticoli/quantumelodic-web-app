@@ -46,7 +46,7 @@ async function stopAllSynths() {
     for (const chorus of activeSynthsRef.choruses) { chorus.dispose(); }
     for (const reverb of activeSynthsRef.reverbs) { reverb.dispose(); }
   } catch (error) {
-    console.warn('PlanetChoirMixer cleanup failed', error);
+    void error;
   }
   activeSynthsRef = null;
 }

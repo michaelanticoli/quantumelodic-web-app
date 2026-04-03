@@ -33,7 +33,10 @@ export async function requestGeneratedSound({ planetName, prompt }: SoundRequest
   }
 
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), SOUND_REQUEST_TIMEOUT_MS);
+  const timeoutId: ReturnType<typeof window.setTimeout> = window.setTimeout(
+    () => controller.abort(),
+    SOUND_REQUEST_TIMEOUT_MS,
+  );
 
   try {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-planet-sound`, {

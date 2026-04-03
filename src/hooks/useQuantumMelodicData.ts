@@ -17,7 +17,7 @@ export function useQuantumMelodicData() {
 
   useEffect(() => {
     async function fetchData() {
-      let timeoutId: number | undefined;
+      let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
 
       try {
         const timeoutPromise = new Promise<never>((_, reject) => {
