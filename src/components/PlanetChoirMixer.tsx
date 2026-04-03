@@ -45,8 +45,9 @@ async function stopAllSynths() {
     for (const synth of activeSynthsRef.synths) { synth.releaseAll(); synth.dispose(); }
     for (const chorus of activeSynthsRef.choruses) { chorus.dispose(); }
     for (const reverb of activeSynthsRef.reverbs) { reverb.dispose(); }
-  } catch (error) {
-    void error;
+  } catch {
+    activeSynthsRef = null;
+    return;
   }
   activeSynthsRef = null;
 }
