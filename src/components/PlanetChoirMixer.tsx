@@ -99,7 +99,7 @@ async function playPlanetChoir(
 
     // Reverb
     const reverb = new Tone.Reverb({ decay: 3 + synthParams.reverbWet * 5, wet: synthParams.reverbWet }).toDestination();
-    reverbGenerationTasks.push(reverb.generate());
+    reverbGenerationTasks.push(reverb.generate() as unknown as Promise<void>);
 
     // Chorus
     const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.5, wet: synthParams.chorusWet }).connect(reverb);
