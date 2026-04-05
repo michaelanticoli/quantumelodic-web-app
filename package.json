@@ -4,9 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail --names \"web,api\" --prefix-colors \"cyan,magenta\" \"npm run dev:web\" \"npm run dev:api\"",
+    "dev": "vite",
     "dev:web": "vite",
-    "dev:api": "PYTHONPATH=backend python -m flask --app backend/api/main run --port 5001 --debug",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
