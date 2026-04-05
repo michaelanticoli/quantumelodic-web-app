@@ -285,17 +285,25 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
     finally { setIsDownloading(null); }
   };
 
+  const [showShareMenu, setShowShareMenu] = useState(false);
+
+  const shareText = '✨ My natal chart has been translated into a living musical composition! Discover your Quantumelodic Harmonic Analysis at MoonTuner.';
+  const shareUrl = 'https://quantumelodic.lovable.app';
+
   const handleShare = async () => {
-    const shareData = {
-      title: 'MoonTuner — My Cosmic Symphony',
-      text: `✨ My cosmic chart has been translated into music! Check out MoonTuner to discover yours.`,
-      url: 'https://quantumelodic.lovable.app',
-    };
     try {
-      if (navigator.share) { await navigator.share(shareData); }
-      else { await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`); setIsDownloading('share-copied'); setTimeout(() => setIsDownloading(null), 2000); }
+      if (navigator.share) {
+        await navigator.share({ title: 'MoonTuner — Quantumelodic Harmonic Analysis', text: shareText, url: shareUrl });
+      } else {
+        setShowShareMenu(prev => !prev);
+      }
     } catch {}
   };
+
+  const shareToTwitter = () => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank'); setShowShareMenu(false); };
+  const shareToFacebook = () => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank'); setShowShareMenu(false); };
+  const shareViaEmail = () => { window.open(`mailto:?subject=${encodeURIComponent('My Quantumelodic Harmonic Analysis')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`, '_blank'); setShowShareMenu(false); };
+  const copyLink = async () => { await navigator.clipboard.writeText(shareText + '\n' + shareUrl); setIsDownloading('share-copied'); setTimeout(() => setIsDownloading(null), 2000); setShowShareMenu(false); };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
