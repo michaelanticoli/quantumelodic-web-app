@@ -328,29 +328,34 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspec
 
             {/* Streaming / completed report */}
             {reportText && (
-              <div className="glass rounded-xl p-5 sm:p-7 relative">
+              <div className="glass rounded-xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
+                {/* Decorative accent line */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+
                 {isGenerating && (
-                  <div className="flex items-center gap-2 mb-4 text-primary/70">
+                  <div className="flex items-center gap-2 mb-6 text-accent/80">
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.2, repeat: Infinity }}>
                       <Sparkles className="w-4 h-4" />
                     </motion.div>
-                    <span className="text-xs tracking-wide">Writing your report…</span>
+                    <span className="text-xs tracking-[0.2em] uppercase">Composing your report…</span>
                   </div>
                 )}
 
-                <div className="prose prose-invert prose-sm max-w-none
+                <div className="prose prose-invert max-w-none
                   prose-headings:font-display prose-headings:tracking-wide
-                  prose-h1:text-2xl prose-h1:font-light prose-h1:text-foreground prose-h1:mb-1
-                  prose-h2:text-lg prose-h2:font-medium prose-h2:text-primary prose-h2:mt-8 prose-h2:mb-3 prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2
-                  prose-h3:text-base prose-h3:font-medium prose-h3:text-foreground/90 prose-h3:mt-6 prose-h3:mb-2
-                  prose-p:text-foreground/80 prose-p:leading-relaxed prose-p:mb-3
+                  prose-h1:text-2xl sm:prose-h1:text-3xl prose-h1:font-light prose-h1:text-foreground prose-h1:mb-1 prose-h1:leading-tight
+                  prose-h2:text-lg sm:prose-h2:text-xl prose-h2:font-medium prose-h2:text-accent prose-h2:mt-10 prose-h2:mb-4 prose-h2:border-b prose-h2:border-accent/20 prose-h2:pb-3 prose-h2:tracking-[0.1em]
+                  prose-h3:text-base sm:prose-h3:text-lg prose-h3:font-medium prose-h3:text-foreground/90 prose-h3:mt-8 prose-h3:mb-3
+                  prose-p:text-foreground/80 prose-p:leading-[1.8] prose-p:mb-4 prose-p:text-sm sm:prose-p:text-base
                   prose-strong:text-foreground prose-strong:font-semibold
-                  prose-em:text-muted-foreground prose-em:italic
-                  prose-hr:border-primary/20 prose-hr:my-6
-                  prose-table:text-xs prose-th:text-primary/70 prose-th:font-medium prose-th:py-2 prose-th:px-3
-                  prose-td:py-1.5 prose-td:px-3 prose-td:text-foreground/70 prose-td:border-t prose-td:border-primary/10
-                  prose-li:text-foreground/80 prose-li:mb-1
-                  prose-blockquote:border-primary/40 prose-blockquote:text-muted-foreground prose-blockquote:italic
+                  prose-em:text-accent/70 prose-em:italic
+                  prose-hr:border-accent/15 prose-hr:my-8
+                  prose-table:text-sm prose-table:w-full
+                  prose-th:text-accent/80 prose-th:font-medium prose-th:py-3 prose-th:px-4 prose-th:text-left prose-th:border-b prose-th:border-accent/20 prose-th:tracking-wider prose-th:text-xs prose-th:uppercase
+                  prose-td:py-2.5 prose-td:px-4 prose-td:text-foreground/70 prose-td:border-t prose-td:border-accent/10
+                  prose-li:text-foreground/80 prose-li:mb-2 prose-li:leading-relaxed
+                  prose-ol:space-y-3
+                  prose-blockquote:border-accent/40 prose-blockquote:text-muted-foreground prose-blockquote:italic prose-blockquote:pl-6
                 ">
                   <ReactMarkdown>{reportText}</ReactMarkdown>
                 </div>
