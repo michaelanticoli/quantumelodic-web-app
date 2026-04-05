@@ -353,14 +353,9 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
 
       {/* Explore button — prominent */}
       <motion.button
-        className="w-full mb-6 py-3.5 rounded-xl border font-display font-medium tracking-wider text-sm uppercase transition-all duration-300"
-        style={{
-          borderColor: 'hsl(292 70% 62% / 0.4)',
-          color: 'hsl(292 70% 72%)',
-          background: 'hsl(292 70% 62% / 0.06)',
-        }}
+        className="w-full mb-6 py-3.5 rounded-xl border border-accent/40 text-accent font-display font-medium tracking-wider text-sm uppercase transition-all duration-300 hover:bg-accent/8 hover:border-accent/60"
         onClick={onExplore}
-        whileHover={{ scale: 1.01, boxShadow: '0 0 20px hsl(292 70% 62% / 0.2)' }}
+        whileHover={{ scale: 1.01, boxShadow: '0 0 20px hsl(var(--accent) / 0.2)' }}
         whileTap={{ scale: 0.99 }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -506,17 +501,49 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       </motion.div>
 
       {/* Share */}
-      <motion.button
-        className="mt-3 w-full py-3 rounded-xl border border-foreground/12 text-foreground/50 text-xs tracking-widest uppercase hover:border-foreground/25 hover:text-foreground/70 transition-all"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        whileHover={{ scale: 1.005 }}
-        whileTap={{ scale: 0.998 }}
-        onClick={handleShare}
-      >
-        {isDownloading === 'share-copied' ? '✓ Link Copied' : '↑ Share Your Symphony'}
-      </motion.button>
+      <div className="relative mt-3">
+        <motion.button
+          className="w-full py-3 rounded-xl border border-foreground/12 text-foreground/50 text-xs tracking-widest uppercase hover:border-foreground/25 hover:text-foreground/70 transition-all"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          whileHover={{ scale: 1.005 }}
+          whileTap={{ scale: 0.998 }}
+          onClick={handleShare}
+        >
+          {isDownloading === 'share-copied' ? '✓ Link Copied' : '↑ Share Your Harmonic Analysis'}
+        </motion.button>
+
+        {/* Desktop share menu fallback */}
+        <AnimatePresence>
+          {showShareMenu && (
+            <motion.div
+              className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-border/50 bg-card/95 backdrop-blur-xl p-2 grid grid-cols-4 gap-1 z-50"
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+            >
+              <button onClick={shareToTwitter} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <span className="text-base">𝕏</span>
+                <span className="text-[9px] text-muted-foreground">Twitter</span>
+              </button>
+              <button onClick={shareToFacebook} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <span className="text-base">f</span>
+                <span className="text-[9px] text-muted-foreground">Facebook</span>
+              </button>
+              <button onClick={shareViaEmail} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <span className="text-base">✉</span>
+                <span className="text-[9px] text-muted-foreground">Email</span>
+              </button>
+              <button onClick={copyLink} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <span className="text-base">⎘</span>
+                <span className="text-[9px] text-muted-foreground">Copy</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
