@@ -14,8 +14,11 @@ Usage:
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # Try to import pyswisseph; fall back to a lightweight stub so the module can
 # still be imported in environments where it hasn't been installed yet.
