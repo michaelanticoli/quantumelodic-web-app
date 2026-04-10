@@ -1,0 +1,602 @@
+{
+  "Aries": {
+    "Tonic": {
+      "sign": "Aries",
+      "note": "C"
+    },
+    "b2": {
+      "sign": "Taurus",
+      "note": "Db"
+    },
+    "2": {
+      "sign": "Gemini",
+      "note": "D"
+    },
+    "b3": {
+      "sign": "Cancer",
+      "note": "Eb"
+    },
+    "3": {
+      "sign": "Leo",
+      "note": "E"
+    },
+    "4": {
+      "sign": "Libra",
+      "note": "F"
+    },
+    "b5": {
+      "sign": "Scorpio",
+      "note": "Gb"
+    },
+    "5": {
+      "sign": "Sagittarius",
+      "note": "G"
+    },
+    "b6": {
+      "sign": "Capricorn",
+      "note": "Ab"
+    },
+    "6": {
+      "sign": "Aquarius",
+      "note": "A"
+    },
+    "b7": {
+      "sign": "Pisces",
+      "note": "Bb"
+    },
+    "7": {
+      "sign": "Virgo",
+      "note": "B"
+    }
+  },
+  "Taurus": {
+    "Tonic": {
+      "sign": "Taurus",
+      "note": "Db"
+    },
+    "b2": {
+      "sign": "Gemini",
+      "note": "D"
+    },
+    "2": {
+      "sign": "Cancer",
+      "note": "Eb"
+    },
+    "b3": {
+      "sign": "Virgo",
+      "note": "E"
+    },
+    "3": {
+      "sign": "Scorpio",
+      "note": "F"
+    },
+    "4": {
+      "sign": "Leo",
+      "note": "Gb"
+    },
+    "b5": {
+      "sign": "Libra",
+      "note": "G"
+    },
+    "5": {
+      "sign": "Capricorn",
+      "note": "Ab"
+    },
+    "b6": {
+      "sign": "Sagittarius",
+      "note": "A"
+    },
+    "6": {
+      "sign": "Pisces",
+      "note": "Bb"
+    },
+    "b7": {
+      "sign": "Aries",
+      "note": "B"
+    },
+    "7": {
+      "sign": "Aquarius",
+      "note": "C"
+    }
+  },
+  "Gemini": {
+    "Tonic": {
+      "sign": "Gemini",
+      "note": "D"
+    },
+    "b2": {
+      "sign": "Cancer",
+      "note": "Eb"
+    },
+    "2": {
+      "sign": "Leo",
+      "note": "E"
+    },
+    "b3": {
+      "sign": "Virgo",
+      "note": "F"
+    },
+    "3": {
+      "sign": "Libra",
+      "note": "Gb"
+    },
+    "4": {
+      "sign": "Pisces",
+      "note": "G"
+    },
+    "b5": {
+      "sign": "Scorpio",
+      "note": "Ab"
+    },
+    "5": {
+      "sign": "Aquarius",
+      "note": "A"
+    },
+    "b6": {
+      "sign": "Capricorn",
+      "note": "Bb"
+    },
+    "6": {
+      "sign": "Aries",
+      "note": "B"
+    },
+    "b7": {
+      "sign": "Taurus",
+      "note": "C"
+    },
+    "7": {
+      "sign": "Sagittarius",
+      "note": "Db"
+    }
+  },
+  "Cancer": {
+    "Tonic": {
+      "sign": "Cancer",
+      "note": "Eb"
+    },
+    "b2": {
+      "sign": "Leo",
+      "note": "E"
+    },
+    "2": {
+      "sign": "Virgo",
+      "note": "F"
+    },
+    "b3": {
+      "sign": "Libra",
+      "note": "Gb"
+    },
+    "3": {
+      "sign": "Scorpio",
+      "note": "G"
+    },
+    "4": {
+      "sign": "Aries",
+      "note": "Ab"
+    },
+    "b5": {
+      "sign": "Sagittarius",
+      "note": "A"
+    },
+    "5": {
+      "sign": "Pisces",
+      "note": "Bb"
+    },
+    "b6": {
+      "sign": "Capricorn",
+      "note": "B"
+    },
+    "6": {
+      "sign": "Taurus",
+      "note": "C"
+    },
+    "b7": {
+      "sign": "Gemini",
+      "note": "Db"
+    },
+    "7": {
+      "sign": "Aquarius",
+      "note": "D"
+    }
+  },
+  "Leo": {
+    "Tonic": {
+      "sign": "Leo",
+      "note": "E"
+    },
+    "b2": {
+      "sign": "Virgo",
+      "note": "F"
+    },
+    "2": {
+      "sign": "Libra",
+      "note": "Gb"
+    },
+    "b3": {
+      "sign": "Scorpio",
+      "note": "G"
+    },
+    "3": {
+      "sign": "Sagittarius",
+      "note": "Ab"
+    },
+    "4": {
+      "sign": "Aries",
+      "note": "A"
+    },
+    "b5": {
+      "sign": "Pisces",
+      "note": "Bb"
+    },
+    "5": {
+      "sign": "Aquarius",
+      "note": "B"
+    },
+    "b6": {
+      "sign": "Gemini",
+      "note": "C"
+    },
+    "6": {
+      "sign": "Gemini",
+      "note": "Db"
+    },
+    "b7": {
+      "sign": "Cancer",
+      "note": "D"
+    },
+    "7": {
+      "sign": "Taurus",
+      "note": "Eb"
+    }
+  },
+  "Virgo": {
+    "Tonic": {
+      "sign": "Virgo",
+      "note": "F"
+    },
+    "b2": {
+      "sign": "Libra",
+      "note": "Gb"
+    },
+    "2": {
+      "sign": "Scorpio",
+      "note": "G"
+    },
+    "b3": {
+      "sign": "Sagittarius",
+      "note": "Ab"
+    },
+    "3": {
+      "sign": "Capricorn",
+      "note": "A"
+    },
+    "4": {
+      "sign": "Gemini",
+      "note": "Bb"
+    },
+    "b5": {
+      "sign": "Pisces",
+      "note": "B"
+    },
+    "5": {
+      "sign": "Taurus",
+      "note": "C"
+    },
+    "b6": {
+      "sign": "Aries",
+      "note": "Db"
+    },
+    "6": {
+      "sign": "Cancer",
+      "note": "D"
+    },
+    "b7": {
+      "sign": "Leo",
+      "note": "Eb"
+    },
+    "7": {
+      "sign": "Aquarius",
+      "note": "E"
+    }
+  },
+  "Libra": {
+    "Tonic": {
+      "sign": "Libra",
+      "note": "Gb"
+    },
+    "b2": {
+      "sign": "Scorpio",
+      "note": "G"
+    },
+    "2": {
+      "sign": "Sagittarius",
+      "note": "Ab"
+    },
+    "b3": {
+      "sign": "Capricorn",
+      "note": "A"
+    },
+    "3": {
+      "sign": "Aquarius",
+      "note": "Bb"
+    },
+    "4": {
+      "sign": "Cancer",
+      "note": "B"
+    },
+    "b5": {
+      "sign": "Pisces",
+      "note": "C"
+    },
+    "5": {
+      "sign": "Gemini",
+      "note": "Db"
+    },
+    "b6": {
+      "sign": "Virgo",
+      "note": "D"
+    },
+    "6": {
+      "sign": "Leo",
+      "note": "Eb"
+    },
+    "b7": {
+      "sign": "Aries",
+      "note": "E"
+    },
+    "7": {
+      "sign": "Taurus",
+      "note": "F"
+    }
+  },
+  "Scorpio": {
+    "Tonic": {
+      "sign": "Scorpio",
+      "note": "G"
+    },
+    "b2": {
+      "sign": "Sagittarius",
+      "note": "Ab"
+    },
+    "2": {
+      "sign": "Capricorn",
+      "note": "A"
+    },
+    "b3": {
+      "sign": "Aquarius",
+      "note": "Bb"
+    },
+    "3": {
+      "sign": "Pisces",
+      "note": "B"
+    },
+    "4": {
+      "sign": "Leo",
+      "note": "C"
+    },
+    "b5": {
+      "sign": "Aries",
+      "note": "Db"
+    },
+    "5": {
+      "sign": "Cancer",
+      "note": "D"
+    },
+    "b6": {
+      "sign": "Gemini",
+      "note": "Eb"
+    },
+    "6": {
+      "sign": "Taurus",
+      "note": "E"
+    },
+    "b7": {
+      "sign": "Taurus",
+      "note": "F"
+    },
+    "7": {
+      "sign": "Virgo",
+      "note": "Gb"
+    }
+  },
+  "Sagittarius": {
+    "Tonic": {
+      "sign": "Sagittarius",
+      "note": "Ab"
+    },
+    "b2": {
+      "sign": "Capricorn",
+      "note": "A"
+    },
+    "2": {
+      "sign": "Aquarius",
+      "note": "Bb"
+    },
+    "b3": {
+      "sign": "Pisces",
+      "note": "B"
+    },
+    "3": {
+      "sign": "Aries",
+      "note": "C"
+    },
+    "4": {
+      "sign": "Virgo",
+      "note": "Db"
+    },
+    "b5": {
+      "sign": "Leo",
+      "note": "D"
+    },
+    "5": {
+      "sign": "Gemini",
+      "note": "Eb"
+    },
+    "b6": {
+      "sign": "Cancer",
+      "note": "E"
+    },
+    "6": {
+      "sign": "Cancer",
+      "note": "F"
+    },
+    "b7": {
+      "sign": "Libra",
+      "note": "Gb"
+    },
+    "7": {
+      "sign": "Taurus",
+      "note": "G"
+    }
+  },
+  "Capricorn": {
+    "Tonic": {
+      "sign": "Capricorn",
+      "note": "A"
+    },
+    "b2": {
+      "sign": "Aquarius",
+      "note": "Bb"
+    },
+    "2": {
+      "sign": "Pisces",
+      "note": "B"
+    },
+    "b3": {
+      "sign": "Aries",
+      "note": "C"
+    },
+    "3": {
+      "sign": "Taurus",
+      "note": "Db"
+    },
+    "4": {
+      "sign": "Libra",
+      "note": "D"
+    },
+    "b5": {
+      "sign": "Leo",
+      "note": "Eb"
+    },
+    "5": {
+      "sign": "Cancer",
+      "note": "E"
+    },
+    "b6": {
+      "sign": "Scorpio",
+      "note": "F"
+    },
+    "6": {
+      "sign": "Virgo",
+      "note": "Gb"
+    },
+    "b7": {
+      "sign": "Gemini",
+      "note": "G"
+    },
+    "7": {
+      "sign": "Sagittarius",
+      "note": "Ab"
+    }
+  },
+  "Aquarius": {
+    "Tonic": {
+      "sign": "Aquarius",
+      "note": "Bb"
+    },
+    "b2": {
+      "sign": "Pisces",
+      "note": "B"
+    },
+    "2": {
+      "sign": "Aries",
+      "note": "C"
+    },
+    "b3": {
+      "sign": "Taurus",
+      "note": "Db"
+    },
+    "3": {
+      "sign": "Gemini",
+      "note": "D"
+    },
+    "4": {
+      "sign": "Scorpio",
+      "note": "Eb"
+    },
+    "b5": {
+      "sign": "Cancer",
+      "note": "E"
+    },
+    "5": {
+      "sign": "Libra",
+      "note": "F"
+    },
+    "b6": {
+      "sign": "Virgo",
+      "note": "Gb"
+    },
+    "6": {
+      "sign": "Sagittarius",
+      "note": "G"
+    },
+    "b7": {
+      "sign": "Capricorn",
+      "note": "Ab"
+    },
+    "7": {
+      "sign": "Leo",
+      "note": "A"
+    }
+  },
+  "Pisces": {
+    "Tonic": {
+      "sign": "Pisces",
+      "note": "B"
+    },
+    "b2": {
+      "sign": "Aries",
+      "note": "C"
+    },
+    "2": {
+      "sign": "Taurus",
+      "note": "Db"
+    },
+    "b3": {
+      "sign": "Gemini",
+      "note": "D"
+    },
+    "3": {
+      "sign": "Cancer",
+      "note": "Eb"
+    },
+    "4": {
+      "sign": "Sagittarius",
+      "note": "E"
+    },
+    "b5": {
+      "sign": "Leo",
+      "note": "F"
+    },
+    "5": {
+      "sign": "Scorpio",
+      "note": "Gb"
+    },
+    "b6": {
+      "sign": "Libra",
+      "note": "G"
+    },
+    "6": {
+      "sign": "Capricorn",
+      "note": "Ab"
+    },
+    "b7": {
+      "sign": "Aquarius",
+      "note": "A"
+    },
+    "7": {
+      "sign": "Virgo",
+      "note": "Bb"
+    }
+  }
+}
