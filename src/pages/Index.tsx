@@ -1,32 +1,38 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CosmicBackground } from '@/components/CosmicBackground';
-import { ZodiacWheel } from '@/components/ZodiacWheel';
-import { AspectLegend } from '@/components/AspectLegend';
-import { PlanetDetailsTable } from '@/components/PlanetDetailsTable';
-import { BirthDataForm } from '@/components/BirthDataForm';
-import { BottomNav } from '@/components/BottomNav';
-import { GeneratingState } from '@/components/GeneratingState';
-import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
-import { useCosmicReading } from '@/hooks/useCosmicReading';
-import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
-import { useToast } from '@/hooks/use-toast';
-import { downloadChartImage, downloadAudio, downloadPdfReport } from '@/utils/downloadHelpers';
-import type { BirthData } from '@/types/astrology';
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { CosmicBackground } from "@/components/CosmicBackground";
+import { ZodiacWheel } from "@/components/ZodiacWheel";
+import { AspectLegend } from "@/components/AspectLegend";
+import { PlanetDetailsTable } from "@/components/PlanetDetailsTable";
+import { BirthDataForm } from "@/components/BirthDataForm";
+import { BottomNav } from "@/components/BottomNav";
+import { GeneratingState } from "@/components/GeneratingState";
+import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
+import { useCosmicReading } from "@/hooks/useCosmicReading";
+import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
+import { useToast } from "@/hooks/use-toast";
+import { downloadChartImage, downloadAudio, downloadPdfReport } from "@/utils/downloadHelpers";
+import type { BirthData } from "@/types/astrology";
 
-type AppState = 'input' | 'generating' | 'result';
+type AppState = "input" | "generating" | "result";
 
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
 
-  const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? 'result' : 'input');
+  const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? "result" : "input");
 
   const {
-    loading, error, reading: hookReading, audioSource: hookAudioSource,
-    progress, stage, generateReading, reset: hookReset,
+    loading,
+    error,
+    reading: hookReading,
+    audioSource: hookAudioSource,
+    progress,
+    stage,
+    generateReading,
+    reset: hookReset,
   } = useCosmicReading();
 
   const reading = cosmicCtx.reading || hookReading;
@@ -34,39 +40,42 @@ const Index = () => {
   const audioSource = cosmicCtx.audioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
 
   const handleFormSubmit = async (data: BirthData) => {
-    setAppState('generating');
+    setAppState("generating");
     try {
       const result = await generateReading(data);
       if (result) {
         cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? null);
       }
-      setAppState('result');
+      setAppState("result");
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to generate your cosmic reading';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
-      setAppState('input');
+      const message = err instanceof Error ? err.message : "Failed to generate your cosmic reading";
+      toast({ title: "Error", description: message, variant: "destructive" });
+      setAppState("input");
     }
   };
 
   const handleGenerationComplete = () => {
-    if (!error) setAppState('result');
+    if (!error) setAppState("result");
   };
 
   const handleBack = () => {
     hookReset();
     cosmicCtx.clearReading();
-    setAppState('input');
+    setAppState("input");
   };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <title>MoonTuner — Your Cosmic Symphony</title>
-      <meta name="description" content="MoonTuner transforms your birth chart into a unique musical composition. Discover your cosmic symphony." />
+      <title>Astro-Harmonic Natal Analysis — Your Cosmic Symphony</title>
+      <meta
+        name="description"
+        content="MoonTuner transforms your birth chart into a unique musical composition. Discover your cosmic symphony."
+      />
 
       <CosmicBackground />
 
       <AnimatePresence mode="wait">
-        {appState === 'input' && (
+        {appState === "input" && (
           <motion.main
             key="input"
             className="relative z-10 min-h-screen flex flex-col items-center px-6 pt-10 pb-32"
@@ -113,7 +122,7 @@ const Index = () => {
               className="mb-8"
               initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 80, damping: 16 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 80, damping: 16 }}
             >
               <ZodiacWheel />
             </motion.div>
@@ -140,16 +149,16 @@ const Index = () => {
           </motion.main>
         )}
 
-        {appState === 'generating' && (
+        {appState === "generating" && (
           <GeneratingState
             key="generating"
-            stage={stage === 'idle' || stage === 'complete' ? 'calculating' : stage}
+            stage={stage === "idle" || stage === "complete" ? "calculating" : stage}
             progress={progress}
             onComplete={handleGenerationComplete}
           />
         )}
 
-        {appState === 'result' && reading && (
+        {appState === "result" && reading && (
           <motion.main
             key="result"
             className="relative z-10 min-h-screen flex flex-col items-center px-4 pt-8 pb-32"
@@ -165,7 +174,7 @@ const Index = () => {
               audioSource={audioSource}
               reading={reading}
               onBack={handleBack}
-              onExplore={() => navigate('/explore')}
+              onExplore={() => navigate("/explore")}
             />
           </motion.main>
         )}
@@ -181,7 +190,14 @@ const Index = () => {
 interface ResultsViewProps {
   name: string;
   chartData: {
-    planets: Array<{ name: string; symbol: string; degree: number; sign: string; signNumber: number; isRetrograde: boolean }>;
+    planets: Array<{
+      name: string;
+      symbol: string;
+      degree: number;
+      sign: string;
+      signNumber: number;
+      isRetrograde: boolean;
+    }>;
     sunSign: string;
     moonSign: string;
     ascendant: string;
@@ -189,13 +205,22 @@ interface ResultsViewProps {
   };
   musicalMode: string;
   audioUrl?: string | null;
-  audioSource?: 'elevenlabs' | 'procedural' | 'tone' | null;
-  reading: import('@/types/astrology').CosmicReading;
+  audioSource?: "elevenlabs" | "procedural" | "tone" | null;
+  reading: import("@/types/astrology").CosmicReading;
   onBack: () => void;
   onExplore: () => void;
 }
 
-const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, reading, onBack, onExplore }: ResultsViewProps) => {
+const ResultsView = ({
+  name,
+  chartData,
+  musicalMode,
+  audioUrl,
+  audioSource,
+  reading,
+  onBack,
+  onExplore,
+}: ResultsViewProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -210,10 +235,10 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
 
     const audio = new Audio();
     // Only set crossOrigin for non-blob URLs to avoid CORS issues with blob URLs
-    if (!audioUrl.startsWith('blob:')) {
-      audio.crossOrigin = 'anonymous';
+    if (!audioUrl.startsWith("blob:")) {
+      audio.crossOrigin = "anonymous";
     }
-    audio.preload = 'metadata';
+    audio.preload = "metadata";
     audio.src = audioUrl;
 
     audioRef.current = audio;
@@ -221,24 +246,27 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
 
     const onMeta = () => setDuration(audio.duration || 0);
     const onTime = () => setCurrentTime(audio.currentTime || 0);
-    const onEnd = () => { setIsPlaying(false); setCurrentTime(0); };
+    const onEnd = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
     const onErr = () => {
-      console.warn('Audio load error for URL:', audioUrl);
+      console.warn("Audio load error for URL:", audioUrl);
       setAudioError(true);
       setIsPlaying(false);
     };
 
-    audio.addEventListener('loadedmetadata', onMeta);
-    audio.addEventListener('timeupdate', onTime);
-    audio.addEventListener('ended', onEnd);
-    audio.addEventListener('error', onErr);
+    audio.addEventListener("loadedmetadata", onMeta);
+    audio.addEventListener("timeupdate", onTime);
+    audio.addEventListener("ended", onEnd);
+    audio.addEventListener("error", onErr);
 
     return () => {
       audio.pause();
-      audio.removeEventListener('loadedmetadata', onMeta);
-      audio.removeEventListener('timeupdate', onTime);
-      audio.removeEventListener('ended', onEnd);
-      audio.removeEventListener('error', onErr);
+      audio.removeEventListener("loadedmetadata", onMeta);
+      audio.removeEventListener("timeupdate", onTime);
+      audio.removeEventListener("ended", onEnd);
+      audio.removeEventListener("error", onErr);
       audioRef.current = null;
       setAudioEl(null);
       setIsPlaying(false);
@@ -256,54 +284,89 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
         setIsPlaying(true);
       }
     } catch (err) {
-      console.warn('Playback error:', err);
+      console.warn("Playback error:", err);
       setIsPlaying(false);
     }
   };
 
-  const formatTime = (t: number) => `${Math.floor(t / 60)}:${Math.floor(t % 60).toString().padStart(2, '0')}`;
+  const formatTime = (t: number) =>
+    `${Math.floor(t / 60)}:${Math.floor(t % 60)
+      .toString()
+      .padStart(2, "0")}`;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleDownloadChart = async () => {
-    setIsDownloading('chart');
-    try { await downloadChartImage('chart-wheel-container', `${name.replace(/\s+/g, '-').toLowerCase()}-chart.png`); }
-    catch (e) { console.error(e); }
-    finally { setIsDownloading(null); }
+    setIsDownloading("chart");
+    try {
+      await downloadChartImage("chart-wheel-container", `${name.replace(/\s+/g, "-").toLowerCase()}-chart.png`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDownloading(null);
+    }
   };
 
   const handleDownloadPdf = async () => {
-    setIsDownloading('pdf');
-    try { await downloadPdfReport(reading, 'chart-wheel-container'); }
-    catch (e) { console.error(e); }
-    finally { setIsDownloading(null); }
+    setIsDownloading("pdf");
+    try {
+      await downloadPdfReport(reading, "chart-wheel-container");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDownloading(null);
+    }
   };
 
   const handleDownloadMusic = async () => {
     if (!audioUrl) return;
-    setIsDownloading('music');
-    try { await downloadAudio(audioUrl, `${name.replace(/\s+/g, '-').toLowerCase()}-composition.mp3`); }
-    finally { setIsDownloading(null); }
+    setIsDownloading("music");
+    try {
+      await downloadAudio(audioUrl, `${name.replace(/\s+/g, "-").toLowerCase()}-composition.mp3`);
+    } finally {
+      setIsDownloading(null);
+    }
   };
 
   const [showShareMenu, setShowShareMenu] = useState(false);
 
-  const shareText = '✨ My natal chart has been translated into a living musical composition! Discover your Quantumelodic Harmonic Analysis at MoonTuner.';
-  const shareUrl = 'https://quantumelodic.lovable.app';
+  const shareText =
+    "✨ My natal chart has been translated into a living musical composition! Discover your Quantumelodic Harmonic Analysis at MoonTuner.";
+  const shareUrl = "https://quantumelodic.lovable.app";
 
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'MoonTuner — Quantumelodic Harmonic Analysis', text: shareText, url: shareUrl });
+        await navigator.share({ title: "MoonTuner — Quantumelodic Harmonic Analysis", text: shareText, url: shareUrl });
       } else {
-        setShowShareMenu(prev => !prev);
+        setShowShareMenu((prev) => !prev);
       }
     } catch {}
   };
 
-  const shareToTwitter = () => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank'); setShowShareMenu(false); };
-  const shareToFacebook = () => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank'); setShowShareMenu(false); };
-  const shareViaEmail = () => { window.open(`mailto:?subject=${encodeURIComponent('My Quantumelodic Harmonic Analysis')}&body=${encodeURIComponent(shareText + '\n\n' + shareUrl)}`, '_blank'); setShowShareMenu(false); };
-  const copyLink = async () => { await navigator.clipboard.writeText(shareText + '\n' + shareUrl); setIsDownloading('share-copied'); setTimeout(() => setIsDownloading(null), 2000); setShowShareMenu(false); };
+  const shareToTwitter = () => {
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+      "_blank",
+    );
+    setShowShareMenu(false);
+  };
+  const shareToFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank");
+    setShowShareMenu(false);
+  };
+  const shareViaEmail = () => {
+    window.open(
+      `mailto:?subject=${encodeURIComponent("My Quantumelodic Harmonic Analysis")}&body=${encodeURIComponent(shareText + "\n\n" + shareUrl)}`,
+      "_blank",
+    );
+    setShowShareMenu(false);
+  };
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(shareText + "\n" + shareUrl);
+    setIsDownloading("share-copied");
+    setTimeout(() => setIsDownloading(null), 2000);
+    setShowShareMenu(false);
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -319,18 +382,12 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       </motion.button>
 
       {/* Name + Sign header */}
-      <motion.div
-        className="text-center mb-4"
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground leading-tight">
-          {name}
-        </h2>
+      <motion.div className="text-center mb-4" initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
+        <h2 className="font-display text-2xl md:text-3xl font-semibold text-foreground leading-tight">{name}</h2>
         <p className="text-xs tracking-[0.3em] text-primary/70 uppercase mt-1.5">
           {chartData.sunSign} ☉ · {chartData.moonSign} ☽ · {musicalMode}
         </p>
-        {chartData.source === 'approximate' && (
+        {chartData.source === "approximate" && (
           <p className="text-[10px] text-muted-foreground/40 mt-1 italic">approximate positions</p>
         )}
       </motion.div>
@@ -355,7 +412,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       <motion.button
         className="w-full mb-6 py-3.5 rounded-xl border border-accent/40 text-accent font-display font-medium tracking-wider text-sm uppercase transition-all duration-300 hover:bg-accent/8 hover:border-accent/60"
         onClick={onExplore}
-        whileHover={{ scale: 1.01, boxShadow: '0 0 20px hsl(var(--accent) / 0.2)' }}
+        whileHover={{ scale: 1.01, boxShadow: "0 0 20px hsl(var(--accent) / 0.2)" }}
         whileTap={{ scale: 0.99 }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -378,7 +435,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       >
         <div
           className="relative w-full h-36 rounded-2xl overflow-hidden mb-3"
-          style={{ border: '1px solid hsl(43 88% 58% / 0.14)' }}
+          style={{ border: "1px solid hsl(43 88% 58% / 0.14)" }}
         >
           <CosmicWaveform
             audioElement={audioEl}
@@ -390,11 +447,11 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
               <motion.button
                 className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
                 style={{
-                  background: 'hsl(228 35% 6% / 0.5)',
-                  border: '1px solid hsl(43 88% 58% / 0.3)',
-                  boxShadow: '0 0 20px hsl(43 88% 58% / 0.15)',
+                  background: "hsl(228 35% 6% / 0.5)",
+                  border: "1px solid hsl(43 88% 58% / 0.3)",
+                  boxShadow: "0 0 20px hsl(43 88% 58% / 0.15)",
                 }}
-                whileHover={{ scale: 1.08, boxShadow: '0 0 30px hsl(43 88% 58% / 0.35)' }}
+                whileHover={{ scale: 1.08, boxShadow: "0 0 30px hsl(43 88% 58% / 0.35)" }}
                 whileTap={{ scale: 0.93 }}
                 onClick={togglePlayPause}
               >
@@ -419,15 +476,17 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
 
         {audioUrl ? (
           <>
-            {(audioSource === 'procedural' || audioSource === 'tone') && (
+            {(audioSource === "procedural" || audioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
-                {audioSource === 'tone' ? 'Tone.js synthesis · planetary composition' : 'Procedural synthesis · chart-derived frequencies'}
+                {audioSource === "tone"
+                  ? "Tone.js synthesis · planetary composition"
+                  : "Procedural synthesis · chart-derived frequencies"}
               </p>
             )}
             <div className="w-full max-w-xs mx-auto mb-2">
               <div
                 className="h-0.5 rounded-full overflow-hidden cursor-pointer"
-                style={{ background: 'hsl(255 25% 18%)' }}
+                style={{ background: "hsl(255 25% 18%)" }}
                 onClick={(e) => {
                   if (!audioRef.current || !duration) return;
                   const rect = (e.target as HTMLElement).getBoundingClientRect();
@@ -438,7 +497,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
                   className="h-full rounded-full"
                   style={{
                     width: `${progressPercent}%`,
-                    background: 'linear-gradient(90deg, hsl(43 88% 58%), hsl(292 70% 62%))',
+                    background: "linear-gradient(90deg, hsl(43 88% 58%), hsl(292 70% 62%))",
                   }}
                 />
               </div>
@@ -449,13 +508,25 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
             </div>
 
             <div className="flex items-center justify-center gap-8">
-              <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, currentTime - 10); }}>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
+              <button
+                className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                onClick={() => {
+                  if (audioRef.current) audioRef.current.currentTime = Math.max(0, currentTime - 10);
+                }}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                </svg>
               </button>
-              <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                onClick={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(duration, currentTime + 10); }}>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
+              <button
+                className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                onClick={() => {
+                  if (audioRef.current) audioRef.current.currentTime = Math.min(duration, currentTime + 10);
+                }}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                </svg>
               </button>
             </div>
           </>
@@ -475,25 +546,25 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
       >
         <button
           onClick={handleDownloadChart}
-          disabled={!!isDownloading && isDownloading !== 'share-copied'}
+          disabled={!!isDownloading && isDownloading !== "share-copied"}
           className="py-2.5 rounded-xl border border-primary/25 text-primary/80 text-[10px] tracking-widest uppercase hover:bg-primary/8 hover:border-primary/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === 'chart' ? '…' : '⬇ Chart'}
+          {isDownloading === "chart" ? "…" : "⬇ Chart"}
         </button>
         <button
           onClick={handleDownloadPdf}
-          disabled={!!isDownloading && isDownloading !== 'share-copied'}
+          disabled={!!isDownloading && isDownloading !== "share-copied"}
           className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === 'pdf' ? '…' : '⬇ Report'}
+          {isDownloading === "pdf" ? "…" : "⬇ Report"}
         </button>
         {audioUrl ? (
           <button
             onClick={handleDownloadMusic}
-            disabled={!!isDownloading && isDownloading !== 'share-copied'}
+            disabled={!!isDownloading && isDownloading !== "share-copied"}
             className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
           >
-            {isDownloading === 'music' ? '…' : '⬇ Music'}
+            {isDownloading === "music" ? "…" : "⬇ Music"}
           </button>
         ) : (
           <div />
@@ -511,7 +582,7 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
           whileTap={{ scale: 0.998 }}
           onClick={handleShare}
         >
-          {isDownloading === 'share-copied' ? '✓ Link Copied' : '↑ Share Your Harmonic Analysis'}
+          {isDownloading === "share-copied" ? "✓ Link Copied" : "↑ Share Your Harmonic Analysis"}
         </motion.button>
 
         {/* Desktop share menu fallback */}
@@ -524,19 +595,31 @@ const ResultsView = ({ name, chartData, musicalMode, audioUrl, audioSource, read
               exit={{ opacity: 0, y: 8, scale: 0.95 }}
               transition={{ duration: 0.15 }}
             >
-              <button onClick={shareToTwitter} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <button
+                onClick={shareToTwitter}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
                 <span className="text-base">𝕏</span>
                 <span className="text-[9px] text-muted-foreground">Twitter</span>
               </button>
-              <button onClick={shareToFacebook} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <button
+                onClick={shareToFacebook}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
                 <span className="text-base">f</span>
                 <span className="text-[9px] text-muted-foreground">Facebook</span>
               </button>
-              <button onClick={shareViaEmail} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <button
+                onClick={shareViaEmail}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
                 <span className="text-base">✉</span>
                 <span className="text-[9px] text-muted-foreground">Email</span>
               </button>
-              <button onClick={copyLink} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <button
+                onClick={copyLink}
+                className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-muted/50 transition-colors"
+              >
                 <span className="text-base">⎘</span>
                 <span className="text-[9px] text-muted-foreground">Copy</span>
               </button>
