@@ -69,7 +69,7 @@ const Index = () => {
       <title>Astro-Harmonic Natal Analysis — Your Cosmic Symphony</title>
       <meta
         name="description"
-        content="MoonTuner transforms your birth chart into a unique musical composition. Discover your cosmic symphony."
+        content="Astro-Harmonic Natal Analysis transforms your birth chart into a unique musical composition. Discover your cosmic symphony."
       />
 
       <CosmicBackground />
@@ -109,8 +109,8 @@ const Index = () => {
               </motion.div>
 
               <h1 className="font-display font-semibold tracking-tight leading-none mb-2">
-                <span className="block text-4xl md:text-6xl text-gold-gradient">Moon</span>
-                <span className="block text-4xl md:text-6xl text-foreground/85">Tuner</span>
+                <span className="block text-4xl md:text-6xl text-gold-gradient">Astro-Harmonic</span>
+                <span className="block text-4xl md:text-6xl text-foreground/85">Natal Analysis</span>
               </h1>
               <p className="font-serif italic text-muted-foreground/70 text-sm md:text-base tracking-wide mt-3">
                 Find yourself in the frequency
