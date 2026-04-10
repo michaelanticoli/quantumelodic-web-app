@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Star, Flame, Droplets, Wind, Mountain, Calendar, Sparkles, BookOpen } from 'lucide-react';
+import { ArrowLeft, Star, Flame, Droplets, Wind, Mountain, Calendar, Sparkles, BookOpen, Music } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { BirthDataForm } from '@/components/BirthDataForm';
 import { generateReport, type LunarReport } from '@/lib/reportEngine';
@@ -183,7 +183,39 @@ export default function LunarReports() {
                 </div>
               </section>
 
-              {/* ── Section 4: Arc Practice ── */}
+              {/* ── Section 4: Musical Placements ── */}
+              {report.placements && report.placements.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Music className="w-4 h-4 text-primary" />
+                    <h3 className="font-display text-lg font-semibold">Your Planetary Orchestra</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {report.placements.map((p, i) => (
+                      <motion.div
+                        key={`${p.planet}-${p.sign}-${p.house}`}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + i * 0.05 }}
+                        className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 space-y-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-display font-semibold text-sm text-primary">{p.planet}</span>
+                          <span className="text-xs text-muted-foreground">in {p.sign} · {p.house}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{p.definition}</p>
+                        <div className="flex items-start gap-2 text-xs pt-1 border-t border-border/20">
+                          <Music className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                          <span className="text-foreground/70 italic">{p.musicalExpression}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* ── Section 5: Arc Practice ── */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-highlight" />
