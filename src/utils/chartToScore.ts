@@ -3,12 +3,21 @@
  * Deterministic: same chart input always produces the same score seed.
  */
 import type { ChartData, PlanetPosition } from '@/types/astrology';
+import { getTonicNote } from '@/data/baseTonicsLookup';
 
 // ─── Musical constants ─────────────────────────────────────────────────────
 
 export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
 
 export const NOTE_NAMES: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+/** Normalize canonical note names (Db→C#, Eb→D#, Gb→F#, Ab→G#, Bb→A#) to our NoteName type */
+function normalizeNote(note: string): NoteName {
+  const FLATS: Record<string, NoteName> = {
+    'Db': 'C#', 'Eb': 'D#', 'Fb': 'E', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#', 'Cb': 'B',
+  };
+  return (FLATS[note] ?? note) as NoteName;
+}
 
 // Modal interval patterns (semitones from root)
 export const MODES: Record<string, number[]> = {
@@ -142,7 +151,9 @@ export function chartToScore(chart: ChartData): Score {
   // Blend sun/moon tempo
   const bpm = Math.round((sunSignMusic.tempo * 0.65 + moonSignMusic.tempo * 0.35));
 
-  const root = sunSignMusic.root;
+  // Use canonical Base Tonic Intervals matrix when available, fall back to SIGN_MUSIC
+  const canonicalTonic = getTonicNote(chart.sunSign);
+  const root: NoteName = canonicalTonic ? normalizeNote(canonicalTonic) : sunSignMusic.root;
   const mode = sunSignMusic.mode;
   const modeIntervals = MODES[mode] || MODES['Dorian'];
 
