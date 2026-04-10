@@ -16,6 +16,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Academy from "./pages/Academy";
 import LunarReports from "./pages/LunarReports";
+import Glossary from "./pages/Glossary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/academy" element={<Academy />} />
                 <Route path="/lunar-reports" element={<LunarReports />} />
+                <Route path="/glossary" element={<Glossary />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <PixelPerfectOverlay 

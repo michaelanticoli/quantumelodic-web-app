@@ -8,6 +8,7 @@
  */
 
 import type { ChartData, PlanetPosition } from '@/types/astrology';
+import { getPlacementMusic } from '@/data/mergedHousesLookup';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -50,12 +51,21 @@ export interface ArcPractice {
   closingNote: string;
 }
 
+export interface PlacementInsight {
+  planet: string;
+  sign: string;
+  house: string;
+  definition: string;
+  musicalExpression: string;
+}
+
 export interface LunarReport {
   powerDays: PowerDay[];
   natal: NatalArchetype;
   peakSummary: PeakSummary;
   arcPractice: ArcPractice;
   chartData: ChartData;
+  placements: PlacementInsight[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -300,5 +310,25 @@ export async function generateReport(
   const peakSummary = derivePeakSummary(chartData, date);
   const arcPractice = deriveArcPractice(chartData);
 
-  return { powerDays, natal, peakSummary, arcPractice, chartData };
+  // 3. Enrich with placement-specific musical expressions from canonical dataset
+  const HOUSE_NAMES = ['1st house','2nd house','3rd house','4th house','5th house','6th house',
+    '7th house','8th house','9th house','10th house','11th house','12th house'];
+  const placements: PlacementInsight[] = [];
+  for (const planet of chartData.planets) {
+    // Derive approximate house from degree (simplified whole-sign houses)
+    const houseIdx = Math.floor(planet.degree / 30) % 12;
+    const house = HOUSE_NAMES[houseIdx];
+    const match = getPlacementMusic(planet.name, planet.sign, house);
+    if (match) {
+      placements.push({
+        planet: planet.name,
+        sign: planet.sign,
+        house,
+        definition: match.definition,
+        musicalExpression: match.musicalExpression,
+      });
+    }
+  }
+
+  return { powerDays, natal, peakSummary, arcPractice, chartData, placements };
 }
