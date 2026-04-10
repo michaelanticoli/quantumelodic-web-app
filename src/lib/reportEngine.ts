@@ -8,6 +8,7 @@
  */
 
 import type { ChartData, PlanetPosition } from '@/types/astrology';
+import { getPlacementMusic } from '@/data/mergedHousesLookup';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -50,12 +51,21 @@ export interface ArcPractice {
   closingNote: string;
 }
 
+export interface PlacementInsight {
+  planet: string;
+  sign: string;
+  house: string;
+  definition: string;
+  musicalExpression: string;
+}
+
 export interface LunarReport {
   powerDays: PowerDay[];
   natal: NatalArchetype;
   peakSummary: PeakSummary;
   arcPractice: ArcPractice;
   chartData: ChartData;
+  placements: PlacementInsight[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
