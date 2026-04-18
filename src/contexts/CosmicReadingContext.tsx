@@ -29,8 +29,8 @@ function getPersistableReading(reading: CosmicReading): CosmicReading {
 function saveToSession(reading: CosmicReading, audioSource: AudioSource) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ reading: getPersistableReading(reading), audioSource }));
-  } catch {
-    // ignore storage failures
+  } catch (error) {
+    console.warn('Unable to persist reading preview to session storage:', error);
   }
 }
 

@@ -238,7 +238,7 @@ serve(async (req) => {
     } = await req.json();
 
     if (!chartData || !reading) {
-      throw new Error("chartData and reading are required");
+      throw new Error("Missing required fields: chartData and reading");
     }
 
     const typedChartData = chartData as ReportChartData;

@@ -103,7 +103,6 @@ export function useCosmicReading() {
       const musicalMode = signModes[chart.sunSign] || 'D Dorian';
 
       const cosmicReading: CosmicReading = {
-        id: null,
         birthData,
         chartData: chart,
         audioUrl: url ?? undefined,

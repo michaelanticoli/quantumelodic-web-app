@@ -344,6 +344,14 @@ serve(async (req) => {
       );
     }
 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const readingId = typeof (rawData as { readingId?: unknown })?.readingId === 'string'
       ? (rawData as { readingId: string }).readingId
       : null;
@@ -351,14 +359,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'readingId is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

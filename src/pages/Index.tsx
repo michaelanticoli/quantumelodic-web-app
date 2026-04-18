@@ -26,6 +26,7 @@ const Index = () => {
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
   const { user, session } = useAuth();
+  const { updateReading } = cosmicCtx;
 
   const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? "result" : "input");
 
@@ -54,7 +55,7 @@ const Index = () => {
     ensureCosmicReadingRecord(session, reading)
       .then((record) => {
         if (cancelled) return;
-        cosmicCtx.updateReading({
+        updateReading({
           id: record.id,
           unlockStatus: record.unlockStatus,
         });
@@ -67,7 +68,7 @@ const Index = () => {
     return () => {
       cancelled = true;
     };
-  }, [session, reading, cosmicCtx]);
+  }, [session, reading, updateReading]);
 
   useEffect(() => {
     const readingId = searchParams.get("reading_id");
@@ -84,7 +85,7 @@ const Index = () => {
       .then((data) => {
         if (cancelled || !data) return;
         if (data.unlock_status === "unlocked") {
-          cosmicCtx.updateReading({ unlockStatus: "unlocked" });
+          updateReading({ unlockStatus: "unlocked" });
           toast({
             title: "Purchase confirmed",
             description: "Your full report, song, and downloads are now unlocked.",
@@ -109,7 +110,7 @@ const Index = () => {
     return () => {
       cancelled = true;
     };
-  }, [session, reading?.id, searchParams, cosmicCtx, toast, setSearchParams]);
+  }, [session, reading?.id, searchParams, updateReading, toast, setSearchParams]);
 
   const handleUnlockReading = async () => {
     if (!reading) return;
@@ -122,7 +123,7 @@ const Index = () => {
     setCheckoutLoading(true);
     try {
       const record = await ensureCosmicReadingRecord(session, reading);
-      cosmicCtx.updateReading({
+      updateReading({
         id: record.id,
         unlockStatus: record.unlockStatus,
       });
@@ -150,7 +151,7 @@ const Index = () => {
     try {
       const data = await refreshCosmicReadingAccess(reading.id);
       if (data?.unlock_status === "unlocked") {
-        cosmicCtx.updateReading({ unlockStatus: "unlocked" });
+        updateReading({ unlockStatus: "unlocked" });
         toast({ title: "Access refreshed", description: "Your premium reading is unlocked." });
       } else {
         toast({ title: "Still processing", description: "Payment confirmation has not arrived yet." });
@@ -175,6 +176,7 @@ const Index = () => {
         `${reading.birthData.name.replace(/\s+/g, "-").toLowerCase()}-full-composition.mp3`,
       );
     } finally {
+      // Allow time for the browser to begin downloading before revoking the blob URL.
       setTimeout(() => URL.revokeObjectURL(fullAudioUrl), 10_000);
     }
   };
