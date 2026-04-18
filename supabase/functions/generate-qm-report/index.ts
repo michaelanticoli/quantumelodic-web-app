@@ -284,8 +284,6 @@ serve(async (req) => {
       }
     }
 
-    const ascendant = typedChartData.planets.find((p) => p.name === "Ascendant");
-
     // Helper: convert absolute longitude to sign-relative degree string
     const toRelDeg = (deg: number): string => {
       const within = deg % 30;
@@ -293,6 +291,11 @@ serve(async (req) => {
       const m = Math.round((within - d) * 60);
       return `${d}°${m.toString().padStart(2, "0")}'`;
     };
+
+    const ascendant = typedChartData.planets.find((p) => p.name === "Ascendant");
+    const ascendantLabel = ascendant
+      ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})`
+      : typedChartData.ascendant || "Unknown";
 
     // Build planetary lines with full QM data
     const planetLines = typedChartData.planets
@@ -349,7 +352,7 @@ Subject:
   Location: ${location || "Unknown"}
   Sun sign: ${typedChartData.sunSign}
   Moon sign: ${typedChartData.moonSign}
-  Ascendant: ${ascendant ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})` : typedChartData.ascendant || "Unknown"}
+  Ascendant: ${ascendantLabel}
   Musical mode / tonal center: ${typedReading.overallKey || "Unknown"}
   Overall tempo: ${typedReading.overallTempo || "Unknown"} BPM
   Dominant element: ${typedReading.dominantElement || "Unknown"}
@@ -384,7 +387,7 @@ Subject:
   Name: ${name || "Unknown"}
   Sun sign: ${typedChartData.sunSign}
   Moon sign: ${typedChartData.moonSign}
-  Ascendant: ${ascendant ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})` : typedChartData.ascendant || "Unknown"}
+  Ascendant: ${ascendantLabel}
   Musical mode / tonal center: ${typedReading.overallKey || "Unknown"}
   Overall tempo: ${typedReading.overallTempo || "Unknown"} BPM
   Dominant element: ${typedReading.dominantElement || "Unknown"}

@@ -77,7 +77,7 @@ export async function fetchUnlockedMusic(session: Session, reading: CosmicReadin
   });
 
   if (!response.ok) {
-    let message = 'Unable to generate full song';
+    let message = `Unable to generate full song (status ${response.status})`;
     try {
       const json = await response.json() as { error?: string };
       if (json.error) {

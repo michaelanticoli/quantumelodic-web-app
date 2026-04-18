@@ -169,11 +169,14 @@ const Index = () => {
       throw new Error("Sign in to download your song");
     }
 
+    const filenameBase = reading.birthData.name.trim()
+      ? reading.birthData.name.replace(/\s+/g, "-").toLowerCase()
+      : "quantumelodic";
     const fullAudioUrl = await fetchUnlockedMusic(session, reading);
     try {
       await downloadAudio(
         fullAudioUrl,
-        `${reading.birthData.name.replace(/\s+/g, "-").toLowerCase()}-full-composition.mp3`,
+        `${filenameBase}-full-composition.mp3`,
       );
     } finally {
       // Allow time for the browser to begin downloading before revoking the blob URL.
@@ -457,6 +460,11 @@ const ResultsView = ({
       .toString()
       .padStart(2, "0")}`;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const audioCaption = audioSource === "tone"
+    ? isUnlocked
+      ? "Tone.js synthesis · planetary composition"
+      : "30-second preview · Tone.js synthesis"
+    : "Procedural synthesis · chart-derived frequencies";
 
   const handleDownloadChart = async () => {
     if (!isUnlocked) return;
@@ -685,11 +693,7 @@ const ResultsView = ({
           <>
             {(audioSource === "procedural" || audioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
-                {audioSource === "tone"
-                  ? isUnlocked
-                    ? "Tone.js synthesis · planetary composition"
-                    : "30-second preview · Tone.js synthesis"
-                  : "Procedural synthesis · chart-derived frequencies"}
+                {audioCaption}
               </p>
             )}
             <div className="w-full max-w-xs mx-auto mb-2">
