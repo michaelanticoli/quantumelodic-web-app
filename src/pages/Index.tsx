@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Crown, Loader2, Lock } from "lucide-react";
 import { CosmicBackground } from "@/components/CosmicBackground";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
 import { AspectLegend } from "@/components/AspectLegend";
@@ -11,16 +12,20 @@ import { GeneratingState } from "@/components/GeneratingState";
 import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
 import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { downloadChartImage, downloadAudio, downloadPdfReport } from "@/utils/downloadHelpers";
+import { ensureCosmicReadingRecord, fetchUnlockedMusic, refreshCosmicReadingAccess, startReadingCheckout } from "@/lib/cosmicReadings";
 import type { BirthData } from "@/types/astrology";
 
 type AppState = "input" | "generating" | "result";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
+  const { user, session } = useAuth();
 
   const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? "result" : "input");
 
@@ -38,6 +43,141 @@ const Index = () => {
   const reading = cosmicCtx.reading || hookReading;
   const audioUrl = cosmicCtx.audioUrl || hookReading?.audioUrl || null;
   const audioSource = cosmicCtx.audioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [refreshingAccess, setRefreshingAccess] = useState(false);
+
+  useEffect(() => {
+    if (!session || !reading || reading.id) return;
+
+    let cancelled = false;
+
+    ensureCosmicReadingRecord(session, reading)
+      .then((record) => {
+        if (cancelled) return;
+        cosmicCtx.updateReading({
+          id: record.id,
+          unlockStatus: record.unlockStatus,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.warn("Unable to create reading record:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, reading, cosmicCtx]);
+
+  useEffect(() => {
+    const readingId = searchParams.get("reading_id");
+    const checkout = searchParams.get("checkout");
+
+    if (!session || !reading?.id || readingId !== reading.id || checkout !== "success") {
+      return;
+    }
+
+    let cancelled = false;
+    setRefreshingAccess(true);
+
+    refreshCosmicReadingAccess(reading.id)
+      .then((data) => {
+        if (cancelled || !data) return;
+        if (data.unlock_status === "unlocked") {
+          cosmicCtx.updateReading({ unlockStatus: "unlocked" });
+          toast({
+            title: "Purchase confirmed",
+            description: "Your full report, song, and downloads are now unlocked.",
+          });
+          setSearchParams((current) => {
+            current.delete("checkout");
+            return current;
+          }, { replace: true });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.warn("Unable to refresh reading access:", error);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setRefreshingAccess(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, reading?.id, searchParams, cosmicCtx, toast, setSearchParams]);
+
+  const handleUnlockReading = async () => {
+    if (!reading) return;
+
+    if (!user || !session) {
+      navigate("/auth");
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const record = await ensureCosmicReadingRecord(session, reading);
+      cosmicCtx.updateReading({
+        id: record.id,
+        unlockStatus: record.unlockStatus,
+      });
+
+      if (record.unlockStatus === "unlocked") {
+        toast({ title: "Already unlocked", description: "Your premium reading is ready." });
+        return;
+      }
+
+      const data = await startReadingCheckout(session, record.id);
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to start checkout";
+      toast({ title: "Checkout unavailable", description: message, variant: "destructive" });
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleRefreshUnlock = async () => {
+    if (!reading?.id) return;
+    setRefreshingAccess(true);
+    try {
+      const data = await refreshCosmicReadingAccess(reading.id);
+      if (data?.unlock_status === "unlocked") {
+        cosmicCtx.updateReading({ unlockStatus: "unlocked" });
+        toast({ title: "Access refreshed", description: "Your premium reading is unlocked." });
+      } else {
+        toast({ title: "Still processing", description: "Payment confirmation has not arrived yet." });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to refresh access";
+      toast({ title: "Refresh failed", description: message, variant: "destructive" });
+    } finally {
+      setRefreshingAccess(false);
+    }
+  };
+
+  const handleDownloadFullMusic = async () => {
+    if (!reading || !session) {
+      throw new Error("Sign in to download your song");
+    }
+
+    const fullAudioUrl = await fetchUnlockedMusic(session, reading);
+    try {
+      await downloadAudio(
+        fullAudioUrl,
+        `${reading.birthData.name.replace(/\s+/g, "-").toLowerCase()}-full-composition.mp3`,
+      );
+    } finally {
+      setTimeout(() => URL.revokeObjectURL(fullAudioUrl), 10_000);
+    }
+  };
 
   const handleFormSubmit = async (data: BirthData) => {
     setAppState("generating");
@@ -173,6 +313,13 @@ const Index = () => {
               audioUrl={audioUrl ?? reading.audioUrl}
               audioSource={audioSource}
               reading={reading}
+              isUnlocked={reading.unlockStatus === "unlocked"}
+              canUnlock={Boolean(user && session)}
+              checkoutLoading={checkoutLoading}
+              refreshingAccess={refreshingAccess}
+              onUnlock={handleUnlockReading}
+              onRefreshAccess={handleRefreshUnlock}
+              onDownloadMusic={handleDownloadFullMusic}
               onBack={handleBack}
               onExplore={() => navigate("/explore")}
             />
@@ -207,6 +354,13 @@ interface ResultsViewProps {
   audioUrl?: string | null;
   audioSource?: "elevenlabs" | "procedural" | "tone" | null;
   reading: import("@/types/astrology").CosmicReading;
+  isUnlocked: boolean;
+  canUnlock: boolean;
+  checkoutLoading: boolean;
+  refreshingAccess: boolean;
+  onUnlock: () => Promise<void>;
+  onRefreshAccess: () => Promise<void>;
+  onDownloadMusic: () => Promise<void>;
   onBack: () => void;
   onExplore: () => void;
 }
@@ -218,6 +372,13 @@ const ResultsView = ({
   audioUrl,
   audioSource,
   reading,
+  isUnlocked,
+  canUnlock,
+  checkoutLoading,
+  refreshingAccess,
+  onUnlock,
+  onRefreshAccess,
+  onDownloadMusic,
   onBack,
   onExplore,
 }: ResultsViewProps) => {
@@ -296,6 +457,7 @@ const ResultsView = ({
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleDownloadChart = async () => {
+    if (!isUnlocked) return;
     setIsDownloading("chart");
     try {
       await downloadChartImage("chart-wheel-container", `${name.replace(/\s+/g, "-").toLowerCase()}-chart.png`);
@@ -307,6 +469,7 @@ const ResultsView = ({
   };
 
   const handleDownloadPdf = async () => {
+    if (!isUnlocked) return;
     setIsDownloading("pdf");
     try {
       await downloadPdfReport(reading, "chart-wheel-container");
@@ -318,10 +481,10 @@ const ResultsView = ({
   };
 
   const handleDownloadMusic = async () => {
-    if (!audioUrl) return;
+    if (!isUnlocked) return;
     setIsDownloading("music");
     try {
-      await downloadAudio(audioUrl, `${name.replace(/\s+/g, "-").toLowerCase()}-composition.mp3`);
+      await onDownloadMusic();
     } finally {
       setIsDownloading(null);
     }
@@ -340,7 +503,9 @@ const ResultsView = ({
       } else {
         setShowShareMenu((prev) => !prev);
       }
-    } catch {}
+    } catch {
+      return;
+    }
   };
 
   const shareToTwitter = () => {
@@ -421,6 +586,46 @@ const ResultsView = ({
         ✦ Explore Interactive Chart ✦
       </motion.button>
 
+      {!isUnlocked && (
+        <motion.div
+          className="mb-6 rounded-2xl border border-primary/20 bg-card/70 backdrop-blur-sm p-5"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-full border border-primary/30 bg-primary/10 p-2">
+              <Lock className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Preview mode</p>
+              <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                Your chart and a short audio preview are ready. Unlock the full report, complete song, interactive breakdown, and downloads after checkout.
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button
+                  onClick={() => void onUnlock()}
+                  disabled={checkoutLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-amber-500 px-4 py-3 text-sm font-medium tracking-wide text-primary-foreground disabled:opacity-60"
+                >
+                  {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
+                  {canUnlock ? "Unlock full reading" : "Sign in to unlock"}
+                </button>
+                {reading.id && (
+                  <button
+                    onClick={() => void onRefreshAccess()}
+                    disabled={refreshingAccess}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground disabled:opacity-60"
+                  >
+                    {refreshingAccess ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    Refresh access
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Planet Details Table */}
       <div className="mb-6">
         <PlanetDetailsTable planets={chartData.planets} />
@@ -479,7 +684,9 @@ const ResultsView = ({
             {(audioSource === "procedural" || audioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
                 {audioSource === "tone"
-                  ? "Tone.js synthesis · planetary composition"
+                  ? isUnlocked
+                    ? "Tone.js synthesis · planetary composition"
+                    : "30-second preview · Tone.js synthesis"
                   : "Procedural synthesis · chart-derived frequencies"}
               </p>
             )}
@@ -546,25 +753,25 @@ const ResultsView = ({
       >
         <button
           onClick={handleDownloadChart}
-          disabled={!!isDownloading && isDownloading !== "share-copied"}
+          disabled={!isUnlocked || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-primary/25 text-primary/80 text-[10px] tracking-widest uppercase hover:bg-primary/8 hover:border-primary/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === "chart" ? "…" : "⬇ Chart"}
+          {isUnlocked ? (isDownloading === "chart" ? "…" : "⬇ Chart") : "🔒 Chart"}
         </button>
         <button
           onClick={handleDownloadPdf}
-          disabled={!!isDownloading && isDownloading !== "share-copied"}
+          disabled={!isUnlocked || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === "pdf" ? "…" : "⬇ Report"}
+          {isUnlocked ? (isDownloading === "pdf" ? "…" : "⬇ Report") : "🔒 Report"}
         </button>
         {audioUrl ? (
           <button
             onClick={handleDownloadMusic}
-            disabled={!!isDownloading && isDownloading !== "share-copied"}
+            disabled={!isUnlocked || (!!isDownloading && isDownloading !== "share-copied")}
             className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
           >
-            {isDownloading === "music" ? "…" : "⬇ Music"}
+            {isUnlocked ? (isDownloading === "music" ? "…" : "⬇ Music") : "🔒 Music"}
           </button>
         ) : (
           <div />

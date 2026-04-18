@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
@@ -21,6 +22,11 @@ serve(async (req) => {
   }
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
@@ -52,6 +58,28 @@ serve(async (req) => {
           email: session.customer_email,
           subscription: session.subscription,
         });
+
+        if (session.metadata?.kind === "reading_unlock" && session.metadata?.reading_id) {
+          const { error } = await supabaseClient
+            .from("cosmic_readings")
+            .update({
+              unlock_status: "unlocked",
+              unlocked_at: new Date().toISOString(),
+              stripe_checkout_session_id: session.id,
+              stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+            })
+            .eq("id", session.metadata.reading_id)
+            .eq("user_id", session.metadata.user_id ?? "");
+
+          if (error) {
+            throw error;
+          }
+
+          logStep("Reading unlocked", {
+            readingId: session.metadata.reading_id,
+            userId: session.metadata.user_id,
+          });
+        }
         break;
       }
 

@@ -1,10 +1,64 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+interface ReportChartPlanet {
+  name: string;
+  degree: number;
+  sign: string;
+  isRetrograde: boolean;
+}
+
+interface ReportChartData {
+  planets: ReportChartPlanet[];
+  sunSign: string;
+  moonSign: string;
+  ascendant: string;
+}
+
+interface ReportReadingPlanet {
+  position: { name: string };
+  qmData?: {
+    archetypal_energy: string;
+    sonic_character: string;
+    instrument: string;
+    harmonic_quality: string;
+  } | null;
+  signData?: {
+    musical_mode: string;
+    key_signature: string;
+    tempo_bpm: number;
+    element: string;
+    texture: string;
+    emotional_quality: string;
+  } | null;
+}
+
+interface ReportReadingAspect {
+  planet1: string;
+  planet2: string;
+  orb: number;
+  aspectType: {
+    symbol: string;
+    name: string;
+    harmonic_interval: string;
+    consonance: string;
+  };
+}
+
+interface ReportReadingPayload {
+  planets?: ReportReadingPlanet[];
+  aspects?: ReportReadingAspect[];
+  overallKey?: string;
+  overallTempo?: number;
+  dominantElement?: string;
+  dominantModality?: string;
+}
 
 const SYSTEM_PROMPT = `You are the "Quantumelodic Codex Engine," a senior report writer that translates astrological chart data plus Quantumelodic musical mappings into a complete, elegant, emotionally resonant report.
 
@@ -172,12 +226,65 @@ serve(async (req) => {
   }
 
   try {
-    const { name, birthDate, birthTime, location, chartData, reading } = await req.json();
+    const {
+      accessMode = "preview",
+      readingId,
+      name,
+      birthDate,
+      birthTime,
+      location,
+      chartData,
+      reading,
+    } = await req.json();
+
+    if (!chartData || !reading) {
+      throw new Error("chartData and reading are required");
+    }
+
+    const typedChartData = chartData as ReportChartData;
+    const typedReading = reading as ReportReadingPayload;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const ascendant = chartData.planets.find((p: any) => p.name === "Ascendant");
+    if (accessMode === "full") {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Authentication required" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        { auth: { persistSession: false } }
+      );
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+      if (userError) throw new Error(`Authentication error: ${userError.message}`);
+      if (!userData.user?.id) throw new Error("User not authenticated");
+      if (typeof readingId !== "string" || !readingId) throw new Error("readingId is required");
+
+      const { data: storedReading, error: storedReadingError } = await supabaseClient
+        .from("cosmic_readings")
+        .select("id, unlock_status")
+        .eq("id", readingId)
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+      if (storedReadingError) throw storedReadingError;
+      if (!storedReading || storedReading.unlock_status !== "unlocked") {
+        return new Response(JSON.stringify({ error: "Reading is locked" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    const ascendant = typedChartData.planets.find((p) => p.name === "Ascendant");
 
     // Helper: convert absolute longitude to sign-relative degree string
     const toRelDeg = (deg: number): string => {
@@ -188,10 +295,10 @@ serve(async (req) => {
     };
 
     // Build planetary lines with full QM data
-    const planetLines = chartData.planets
-      .filter((p: any) => p.name !== "Ascendant")
-      .map((p: any) => {
-        const qm = reading?.planets?.find((rp: any) => rp.position.name === p.name);
+    const planetLines = typedChartData.planets
+      .filter((p) => p.name !== "Ascendant")
+      .map((p) => {
+        const qm = typedReading.planets?.find((rp) => rp.position.name === p.name);
         const signDeg = toRelDeg(p.degree);
         const lines = [
           `${p.name}:`,
@@ -218,26 +325,35 @@ serve(async (req) => {
       .join("\n\n");
 
     // Build aspects section
-    const aspectLines = reading?.aspects
+    const aspectLines = typedReading.aspects
       ?.slice(0, 15)
-      .map((a: any) =>
+      .map((a) =>
         `${a.planet1} ${a.aspectType.symbol} ${a.planet2} (${a.aspectType.name}, orb ${a.orb.toFixed(1)}°) — ${a.aspectType.harmonic_interval}, ${a.aspectType.consonance}`
       )
       .join("\n") || "None provided";
 
-    const userContent = `Generate a complete Quantumelodic Harmonic Analysis report from the following data.
+    const reportInstruction = accessMode === "preview"
+      ? `Generate a premium preview for this reading.
+
+Output requirements:
+- Use markdown.
+- Keep it under 220 words.
+- Include a short title, one evocative paragraph, and exactly 3 bullet points.
+- Tease the deeper harmonic themes without revealing the full report structure.
+- End with a single sentence inviting the reader to unlock the full report, song, and downloads.`
+      : `Generate a complete Quantumelodic Harmonic Analysis report from the following data.
 
 Subject:
   Name: ${name || "Unknown"}
   Born: ${birthDate || "Unknown"}, ${birthTime || "Unknown"}
   Location: ${location || "Unknown"}
-  Sun sign: ${chartData.sunSign}
-  Moon sign: ${chartData.moonSign}
-  Ascendant: ${ascendant ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})` : chartData.ascendant || "Unknown"}
-  Musical mode / tonal center: ${reading?.overallKey || "Unknown"}
-  Overall tempo: ${reading?.overallTempo || "Unknown"} BPM
-  Dominant element: ${reading?.dominantElement || "Unknown"}
-  Dominant modality: ${reading?.dominantModality || "Unknown"}
+  Sun sign: ${typedChartData.sunSign}
+  Moon sign: ${typedChartData.moonSign}
+  Ascendant: ${ascendant ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})` : typedChartData.ascendant || "Unknown"}
+  Musical mode / tonal center: ${typedReading.overallKey || "Unknown"}
+  Overall tempo: ${typedReading.overallTempo || "Unknown"} BPM
+  Dominant element: ${typedReading.dominantElement || "Unknown"}
+  Dominant modality: ${typedReading.dominantModality || "Unknown"}
 
 Planetary data:
 ${planetLines}
@@ -260,6 +376,26 @@ CRITICAL output instructions:
 - Display sign-relative degrees in the Planetary Orchestra table.
 - GROUP conjunct personal planets in Section II. GROUP thematically related outer planets in Section III.
 - Do not invent missing data. Prefer omission over hallucination.`;
+
+    const userContent = accessMode === "preview"
+      ? `${reportInstruction}
+
+Subject:
+  Name: ${name || "Unknown"}
+  Sun sign: ${typedChartData.sunSign}
+  Moon sign: ${typedChartData.moonSign}
+  Ascendant: ${ascendant ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})` : typedChartData.ascendant || "Unknown"}
+  Musical mode / tonal center: ${typedReading.overallKey || "Unknown"}
+  Overall tempo: ${typedReading.overallTempo || "Unknown"} BPM
+  Dominant element: ${typedReading.dominantElement || "Unknown"}
+  Dominant modality: ${typedReading.dominantModality || "Unknown"}
+
+Planetary data:
+${planetLines}
+
+Major aspects:
+${aspectLines}`
+      : reportInstruction;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

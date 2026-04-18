@@ -14,7 +14,7 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   try {
@@ -28,25 +28,82 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    const body = await req.json().catch(() => ({}));
+    const kind = body?.kind === "reading_unlock" ? "reading_unlock" : "academy";
+
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     }
 
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price: "price_1T341pApODHiQWcAAJuwsML9",
-          quantity: 1,
+    let session: Stripe.Checkout.Session;
+
+    if (kind === "reading_unlock") {
+      const readingId = typeof body?.readingId === "string" ? body.readingId : "";
+      if (!readingId) {
+        throw new Error("readingId is required");
+      }
+
+      const { data: reading, error: readingError } = await supabaseClient
+        .from("cosmic_readings")
+        .select("id, unlock_status")
+        .eq("id", readingId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (readingError) throw readingError;
+      if (!reading) throw new Error("Reading not found");
+      if (reading.unlock_status === "unlocked") {
+        return new Response(JSON.stringify({ url: null, alreadyUnlocked: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      const priceId = Deno.env.get("STRIPE_READING_PRICE_ID");
+      if (!priceId) {
+        throw new Error("STRIPE_READING_PRICE_ID is not set");
+      }
+
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        customer_email: customerId ? undefined : user.email,
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: "payment",
+        metadata: {
+          kind,
+          reading_id: readingId,
+          user_id: user.id,
         },
-      ],
-      mode: "subscription",
-      success_url: `${req.headers.get("origin")}/academy?success=true`,
-      cancel_url: `${req.headers.get("origin")}/academy`,
-    });
+        success_url: `${req.headers.get("origin")}/?checkout=success&reading_id=${readingId}`,
+        cancel_url: `${req.headers.get("origin")}/?reading_id=${readingId}`,
+      });
+
+      await supabaseClient
+        .from("cosmic_readings")
+        .update({ stripe_checkout_session_id: session.id, stripe_customer_id: customerId ?? null })
+        .eq("id", readingId)
+        .eq("user_id", user.id);
+    } else {
+      session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        customer_email: customerId ? undefined : user.email,
+        line_items: [
+          {
+            price: "price_1T341pApODHiQWcAAJuwsML9",
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        metadata: {
+          kind,
+          user_id: user.id,
+        },
+        success_url: `${req.headers.get("origin")}/academy?success=true`,
+        cancel_url: `${req.headers.get("origin")}/academy`,
+      });
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

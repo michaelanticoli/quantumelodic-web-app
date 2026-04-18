@@ -14,6 +14,7 @@ import { useQuantumMelodicData } from '@/hooks/useQuantumMelodicData';
 import { useCosmicReadingContext } from '@/contexts/CosmicReadingContext';
 import type { PlanetPosition, ChartData } from '@/types/astrology';
 import type { ComputedAspect, QuantumMelodicReading } from '@/types/quantumMelodic';
+import { Lock } from 'lucide-react';
 
 interface LocationState {
   chartData: ChartData;
@@ -29,6 +30,7 @@ const ChartExplorer = () => {
   // Prefer context reading over location state so chart persists across navigation
   const chartData = cosmicCtx.reading?.chartData ?? locState?.chartData ?? null;
   const chartName = cosmicCtx.reading?.birthData.name ?? locState?.name ?? '';
+  const isUnlocked = cosmicCtx.reading?.unlockStatus === 'unlocked';
 
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetPosition | null>(null);
   const [selectedAspect, setSelectedAspect] = useState<ComputedAspect | null>(null);
@@ -261,7 +263,7 @@ const ChartExplorer = () => {
             )}
 
             {/* Planet Choir Mixer */}
-            {reading && (
+            {reading && isUnlocked && (
               <PlanetChoirMixer
                 reading={reading}
                 enabledPlanets={enabledPlanets}
@@ -272,6 +274,22 @@ const ChartExplorer = () => {
               />
             )}
 
+            {reading && !isUnlocked && (
+              <div className="mt-4 rounded-2xl border border-primary/20 bg-card/70 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full border border-primary/30 bg-primary/10 p-2">
+                    <Lock className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Premium breakdown locked</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Preview mode includes the wheel and essential placements. Unlock to access the choir mixer, complete aspect breakdown, and the full Quantumelodic report.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* QuantumMelodic Summary */}
             {reading && (
               <div className="mt-4">
@@ -279,6 +297,8 @@ const ChartExplorer = () => {
                   reading={reading}
                   chartData={chartData}
                   subjectName={chartName}
+                  readingId={cosmicCtx.reading?.id ?? null}
+                  isUnlocked={isUnlocked}
                   onAspectPatternClick={handleAspectPatternClick}
                 />
               </div>
@@ -291,7 +311,9 @@ const ChartExplorer = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
             >
-              Tap any planet or aspect line to explore · Click aspect patterns to hear chordal recipes · Toggle planets to create custom choirs
+              {isUnlocked
+                ? 'Tap any planet or aspect line to explore · Click aspect patterns to hear chordal recipes · Toggle planets to create custom choirs'
+                : 'Preview the wheel and harmonic metrics here · Unlock on the results screen for the full choir mixer and premium breakdown'}
             </motion.p>
           </div>
         )}

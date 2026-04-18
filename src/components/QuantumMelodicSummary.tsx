@@ -1,21 +1,27 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate } from 'react-router-dom';
+import type { PlanetPosition } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { calculateHarmonicAnalysis, getResolutionGuidance, elementInfo } from '@/utils/harmonicWisdom';
-import { Music, Sparkles, BarChart3, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Music, Sparkles, BarChart3, Loader2, AlertCircle, Lock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   reading: QuantumMelodicReading;
-  chartData?: { planets: any[]; sunSign: string; moonSign: string; ascendant: string };
+  chartData?: { planets: PlanetPosition[]; sunSign: string; moonSign: string; ascendant: string };
   subjectName?: string;
+  readingId?: string | null;
+  isUnlocked: boolean;
   onAspectPatternClick?: (aspectName: string) => void;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspectPatternClick }: Props) => {
+export const QuantumMelodicSummary = ({ reading, chartData, subjectName, readingId, isUnlocked, onAspectPatternClick }: Props) => {
+  const navigate = useNavigate();
+  const { session } = useAuth();
   const { dominantElement, dominantModality, overallKey, overallTempo, aspects, planets } = reading;
   const [activeTab, setActiveTab] = useState<'analytics' | 'report'>('analytics');
   const [reportText, setReportText] = useState('');
@@ -44,13 +50,19 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspec
     abortRef.current = new AbortController();
 
     try {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      if (isUnlocked && session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-qm-report`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${ANON_KEY}`,
-        },
+        headers,
         body: JSON.stringify({
+          accessMode: isUnlocked ? 'full' : 'preview',
+          readingId,
           name: subjectName || 'Unknown',
           chartData: chartData || { planets: planets.map(p => p.position), sunSign: '', moonSign: '', ascendant: '' },
           reading: {
@@ -101,13 +113,13 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspec
       }
 
       setReportGenerated(true);
-    } catch (err: any) {
-      if (err?.name === 'AbortError') return;
-      setReportError(err.message || 'Failed to generate report');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setReportError(err instanceof Error ? err.message : 'Failed to generate report');
     } finally {
       setIsGenerating(false);
     }
-  }, [isGenerating, subjectName, chartData, planets, aspects, dominantElement, dominantModality, overallKey, overallTempo]);
+  }, [isGenerating, isUnlocked, session, readingId, subjectName, chartData, planets, aspects, dominantElement, dominantModality, overallKey, overallTempo]);
 
   const handleTabChange = (tab: 'analytics' | 'report') => {
     setActiveTab(tab);
@@ -145,7 +157,7 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspec
           }`}
         >
           <Sparkles className="w-4 h-4" />
-          Full Report
+          {isUnlocked ? 'Full Report' : 'Report Preview'}
         </button>
       </div>
 
@@ -310,6 +322,28 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspec
               </div>
             )}
 
+            {!reportError && !isUnlocked && (
+              <div className="mb-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full border border-primary/30 bg-primary/10 p-2">
+                    <Lock className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Preview excerpt</p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      This teaser only reveals part of the Quantumelodic narrative. Return to the results screen to unlock the full report, premium song, and downloads.
+                    </p>
+                    <button
+                      onClick={() => navigate('/')}
+                      className="mt-3 text-xs text-primary hover:underline"
+                    >
+                      Return to unlock
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Generating / empty */}
             {!reportError && !reportText && isGenerating && (
               <div className="glass rounded-xl p-10 flex flex-col items-center gap-4">
@@ -362,14 +396,14 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, onAspec
 
                 {!isGenerating && reportGenerated && (
                   <div className="mt-6 pt-4 border-t border-primary/10 flex justify-end">
-                    <button
-                      onClick={() => { setReportText(''); setReportGenerated(false); generateReport(); }}
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
-                    >
-                      <Sparkles className="w-3 h-3" /> Regenerate
-                    </button>
-                  </div>
-                )}
+                     <button
+                       onClick={() => { setReportText(''); setReportGenerated(false); generateReport(); }}
+                       className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+                     >
+                       <Sparkles className="w-3 h-3" /> {isUnlocked ? 'Regenerate' : 'Refresh preview'}
+                     </button>
+                   </div>
+                 )}
               </div>
             )}
           </motion.div>
