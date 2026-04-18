@@ -30,7 +30,7 @@ function saveToSession(reading: CosmicReading, audioSource: AudioSource) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ reading: getPersistableReading(reading), audioSource }));
   } catch (error) {
-    console.warn('Unable to persist reading preview to session storage:', error);
+    console.warn('Unable to persist reading preview to session storage (quota exceeded or private browsing may block storage):', error);
   }
 }
 

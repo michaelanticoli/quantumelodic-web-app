@@ -60,6 +60,21 @@ interface ReportReadingPayload {
   dominantModality?: string;
 }
 
+function isReportChartData(value: unknown): value is ReportChartData {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as ReportChartData;
+  return Array.isArray(candidate.planets)
+    && typeof candidate.sunSign === "string"
+    && typeof candidate.moonSign === "string"
+    && typeof candidate.ascendant === "string";
+}
+
+function isReportReadingPayload(value: unknown): value is ReportReadingPayload {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as ReportReadingPayload;
+  return Array.isArray(candidate.planets) || Array.isArray(candidate.aspects);
+}
+
 const SYSTEM_PROMPT = `You are the "Quantumelodic Codex Engine," a senior report writer that translates astrological chart data plus Quantumelodic musical mappings into a complete, elegant, emotionally resonant report.
 
 The report should feel like:
@@ -240,9 +255,12 @@ serve(async (req) => {
     if (!chartData || !reading) {
       throw new Error("Missing required fields: chartData and reading");
     }
+    if (!isReportChartData(chartData) || !isReportReadingPayload(reading)) {
+      throw new Error("Invalid reading payload");
+    }
 
-    const typedChartData = chartData as ReportChartData;
-    const typedReading = reading as ReportReadingPayload;
+    const typedChartData = chartData;
+    const typedReading = reading;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");

@@ -2,6 +2,11 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { CosmicReading } from '@/types/astrology';
 
+function sanitizeErrorMessage(message: string | undefined, fallback: string) {
+  if (!message) return fallback;
+  return message.replace(/\s+/g, ' ').trim().slice(0, 160) || fallback;
+}
+
 export async function ensureCosmicReadingRecord(session: Session, reading: CosmicReading) {
   if (reading.id) {
     return { id: reading.id, unlockStatus: reading.unlockStatus ?? 'preview' } as const;
@@ -81,7 +86,7 @@ export async function fetchUnlockedMusic(session: Session, reading: CosmicReadin
     try {
       const json = await response.json() as { error?: string };
       if (json.error) {
-        message = json.error;
+        message = sanitizeErrorMessage(json.error, message);
       }
     } catch (error) {
       console.warn('Unable to parse generate-music error response:', error);

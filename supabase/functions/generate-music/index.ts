@@ -25,6 +25,10 @@ interface RequestBody {
   planets?: PlanetPosition[];
 }
 
+interface ReadingRequestBody extends RequestBody {
+  readingId?: string;
+}
+
 interface QMSign {
   name: string;
   element: string;
@@ -108,6 +112,12 @@ function validateRequest(data: unknown): { valid: true; data: RequestBody } | { 
       planets: Array.isArray(obj.planets) ? obj.planets as PlanetPosition[] : undefined,
     },
   };
+}
+
+function getReadingId(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const { readingId } = data as ReadingRequestBody;
+  return typeof readingId === 'string' && readingId.length > 0 ? readingId : null;
 }
 
 // ── Translation table name fallback lists ─────────────────────────────────────
@@ -352,9 +362,7 @@ serve(async (req) => {
       );
     }
 
-    const readingId = typeof (rawData as { readingId?: unknown })?.readingId === 'string'
-      ? (rawData as { readingId: string }).readingId
-      : null;
+    const readingId = getReadingId(rawData);
     if (!readingId) {
       return new Response(
         JSON.stringify({ error: 'readingId is required' }),

@@ -5,6 +5,7 @@ import { chartToScore } from '@/utils/chartToScore';
 import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
 
 const TONE_RENDER_TIMEOUT_MS = 45_000;
+const PREVIEW_DURATION_SECONDS = 24;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -78,7 +79,7 @@ export function useCosmicReading() {
       try {
         const score = chartToScore(chart);
 
-        const renderPromise = renderPreviewScoreToAudioUrl(score);
+        const renderPromise = renderPreviewScoreToAudioUrl(score, PREVIEW_DURATION_SECONDS);
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error(`Tone.js render timed out after ${TONE_RENDER_TIMEOUT_MS / 1000} s`)), TONE_RENDER_TIMEOUT_MS)
         );
@@ -86,7 +87,7 @@ export function useCosmicReading() {
         url = await Promise.race([renderPromise, timeoutPromise]);
         setProgress(90);
         toast('Cosmic preview ready', {
-          description: `30-second preview · ${score.mode} in ${score.rootNote} · ${score.bpm} BPM`,
+          description: `${PREVIEW_DURATION_SECONDS}-second preview · ${score.mode} in ${score.rootNote} · ${score.bpm} BPM`,
         });
       } catch (audioErr) {
         console.warn('Tone.js render failed or timed out:', audioErr);

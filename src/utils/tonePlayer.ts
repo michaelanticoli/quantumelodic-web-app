@@ -5,6 +5,8 @@
 import * as Tone from 'tone';
 import type { Score, ScoreTrack, NoteEvent } from './chartToScore';
 
+const MIN_TRIMMED_NOTE_DURATION_SECONDS = 0.25;
+
 // ─── Offline render to WAV blob URL ──────────────────────────────────────
 
 export async function renderScoreToAudioUrl(score: Score): Promise<string> {
@@ -196,7 +198,7 @@ function trimScore(score: Score, maxDuration: number): Score {
         .filter((note) => note.time < maxDuration)
         .map((note) => ({
           ...note,
-          duration: Math.min(note.duration, Math.max(0.25, maxDuration - note.time)),
+          duration: Math.min(note.duration, Math.max(MIN_TRIMMED_NOTE_DURATION_SECONDS, maxDuration - note.time)),
         })),
     })),
     totalDuration: maxDuration,
