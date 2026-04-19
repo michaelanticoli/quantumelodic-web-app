@@ -137,6 +137,8 @@ export function useCosmicReading() {
       const cosmicReading: CosmicReading = {
         birthData,
         chartData: chart,
+        audioUrl: undefined,
+        audioSource: 'procedural',
         musicalMode,
         unlockStatus: 'preview',
       };
