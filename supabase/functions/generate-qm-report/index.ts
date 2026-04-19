@@ -1,11 +1,62 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import mergedHousesData from "./mergedHouses.json" with { type: "json" };
+import baseTonicsData from "./baseTonics.json" with { type: "json" };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const ZODIAC_ORDER = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+];
+
+const HOUSE_LABELS = [
+  "1st house", "2nd house", "3rd house", "4th house", "5th house", "6th house",
+  "7th house", "8th house", "9th house", "10th house", "11th house", "12th house",
+];
+
+const mergedHouses = mergedHousesData as Record<string, { d: string; m: string }>;
+const baseTonics = baseTonicsData as Record<string, Record<string, { sign: string; note: string }>>;
+
+function getPlacementMusic(planet: string, sign: string, house: string): { definition: string; musicalExpression: string } | null {
+  const entry = mergedHouses[`${planet}|${sign}|${house}`];
+  return entry ? { definition: entry.d, musicalExpression: entry.m } : null;
+}
+
+function computeWholeSignHouse(planetSign: string, ascendantSign: string): string {
+  const ascIdx = ZODIAC_ORDER.indexOf(ascendantSign);
+  const planetIdx = ZODIAC_ORDER.indexOf(planetSign);
+  if (ascIdx === -1 || planetIdx === -1) return "";
+  const houseNum = (planetIdx - ascIdx + 12) % 12;
+  return HOUSE_LABELS[houseNum];
+}
+
+function buildBaseTonicScale(sunSign: string): string {
+  const tonics = baseTonics[sunSign];
+  if (!tonics) return "";
+  const order = ["Tonic", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7"];
+  return order
+    .map((degree) => {
+      const t = tonics[degree];
+      return t ? `${degree}=${t.note}(${t.sign})` : null;
+    })
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function buildCodexString(sunSign: string, moonSign: string, ascendant: string, planets: { name: string; sign: string }[]): string {
+  const initials = (s: string) => s.slice(0, 2).toUpperCase();
+  const core = `${initials(sunSign)}${initials(moonSign)}${initials(ascendant)}`;
+  const planetCode = planets
+    .filter((p) => p.name !== "Ascendant")
+    .map((p) => `${p.name[0]}${initials(p.sign)}`)
+    .join("-");
+  return `QM-${core}-${planetCode}`;
+}
 
 interface ReportChartPlanet {
   name: string;
