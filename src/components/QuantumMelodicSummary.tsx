@@ -403,7 +403,7 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
 
             {/* Streaming / completed report */}
             {reportText && (
-              <div className="glass rounded-xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
+              <div ref={reportRef} className="glass rounded-xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
                 {/* Decorative accent line */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 
@@ -436,7 +436,17 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
                 </div>
 
                 {!isGenerating && reportGenerated && (
-                  <div className="mt-6 pt-4 border-t border-primary/10 flex justify-end">
+                  <div className="mt-6 pt-4 border-t border-primary/10 flex justify-end gap-4">
+                    {isUnlocked && (
+                      <button
+                        onClick={handleDownloadPdf}
+                        disabled={isExporting}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {isExporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                        {isExporting ? 'Preparing PDF…' : 'Download PDF'}
+                      </button>
+                    )}
                      <button
                        onClick={() => { setReportText(''); setReportGenerated(false); generateReport(); }}
                        className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
