@@ -56,7 +56,6 @@ export function useCosmicReading() {
         }
         return url;
       });
-      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'procedural' } : current);
       toast('Cosmic preview ready', {
         description: 'Short procedural preview generated from your chart frequencies.',
       });
@@ -137,8 +136,6 @@ export function useCosmicReading() {
       const cosmicReading: CosmicReading = {
         birthData,
         chartData: chart,
-        audioUrl: undefined,
-        audioSource: 'procedural',
         musicalMode,
         unlockStatus: 'preview',
       };

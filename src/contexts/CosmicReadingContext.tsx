@@ -57,7 +57,7 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
       setReading(saved.reading);
       setAudioSource(saved.audioSource);
       // Re-render preview audio from chart data (blob URLs don't survive navigation).
-      if (saved.reading.chartData && saved.audioSource !== 'elevenlabs') {
+      if (saved.reading.chartData && (saved.audioSource === 'procedural' || saved.audioSource === 'tone')) {
         const renderPromise = generateProceduralAudio(saved.reading.chartData);
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error(`Preview hydration render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000} seconds`)), PREVIEW_RENDER_TIMEOUT_MS)

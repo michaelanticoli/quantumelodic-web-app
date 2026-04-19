@@ -190,7 +190,7 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? null);
+        cosmicCtx.setReadingData(result, result.audioUrl ?? null, "procedural");
       }
       setAppState("result");
     } catch (err) {
