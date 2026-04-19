@@ -60,7 +60,7 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
       if (saved.reading.chartData) {
         const renderPromise = generateProceduralAudio(saved.reading.chartData);
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Preview hydration render timed out')), PREVIEW_RENDER_TIMEOUT_MS)
+          setTimeout(() => reject(new Error(`Preview hydration render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000} seconds`)), PREVIEW_RENDER_TIMEOUT_MS)
         );
         Promise.race([renderPromise, timeoutPromise])
           .then((url) => {

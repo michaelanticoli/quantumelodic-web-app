@@ -40,7 +40,7 @@ export function useCosmicReading() {
     try {
       const previewPromise = generateProceduralAudio(chart);
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Preview render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000} s`)), PREVIEW_RENDER_TIMEOUT_MS)
+        setTimeout(() => reject(new Error(`Preview render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000} seconds`)), PREVIEW_RENDER_TIMEOUT_MS)
       );
 
       const url = await Promise.race([previewPromise, timeoutPromise]);
