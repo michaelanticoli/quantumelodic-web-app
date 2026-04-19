@@ -49,7 +49,7 @@ export function useCosmicReading() {
       setStage('calculating');
       setProgress(25);
 
-      const chartResponse = await fetch(`${SUPABASE_URL}/functions/v1/calculate-chart`, {
+      const chartResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-chart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
