@@ -1,11 +1,62 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import mergedHousesData from "./mergedHouses.json" with { type: "json" };
+import baseTonicsData from "./baseTonics.json" with { type: "json" };
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const ZODIAC_ORDER = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+];
+
+const HOUSE_LABELS = [
+  "1st house", "2nd house", "3rd house", "4th house", "5th house", "6th house",
+  "7th house", "8th house", "9th house", "10th house", "11th house", "12th house",
+];
+
+const mergedHouses = mergedHousesData as Record<string, { d: string; m: string }>;
+const baseTonics = baseTonicsData as Record<string, Record<string, { sign: string; note: string }>>;
+
+function getPlacementMusic(planet: string, sign: string, house: string): { definition: string; musicalExpression: string } | null {
+  const entry = mergedHouses[`${planet}|${sign}|${house}`];
+  return entry ? { definition: entry.d, musicalExpression: entry.m } : null;
+}
+
+function computeWholeSignHouse(planetSign: string, ascendantSign: string): string {
+  const ascIdx = ZODIAC_ORDER.indexOf(ascendantSign);
+  const planetIdx = ZODIAC_ORDER.indexOf(planetSign);
+  if (ascIdx === -1 || planetIdx === -1) return "";
+  const houseNum = (planetIdx - ascIdx + 12) % 12;
+  return HOUSE_LABELS[houseNum];
+}
+
+function buildBaseTonicScale(sunSign: string): string {
+  const tonics = baseTonics[sunSign];
+  if (!tonics) return "";
+  const order = ["Tonic", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7"];
+  return order
+    .map((degree) => {
+      const t = tonics[degree];
+      return t ? `${degree}=${t.note}(${t.sign})` : null;
+    })
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function buildCodexString(sunSign: string, moonSign: string, ascendant: string, planets: { name: string; sign: string }[]): string {
+  const initials = (s: string) => s.slice(0, 2).toUpperCase();
+  const core = `${initials(sunSign)}${initials(moonSign)}${initials(ascendant)}`;
+  const planetCode = planets
+    .filter((p) => p.name !== "Ascendant")
+    .map((p) => `${p.name[0]}${initials(p.sign)}`)
+    .join("-");
+  return `QM-${core}-${planetCode}`;
+}
 
 interface ReportChartPlanet {
   name: string;
@@ -127,9 +178,9 @@ Your reader should walk away feeling accurately seen, musically translated, and 
 
 ### The Planetary Orchestra
 
-| Planet | Sign & Degree | Motion | Instrumental Voice | Tonal Role |
-| :---- | :---- | :---- | :---- | :---- |
-[Fill all 10 planets. Use sign-relative degree (e.g., "Taurus 4°"). Use planet emojis in first column. Instrumental Voice and Tonal Role should be evocative and specific to the mapping data — e.g. "Radiant Brass & Strings" / "Central Melody / Legato Warmth".]
+| Planet | Sign & Degree | House | Motion | Instrumental Voice | Tonal Role |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+[Fill all 10 planets. Use sign-relative degree (e.g., "Taurus 4°"). Use planet emojis in first column. House column shows the Whole Sign house from the data. Instrumental Voice and Tonal Role should be evocative and specific to the mapping data — e.g. "Radiant Brass & Strings" / "Central Melody / Legato Warmth".]
 
 ---
 
@@ -315,16 +366,22 @@ serve(async (req) => {
       ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})`
       : typedChartData.ascendant || "Unknown";
 
-    // Build planetary lines with full QM data
+    // Compute Whole Sign houses from ascendant
+    const ascendantSignName = ascendant?.sign || typedChartData.ascendant.split(" ")[0];
+
+    // Build planetary lines with full QM data + canonical placement music
     const planetLines = typedChartData.planets
       .filter((p) => p.name !== "Ascendant")
       .map((p) => {
         const qm = typedReading.planets?.find((rp) => rp.position.name === p.name);
         const signDeg = toRelDeg(p.degree);
+        const house = computeWholeSignHouse(p.sign, ascendantSignName);
+        const placementMusic = house ? getPlacementMusic(p.name, p.sign, house) : null;
         const lines = [
           `${p.name}:`,
           `  sign: ${p.sign}`,
           `  sign_relative_degree: ${p.sign} ${signDeg}`,
+          `  house: ${house || "Unknown"}`,
           `  motion: ${p.isRetrograde ? "Retrograde" : "Direct"}`,
         ];
         if (qm?.qmData) {
@@ -341,17 +398,28 @@ serve(async (req) => {
           lines.push(`  texture: ${qm.signData.texture}`);
           lines.push(`  emotional_quality: ${qm.signData.emotional_quality}`);
         }
+        if (placementMusic) {
+          lines.push(`  canonical_definition: ${placementMusic.definition}`);
+          lines.push(`  canonical_musical_expression: ${placementMusic.musicalExpression}`);
+        }
         return lines.join("\n");
       })
       .join("\n\n");
 
-    // Build aspects section
     const aspectLines = typedReading.aspects
       ?.slice(0, 15)
       .map((a) =>
         `${a.planet1} ${a.aspectType.symbol} ${a.planet2} (${a.aspectType.name}, orb ${a.orb.toFixed(1)}°) — ${a.aspectType.harmonic_interval}, ${a.aspectType.consonance}`
       )
       .join("\n") || "None provided";
+
+    const baseTonicScale = buildBaseTonicScale(typedChartData.sunSign);
+    const codexString = buildCodexString(
+      typedChartData.sunSign,
+      typedChartData.moonSign,
+      ascendantSignName,
+      typedChartData.planets,
+    );
 
     const reportInstruction = accessMode === "preview"
       ? `Generate a premium preview for this reading.
@@ -375,8 +443,12 @@ Subject:
   Overall tempo: ${typedReading.overallTempo || "Unknown"} BPM
   Dominant element: ${typedReading.dominantElement || "Unknown"}
   Dominant modality: ${typedReading.dominantModality || "Unknown"}
+  Codex String (sonic fingerprint): ${codexString}
 
-Planetary data:
+Canonical Base Tonic Scale (12-tone chromatic mapping rooted in ${typedChartData.sunSign}):
+${baseTonicScale}
+
+Planetary data (each placement includes its CANONICAL musical expression from the Quantumelodic Merged Houses dataset — use this as the source of truth, do not invent alternatives):
 ${planetLines}
 
 Major aspects:
@@ -386,6 +458,8 @@ Quantumelodic context:
 - The system maps each planet to a specific instrument and sonic archetype.
 - Signs correspond to musical modes, keys, tempos, and tonal textures.
 - Aspects map to harmonic intervals (trines = perfect fifths, squares = tritones, conjunctions = unison/octave, sextiles = major thirds, oppositions = octave of duality).
+- Houses are computed using the Whole Sign system, anchored to the Ascendant.
+- The Base Tonic Scale provides the chromatic intervals that govern this composition's harmonic palette.
 - The chart is interpreted as a complete musical composition — a living, breathing piece of music unique to this individual.
 
 CRITICAL output instructions:
@@ -394,8 +468,11 @@ CRITICAL output instructions:
 - Bold all musical and astrological terminology.
 - Use the exact insight labels (*Hidden Power:*, *Growth Edge:*, *Gift:*, *Challenge:*).
 - Start each planet's musical paragraph with **Quantumelodic Description:** or **Quantumelodic Translation:**
-- Display sign-relative degrees in the Planetary Orchestra table.
+- Display sign-relative degrees AND house number in the Planetary Orchestra table (add a "House" column).
+- When writing each planet's narrative, WEAVE IN the canonical_musical_expression and canonical_definition verbatim or paraphrased — these are the official Quantumelodic mappings.
+- Reference the Base Tonic Scale at least once in Section I to ground the composition harmonically.
 - GROUP conjunct personal planets in Section II. GROUP thematically related outer planets in Section III.
+- After Section V, append a final line: \`**Codex String:** ${codexString}\` — this is the unique sonic fingerprint.
 - Do not invent missing data. Prefer omission over hallucination.`;
 
     const userContent = accessMode === "preview"
