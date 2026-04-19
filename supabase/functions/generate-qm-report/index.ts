@@ -366,16 +366,22 @@ serve(async (req) => {
       ? `${ascendant.sign} (${toRelDeg(ascendant.degree)})`
       : typedChartData.ascendant || "Unknown";
 
-    // Build planetary lines with full QM data
+    // Compute Whole Sign houses from ascendant
+    const ascendantSignName = ascendant?.sign || typedChartData.ascendant.split(" ")[0];
+
+    // Build planetary lines with full QM data + canonical placement music
     const planetLines = typedChartData.planets
       .filter((p) => p.name !== "Ascendant")
       .map((p) => {
         const qm = typedReading.planets?.find((rp) => rp.position.name === p.name);
         const signDeg = toRelDeg(p.degree);
+        const house = computeWholeSignHouse(p.sign, ascendantSignName);
+        const placementMusic = house ? getPlacementMusic(p.name, p.sign, house) : null;
         const lines = [
           `${p.name}:`,
           `  sign: ${p.sign}`,
           `  sign_relative_degree: ${p.sign} ${signDeg}`,
+          `  house: ${house || "Unknown"}`,
           `  motion: ${p.isRetrograde ? "Retrograde" : "Direct"}`,
         ];
         if (qm?.qmData) {
@@ -392,17 +398,28 @@ serve(async (req) => {
           lines.push(`  texture: ${qm.signData.texture}`);
           lines.push(`  emotional_quality: ${qm.signData.emotional_quality}`);
         }
+        if (placementMusic) {
+          lines.push(`  canonical_definition: ${placementMusic.definition}`);
+          lines.push(`  canonical_musical_expression: ${placementMusic.musicalExpression}`);
+        }
         return lines.join("\n");
       })
       .join("\n\n");
 
-    // Build aspects section
     const aspectLines = typedReading.aspects
       ?.slice(0, 15)
       .map((a) =>
         `${a.planet1} ${a.aspectType.symbol} ${a.planet2} (${a.aspectType.name}, orb ${a.orb.toFixed(1)}°) — ${a.aspectType.harmonic_interval}, ${a.aspectType.consonance}`
       )
       .join("\n") || "None provided";
+
+    const baseTonicScale = buildBaseTonicScale(typedChartData.sunSign);
+    const codexString = buildCodexString(
+      typedChartData.sunSign,
+      typedChartData.moonSign,
+      ascendantSignName,
+      typedChartData.planets,
+    );
 
     const reportInstruction = accessMode === "preview"
       ? `Generate a premium preview for this reading.
