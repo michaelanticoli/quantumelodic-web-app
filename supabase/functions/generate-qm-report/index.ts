@@ -443,8 +443,12 @@ Subject:
   Overall tempo: ${typedReading.overallTempo || "Unknown"} BPM
   Dominant element: ${typedReading.dominantElement || "Unknown"}
   Dominant modality: ${typedReading.dominantModality || "Unknown"}
+  Codex String (sonic fingerprint): ${codexString}
 
-Planetary data:
+Canonical Base Tonic Scale (12-tone chromatic mapping rooted in ${typedChartData.sunSign}):
+${baseTonicScale}
+
+Planetary data (each placement includes its CANONICAL musical expression from the Quantumelodic Merged Houses dataset — use this as the source of truth, do not invent alternatives):
 ${planetLines}
 
 Major aspects:
@@ -454,6 +458,8 @@ Quantumelodic context:
 - The system maps each planet to a specific instrument and sonic archetype.
 - Signs correspond to musical modes, keys, tempos, and tonal textures.
 - Aspects map to harmonic intervals (trines = perfect fifths, squares = tritones, conjunctions = unison/octave, sextiles = major thirds, oppositions = octave of duality).
+- Houses are computed using the Whole Sign system, anchored to the Ascendant.
+- The Base Tonic Scale provides the chromatic intervals that govern this composition's harmonic palette.
 - The chart is interpreted as a complete musical composition — a living, breathing piece of music unique to this individual.
 
 CRITICAL output instructions:
@@ -462,8 +468,11 @@ CRITICAL output instructions:
 - Bold all musical and astrological terminology.
 - Use the exact insight labels (*Hidden Power:*, *Growth Edge:*, *Gift:*, *Challenge:*).
 - Start each planet's musical paragraph with **Quantumelodic Description:** or **Quantumelodic Translation:**
-- Display sign-relative degrees in the Planetary Orchestra table.
+- Display sign-relative degrees AND house number in the Planetary Orchestra table (add a "House" column).
+- When writing each planet's narrative, WEAVE IN the canonical_musical_expression and canonical_definition verbatim or paraphrased — these are the official Quantumelodic mappings.
+- Reference the Base Tonic Scale at least once in Section I to ground the composition harmonically.
 - GROUP conjunct personal planets in Section II. GROUP thematically related outer planets in Section III.
+- After Section V, append a final line: \`**Codex String:** ${codexString}\` — this is the unique sonic fingerprint.
 - Do not invent missing data. Prefer omission over hallucination.`;
 
     const userContent = accessMode === "preview"
