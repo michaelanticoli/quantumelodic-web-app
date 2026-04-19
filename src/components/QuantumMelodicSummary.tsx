@@ -5,8 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import type { PlanetPosition } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { calculateHarmonicAnalysis, getResolutionGuidance, elementInfo } from '@/utils/harmonicWisdom';
-import { Music, Sparkles, BarChart3, Loader2, AlertCircle, Lock } from 'lucide-react';
+import { Music, Sparkles, BarChart3, Loader2, AlertCircle, Lock, Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface Props {
   reading: QuantumMelodicReading;
@@ -28,7 +30,46 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportGenerated, setReportGenerated] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const reportRef = useRef<HTMLDivElement | null>(null);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!reportRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      const node = reportRef.current;
+      const canvas = await html2canvas(node, {
+        backgroundColor: '#0a0a0a',
+        scale: 2,
+        useCORS: true,
+        windowWidth: node.scrollWidth,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      const safeName = (subjectName || 'MoonTuner').replace(/[^a-z0-9]+/gi, '_');
+      pdf.save(`${safeName}_Quantumelodic_Report.pdf`);
+    } catch (err) {
+      console.error('PDF export failed', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting, subjectName]);
 
   const harmonicAnalysis = calculateHarmonicAnalysis(aspects, planets);
   const resolutionGuidance = getResolutionGuidance(harmonicAnalysis);
@@ -362,7 +403,7 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
 
             {/* Streaming / completed report */}
             {reportText && (
-              <div className="glass rounded-xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
+              <div ref={reportRef} className="glass rounded-xl p-6 sm:p-8 lg:p-10 relative overflow-hidden">
                 {/* Decorative accent line */}
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 
@@ -395,7 +436,17 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
                 </div>
 
                 {!isGenerating && reportGenerated && (
-                  <div className="mt-6 pt-4 border-t border-primary/10 flex justify-end">
+                  <div className="mt-6 pt-4 border-t border-primary/10 flex justify-end gap-4">
+                    {isUnlocked && (
+                      <button
+                        onClick={handleDownloadPdf}
+                        disabled={isExporting}
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {isExporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                        {isExporting ? 'Preparing PDF…' : 'Download PDF'}
+                      </button>
+                    )}
                      <button
                        onClick={() => { setReportText(''); setReportGenerated(false); generateReport(); }}
                        className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
