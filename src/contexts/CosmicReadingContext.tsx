@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { CosmicReading } from '@/types/astrology';
-import { chartToScore } from '@/utils/chartToScore';
-import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
+import { generateProceduralAudio } from '@/utils/proceduralAudio';
 
 type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
 
 const SESSION_KEY = 'moontuner_reading';
+const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
 
 interface CosmicReadingContextValue {
   reading: CosmicReading | null;
@@ -57,15 +57,15 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
       setReading(saved.reading);
       setAudioSource(saved.audioSource);
       // Re-render preview audio from chart data (blob URLs don't survive navigation).
-      if (saved.reading.chartData && saved.audioSource === 'tone') {
-        const score = chartToScore(saved.reading.chartData);
-        const renderPromise = renderPreviewScoreToAudioUrl(score);
+      if (saved.reading.chartData) {
+        const renderPromise = generateProceduralAudio(saved.reading.chartData);
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Tone.js hydration render timed out')), 45_000)
+          setTimeout(() => reject(new Error('Preview hydration render timed out')), PREVIEW_RENDER_TIMEOUT_MS)
         );
         Promise.race([renderPromise, timeoutPromise])
           .then((url) => {
             setAudioUrl(url);
+            setAudioSource('procedural');
             setAudioReady(true);
           })
           .catch(() => {

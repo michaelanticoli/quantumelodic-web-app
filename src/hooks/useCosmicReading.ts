@@ -1,11 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
-import { chartToScore } from '@/utils/chartToScore';
-import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
+import { generateProceduralAudio } from '@/utils/proceduralAudio';
 
-const TONE_RENDER_TIMEOUT_MS = 45_000;
-const PREVIEW_DURATION_SECONDS = 24;
+const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -29,14 +27,75 @@ export function useCosmicReading() {
   const [reading, setReading] = useState<CosmicReading | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState<'idle' | 'geocoding' | 'calculating' | 'generating' | 'complete'>('idle');
-  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'tone' | null>(null);
+  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | 'tone' | null>(null);
+  const previewRequestRef = useRef(0);
+
+  const generatePreviewAudio = useCallback(async (chart: ChartData, requestId: number) => {
+    setPreviewLoading(true);
+    setAudioSource('procedural');
+
+    try {
+      const previewPromise = generateProceduralAudio(chart);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Preview render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000} s`)), PREVIEW_RENDER_TIMEOUT_MS)
+      );
+
+      const url = await Promise.race([previewPromise, timeoutPromise]);
+
+      if (previewRequestRef.current !== requestId) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      setAudioUrl((current) => {
+        if (current && current !== url) {
+          URL.revokeObjectURL(current);
+        }
+        return url;
+      });
+      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'procedural' } : current);
+      toast('Cosmic preview ready', {
+        description: 'Short procedural preview generated from your chart frequencies.',
+      });
+    } catch (audioErr) {
+      if (previewRequestRef.current !== requestId) {
+        return;
+      }
+
+      console.warn('Preview audio render failed or timed out:', audioErr);
+      setAudioSource(null);
+      setAudioUrl((current) => {
+        if (current) {
+          URL.revokeObjectURL(current);
+        }
+        return null;
+      });
+      toast('Reading complete', {
+        description: 'Preview audio could not be rendered in your browser — chart data is available.',
+      });
+    } finally {
+      if (previewRequestRef.current === requestId) {
+        setPreviewLoading(false);
+      }
+    }
+  }, []);
 
   const generateReading = useCallback(async (birthData: BirthData) => {
+    previewRequestRef.current += 1;
     setLoading(true);
     setError(null);
     setProgress(0);
+    setPreviewLoading(false);
+    setAudioSource(null);
+    setAudioUrl((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return null;
+    });
 
     try {
       // Stage 1: Visual progress smoothness
@@ -68,52 +127,26 @@ export function useCosmicReading() {
       setChartData(chart);
       setProgress(50);
 
-      // Stage 3: Generate preview audio locally
+      // Stage 3: Finalize chart result, then generate preview audio in the background
       setStage('generating');
       setProgress(60);
-
-      let url: string | null = null;
-      const finalAudioSource = 'tone' as const;
-
       setProgress(70);
-      try {
-        const score = chartToScore(chart);
-
-        const renderPromise = renderPreviewScoreToAudioUrl(score, PREVIEW_DURATION_SECONDS);
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Tone.js render timed out after ${TONE_RENDER_TIMEOUT_MS / 1000} s`)), TONE_RENDER_TIMEOUT_MS)
-        );
-
-        url = await Promise.race([renderPromise, timeoutPromise]);
-        setProgress(90);
-        toast('Cosmic preview ready', {
-          description: `${PREVIEW_DURATION_SECONDS}-second preview · ${score.mode} in ${score.rootNote} · ${score.bpm} BPM`,
-        });
-      } catch (audioErr) {
-        console.warn('Tone.js render failed or timed out:', audioErr);
-        setProgress(90);
-        toast('Reading complete', {
-          description: 'Preview audio could not be rendered in your browser — chart data is available.',
-        });
-      }
-
-      setAudioSource(finalAudioSource);
-      setAudioUrl(url);
-      setProgress(100);
 
       const musicalMode = signModes[chart.sunSign] || 'D Dorian';
 
       const cosmicReading: CosmicReading = {
         birthData,
         chartData: chart,
-        audioUrl: url ?? undefined,
         musicalMode,
-        audioSource: finalAudioSource,
         unlockStatus: 'preview',
       };
 
       setReading(cosmicReading);
       setStage('complete');
+      setProgress(100);
+
+      const previewRequestId = previewRequestRef.current;
+      void generatePreviewAudio(chart, previewRequestId);
 
       return cosmicReading;
 
@@ -125,21 +158,25 @@ export function useCosmicReading() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [generatePreviewAudio]);
 
   const reset = useCallback(() => {
     setLoading(false);
     setError(null);
     setReading(null);
     setChartData(null);
+    setPreviewLoading(false);
     setProgress(0);
     setStage('idle');
-
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      // Note: setAudioUrl handled separately to avoid stale closure
-    }
-  }, [audioUrl]);
+    setAudioSource(null);
+    setAudioUrl((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return null;
+    });
+    previewRequestRef.current += 1;
+  }, []);
 
   return {
     loading,
@@ -148,6 +185,7 @@ export function useCosmicReading() {
     chartData,
     audioUrl,
     audioSource,
+    previewLoading,
     progress,
     stage,
     generateReading,
