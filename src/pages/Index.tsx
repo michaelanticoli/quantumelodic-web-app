@@ -35,6 +35,7 @@ const Index = () => {
     error,
     reading: hookReading,
     audioSource: hookAudioSource,
+    previewLoading,
     progress,
     stage,
     generateReading,
@@ -189,7 +190,7 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? null);
+        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? "procedural");
       }
       setAppState("result");
     } catch (err) {
@@ -318,6 +319,7 @@ const Index = () => {
               audioUrl={audioUrl ?? reading.audioUrl}
               audioSource={audioSource}
               reading={reading}
+              previewLoading={previewLoading && !audioUrl}
               isUnlocked={reading.unlockStatus === "unlocked"}
               canUnlock={Boolean(user && session)}
               checkoutLoading={checkoutLoading}
@@ -359,6 +361,7 @@ interface ResultsViewProps {
   audioUrl?: string | null;
   audioSource?: "elevenlabs" | "procedural" | "tone" | null;
   reading: import("@/types/astrology").CosmicReading;
+  previewLoading: boolean;
   isUnlocked: boolean;
   canUnlock: boolean;
   checkoutLoading: boolean;
@@ -377,6 +380,7 @@ const ResultsView = ({
   audioUrl,
   audioSource,
   reading,
+  previewLoading,
   isUnlocked,
   canUnlock,
   checkoutLoading,
@@ -464,7 +468,7 @@ const ResultsView = ({
     ? isUnlocked
       ? "Tone.js synthesis · planetary composition"
       : "30-second preview · Tone.js synthesis"
-    : "Procedural synthesis · chart-derived frequencies";
+    : "Short preview · chart-derived frequencies";
 
   const handleDownloadChart = async () => {
     if (!isUnlocked) return;
@@ -609,7 +613,9 @@ const ResultsView = ({
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">Preview mode</p>
               <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                Your chart and a short audio preview are ready. Unlock the full report, complete song, interactive breakdown, and downloads after checkout.
+                {previewLoading
+                  ? "Your chart is ready. The preview audio is rendering separately so the site stays responsive."
+                  : "Your chart and a short audio preview are ready. Unlock the full report, complete song, interactive breakdown, and downloads after checkout."}
               </p>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <button
@@ -745,7 +751,7 @@ const ResultsView = ({
           </>
         ) : (
           <p className="text-[10px] text-muted-foreground/30 italic text-center">
-            Audio unavailable — explore your chart data above
+            {previewLoading ? "Preparing your audio preview…" : "Audio unavailable — explore your chart data above"}
           </p>
         )}
       </motion.div>
