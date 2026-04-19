@@ -178,9 +178,9 @@ Your reader should walk away feeling accurately seen, musically translated, and 
 
 ### The Planetary Orchestra
 
-| Planet | Sign & Degree | Motion | Instrumental Voice | Tonal Role |
-| :---- | :---- | :---- | :---- | :---- |
-[Fill all 10 planets. Use sign-relative degree (e.g., "Taurus 4°"). Use planet emojis in first column. Instrumental Voice and Tonal Role should be evocative and specific to the mapping data — e.g. "Radiant Brass & Strings" / "Central Melody / Legato Warmth".]
+| Planet | Sign & Degree | House | Motion | Instrumental Voice | Tonal Role |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+[Fill all 10 planets. Use sign-relative degree (e.g., "Taurus 4°"). Use planet emojis in first column. House column shows the Whole Sign house from the data. Instrumental Voice and Tonal Role should be evocative and specific to the mapping data — e.g. "Radiant Brass & Strings" / "Central Melody / Legato Warmth".]
 
 ---
 
