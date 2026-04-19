@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { CosmicReading } from '@/types/astrology';
 import { chartToScore } from '@/utils/chartToScore';
-import { renderScoreToAudioUrl } from '@/utils/tonePlayer';
+import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
 
 type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
 
@@ -13,15 +13,25 @@ interface CosmicReadingContextValue {
   audioUrl: string | null;
   audioReady: boolean;
   setReadingData: (reading: CosmicReading, audioUrl: string | null, audioSource: AudioSource) => void;
+  updateReading: (patch: Partial<CosmicReading>) => void;
   clearReading: () => void;
 }
 
 const CosmicReadingContext = createContext<CosmicReadingContextValue | null>(null);
 
+function getPersistableReading(reading: CosmicReading): CosmicReading {
+  return {
+    ...reading,
+    audioUrl: undefined,
+  };
+}
+
 function saveToSession(reading: CosmicReading, audioSource: AudioSource) {
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ reading, audioSource }));
-  } catch {}
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ reading: getPersistableReading(reading), audioSource }));
+  } catch (error) {
+    console.warn('Unable to persist reading preview to session storage (quota exceeded or private browsing may block storage):', error);
+  }
 }
 
 function loadFromSession(): { reading: CosmicReading; audioSource: AudioSource } | null {
@@ -46,13 +56,10 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
     if (saved) {
       setReading(saved.reading);
       setAudioSource(saved.audioSource);
-      // Re-render audio from chart data (blob URLs don't survive navigation).
-      // Only attempt Tone.js re-render for 'tone' source; for 'elevenlabs' the
-      // blob URL is gone and we accept no audio rather than re-calling the API.
+      // Re-render preview audio from chart data (blob URLs don't survive navigation).
       if (saved.reading.chartData && saved.audioSource === 'tone') {
         const score = chartToScore(saved.reading.chartData);
-        // Race against a timeout so Safari can't hang indefinitely on hydration
-        const renderPromise = renderScoreToAudioUrl(score);
+        const renderPromise = renderPreviewScoreToAudioUrl(score);
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Tone.js hydration render timed out')), 45_000)
         );
@@ -82,6 +89,15 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateReading = useCallback((patch: Partial<CosmicReading>) => {
+    setReading((current) => {
+      if (!current) return current;
+      const next = { ...current, ...patch };
+      saveToSession(next, audioSource);
+      return next;
+    });
+  }, [audioSource]);
+
   const clearReading = useCallback(() => {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setReading(null);
@@ -92,7 +108,7 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
   }, [audioUrl]);
 
   return (
-    <CosmicReadingContext.Provider value={{ reading, audioSource, audioUrl, audioReady, setReadingData, clearReading }}>
+    <CosmicReadingContext.Provider value={{ reading, audioSource, audioUrl, audioReady, setReadingData, updateReading, clearReading }}>
       {children}
     </CosmicReadingContext.Provider>
   );

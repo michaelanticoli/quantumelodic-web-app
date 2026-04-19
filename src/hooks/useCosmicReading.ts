@@ -2,12 +2,10 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
 import { chartToScore } from '@/utils/chartToScore';
-import { renderScoreToAudioUrl } from '@/utils/tonePlayer';
+import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
 
-const ELEVENLABS_TIMEOUT_MS = 60_000; // 60 s — ElevenLabs generation can be slow
-const TONE_RENDER_TIMEOUT_MS = 45_000; // 45 s — Tone offline render (Safari guard)
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const TONE_RENDER_TIMEOUT_MS = 45_000;
+const PREVIEW_DURATION_SECONDS = 24;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -70,91 +68,33 @@ export function useCosmicReading() {
       setChartData(chart);
       setProgress(50);
 
-      // Stage 3: Generate music — try ElevenLabs first, fall back to Tone.js
+      // Stage 3: Generate preview audio locally
       setStage('generating');
       setProgress(60);
 
       let url: string | null = null;
-      let finalAudioSource: 'elevenlabs' | 'tone' = 'tone';
+      const finalAudioSource = 'tone' as const;
 
-      // ── Attempt 1: ElevenLabs via Supabase edge function ──────────────────
-      if (SUPABASE_URL) {
-        setProgress(65);
-        const elAbort = new AbortController();
-        const elTimer = setTimeout(() => elAbort.abort(), ELEVENLABS_TIMEOUT_MS);
-        try {
-          const musicResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-music`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: elAbort.signal,
-            body: JSON.stringify({
-              sunSign: chart.sunSign,
-              moonSign: chart.moonSign,
-              ascendant: chart.ascendant,
-              name: birthData.name,
-              planets: chart.planets,
-            }),
-          });
-          clearTimeout(elTimer);
-          setProgress(85);
+      setProgress(70);
+      try {
+        const score = chartToScore(chart);
 
-          const contentType = musicResponse.headers.get('content-type') || '';
-          if (musicResponse.ok && contentType.startsWith('audio/')) {
-            const audioBlob = await musicResponse.blob();
-            url = URL.createObjectURL(audioBlob);
-            finalAudioSource = 'elevenlabs';
-            setProgress(95);
-            toast('✨ Cosmic composition ready', {
-              description: 'Your personalised QuantumMelodic track — powered by ElevenLabs',
-            });
-          } else {
-            // Not audio: parse reason and fall through to Tone.js
-            const json = await musicResponse.json().catch(() => ({})) as Record<string, unknown>;
-            console.warn('generate-music did not return audio, falling back to Tone.js:', json);
-            toast('Generating synthesised audio', {
-              description: 'ElevenLabs is unavailable right now — using local composition instead.',
-            });
-          }
-        } catch (elErr) {
-          clearTimeout(elTimer);
-          if (elErr instanceof Error && elErr.name === 'AbortError') {
-            console.warn('ElevenLabs request timed out after 60 s — falling back to Tone.js');
-            toast('Generating synthesised audio', {
-              description: 'ElevenLabs took too long — using local composition instead.',
-            });
-          } else {
-            console.warn('ElevenLabs request failed — falling back to Tone.js:', elErr);
-            toast('Generating synthesised audio', {
-              description: 'ElevenLabs unavailable — using local composition instead.',
-            });
-          }
-        }
-      }
+        const renderPromise = renderPreviewScoreToAudioUrl(score, PREVIEW_DURATION_SECONDS);
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Tone.js render timed out after ${TONE_RENDER_TIMEOUT_MS / 1000} s`)), TONE_RENDER_TIMEOUT_MS)
+        );
 
-      // ── Attempt 2: Tone.js offline render (fallback) ───────────────────────
-      if (!url) {
-        setProgress(70);
-        try {
-          const score = chartToScore(chart);
-
-          // Race against a hard timeout so Safari can't hang at 70% forever
-          const renderPromise = renderScoreToAudioUrl(score);
-          const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Tone.js render timed out after ${TONE_RENDER_TIMEOUT_MS / 1000} s`)), TONE_RENDER_TIMEOUT_MS)
-          );
-
-          url = await Promise.race([renderPromise, timeoutPromise]);
-          setProgress(90);
-          toast('Cosmic composition ready', {
-            description: `${score.mode} in ${score.rootNote} · ${score.bpm} BPM · ${score.tracks.length} planetary voices`,
-          });
-        } catch (audioErr) {
-          console.warn('Tone.js render failed or timed out:', audioErr);
-          setProgress(90);
-          toast('Reading complete', {
-            description: 'Audio could not be rendered in your browser — reading data is available.',
-          });
-        }
+        url = await Promise.race([renderPromise, timeoutPromise]);
+        setProgress(90);
+        toast('Cosmic preview ready', {
+          description: `${PREVIEW_DURATION_SECONDS}-second preview · ${score.mode} in ${score.rootNote} · ${score.bpm} BPM`,
+        });
+      } catch (audioErr) {
+        console.warn('Tone.js render failed or timed out:', audioErr);
+        setProgress(90);
+        toast('Reading complete', {
+          description: 'Preview audio could not be rendered in your browser — chart data is available.',
+        });
       }
 
       setAudioSource(finalAudioSource);
@@ -169,6 +109,7 @@ export function useCosmicReading() {
         audioUrl: url ?? undefined,
         musicalMode,
         audioSource: finalAudioSource,
+        unlockStatus: 'preview',
       };
 
       setReading(cosmicReading);

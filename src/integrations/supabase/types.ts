@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      cosmic_readings: {
+        Row: {
+          birth_data: Json
+          chart_data: Json
+          created_at: string
+          id: string
+          musical_mode: string
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          unlock_status: "preview" | "unlocked"
+          unlocked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_data: Json
+          chart_data: Json
+          created_at?: string
+          id?: string
+          musical_mode: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          unlock_status?: "preview" | "unlocked"
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_data?: Json
+          chart_data?: Json
+          created_at?: string
+          id?: string
+          musical_mode?: string
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          unlock_status?: "preview" | "unlocked"
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       qm_aspects: {
         Row: {
           angle: number

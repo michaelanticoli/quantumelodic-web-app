@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,6 +23,10 @@ interface RequestBody {
   ascendant?: string;
   name: string;
   planets?: PlanetPosition[];
+}
+
+interface ReadingRequestBody extends RequestBody {
+  readingId?: string;
 }
 
 interface QMSign {
@@ -107,6 +112,12 @@ function validateRequest(data: unknown): { valid: true; data: RequestBody } | { 
       planets: Array.isArray(obj.planets) ? obj.planets as PlanetPosition[] : undefined,
     },
   };
+}
+
+function getReadingId(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const { readingId } = data as ReadingRequestBody;
+  return typeof readingId === 'string' && readingId.length > 0 ? readingId : null;
 }
 
 // ── Translation table name fallback lists ─────────────────────────────────────
@@ -340,6 +351,54 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: validation.error }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const readingId = getReadingId(rawData);
+    if (!readingId) {
+      return new Response(
+        JSON.stringify({ error: 'readingId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseServiceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await supabaseServiceClient.auth.getUser(token);
+    if (userError) {
+      throw new Error(`Authentication error: ${userError.message}`);
+    }
+    if (!userData.user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data: storedReading, error: storedReadingError } = await supabaseServiceClient
+      .from('cosmic_readings')
+      .select('id, unlock_status')
+      .eq('id', readingId)
+      .eq('user_id', userData.user.id)
+      .maybeSingle();
+
+    if (storedReadingError) {
+      throw storedReadingError;
+    }
+    if (!storedReading || storedReading.unlock_status !== 'unlocked') {
+      return new Response(
+        JSON.stringify({ error: 'Reading is locked' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

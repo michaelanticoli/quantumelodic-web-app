@@ -5,6 +5,8 @@
 import * as Tone from 'tone';
 import type { Score, ScoreTrack, NoteEvent } from './chartToScore';
 
+const MIN_TRIMMED_NOTE_DURATION_SECONDS = 0.25;
+
 // ─── Offline render to WAV blob URL ──────────────────────────────────────
 
 export async function renderScoreToAudioUrl(score: Score): Promise<string> {
@@ -23,7 +25,9 @@ export async function renderScoreToAudioUrl(score: Score): Promise<string> {
         transport.schedule((time) => {
           try {
             (synth as Tone.PolySynth).triggerAttackRelease(freq, note.duration, time, vel);
-          } catch {}
+          } catch {
+            return;
+          }
         }, note.time);
       }
     }
@@ -35,6 +39,10 @@ export async function renderScoreToAudioUrl(score: Score): Promise<string> {
   const wav = audioBufferToWav(buffer.get()!);
   const blob = new Blob([wav], { type: 'audio/wav' });
   return URL.createObjectURL(blob);
+}
+
+export async function renderPreviewScoreToAudioUrl(score: Score, maxDuration = 24): Promise<string> {
+  return renderScoreToAudioUrl(trimScore(score, maxDuration));
 }
 
 // ─── Live playback engine ─────────────────────────────────────────────────
@@ -72,7 +80,9 @@ export async function startLivePlayback(score: Score, onProgress?: (t: number) =
       const vel = note.velocity / 127;
       try {
         synth.triggerAttackRelease(freq, note.duration, time, vel);
-      } catch {}
+      } catch {
+        return;
+      }
     }, track.notes.map(n => [n.time, n]));
 
     part.start(0);
@@ -167,6 +177,32 @@ function mapOscType(type: string): OscillatorType {
     case 'fmsawtooth': return 'fmsawtooth' as OscillatorType;
     default:           return type as OscillatorType;
   }
+}
+
+function trimScore(score: Score, maxDuration: number): Score {
+  if (score.totalDuration <= maxDuration) {
+    return score;
+  }
+
+  return {
+    ...score,
+    sections: score.sections
+      .filter((section) => section.startTime < maxDuration)
+      .map((section) => ({
+        ...section,
+        duration: Math.min(section.duration, maxDuration - section.startTime),
+      })),
+    tracks: score.tracks.map((track) => ({
+      ...track,
+      notes: track.notes
+        .filter((note) => note.time < maxDuration)
+        .map((note) => ({
+          ...note,
+          duration: Math.min(note.duration, Math.max(MIN_TRIMMED_NOTE_DURATION_SECONDS, maxDuration - note.time)),
+        })),
+    })),
+    totalDuration: maxDuration,
+  };
 }
 
 // ─── WAV encoder ─────────────────────────────────────────────────────────

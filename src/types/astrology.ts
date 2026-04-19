@@ -26,9 +26,11 @@ export interface BirthData {
 }
 
 export interface CosmicReading {
+  id?: string | null;
   birthData: BirthData;
   chartData: ChartData;
   audioUrl?: string;
   musicalMode: string;
   audioSource?: 'tone' | 'elevenlabs' | 'procedural';
+  unlockStatus?: 'preview' | 'unlocked';
 }
