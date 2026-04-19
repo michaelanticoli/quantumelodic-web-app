@@ -7,44 +7,13 @@ function sanitizeErrorMessage(message: string | undefined, fallback: string) {
   return message.replace(/\s+/g, ' ').trim().slice(0, 160) || fallback;
 }
 
-export async function ensureCosmicReadingRecord(session: Session, reading: CosmicReading) {
-  if (reading.id) {
-    return { id: reading.id, unlockStatus: reading.unlockStatus ?? 'preview' } as const;
-  }
-
-  const { data, error } = await supabase
-    .from('cosmic_readings')
-    .insert({
-      user_id: session.user.id,
-      birth_data: reading.birthData,
-      chart_data: reading.chartData,
-      musical_mode: reading.musicalMode,
-    })
-    .select('id, unlock_status')
-    .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return {
-    id: data.id,
-    unlockStatus: data.unlock_status,
-  } as const;
+export async function ensureCosmicReadingRecord(_session: Session, reading: CosmicReading) {
+  // cosmic_readings table not yet provisioned — return preview-only stub
+  return { id: reading.id ?? null, unlockStatus: reading.unlockStatus ?? 'preview' } as const;
 }
 
-export async function refreshCosmicReadingAccess(readingId: string) {
-  const { data, error } = await supabase
-    .from('cosmic_readings')
-    .select('id, unlock_status, unlocked_at')
-    .eq('id', readingId)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
+export async function refreshCosmicReadingAccess(_readingId: string) {
+  return null;
 }
 
 export async function startReadingCheckout(session: Session, readingId: string) {
