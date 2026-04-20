@@ -2,8 +2,10 @@ import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
 import { generateProceduralAudio } from '@/utils/proceduralAudio';
+import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
 
 const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
+const CHART_REQUEST_TIMEOUT_MS = 25_000;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -113,7 +115,7 @@ export function useCosmicReading() {
       setStage('calculating');
       setProgress(25);
 
-      const chartResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-chart`, {
+      const chartResponse = await fetchWithTimeout(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-chart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -121,7 +123,7 @@ export function useCosmicReading() {
           time: birthData.time,
           location: birthData.location,
         }),
-      });
+      }, CHART_REQUEST_TIMEOUT_MS);
 
       if (!chartResponse.ok) {
         const errorData = await chartResponse.json();
@@ -156,7 +158,9 @@ export function useCosmicReading() {
       return cosmicReading;
 
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
+      const message = err instanceof RequestTimeoutError
+        ? 'Chart generation took too long. Please try a more specific location or try again in a moment.'
+        : err instanceof Error ? err.message : 'An error occurred';
       setError(message);
       console.error('Cosmic reading error:', err);
       throw err;
