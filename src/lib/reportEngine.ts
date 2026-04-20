@@ -9,8 +9,10 @@
 
 import type { ChartData, PlanetPosition } from '@/types/astrology';
 import { getPlacementMusic } from '@/data/mergedHousesLookup';
+import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const CHART_REQUEST_TIMEOUT_MS = 25_000;
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -290,11 +292,20 @@ export async function generateReport(
   location: string,   // 'City, Country'
 ): Promise<LunarReport> {
   // 1. Call the existing calculate-chart edge function
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/calculate-chart`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ date: birthDate, time: birthTime, location }),
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/calculate-chart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: birthDate, time: birthTime, location }),
+    }, CHART_REQUEST_TIMEOUT_MS);
+  } catch (error) {
+    if (error instanceof RequestTimeoutError) {
+      throw new Error('Chart generation timed out. Please use a more specific location or try again shortly.');
+    }
+
+    throw error;
+  }
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
