@@ -9,6 +9,7 @@ import { Music, Sparkles, BarChart3, Loader2, AlertCircle, Lock, Download } from
 import { useAuth } from '@/contexts/AuthContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
 
 interface Props {
   reading: QuantumMelodicReading;
@@ -20,6 +21,7 @@ interface Props {
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const REPORT_REQUEST_TIMEOUT_MS = 45_000;
 
 export const QuantumMelodicSummary = ({ reading, chartData, subjectName, readingId, isUnlocked, onAspectPatternClick }: Props) => {
   const navigate = useNavigate();
@@ -98,7 +100,7 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
         headers.Authorization = `Bearer ${session.access_token}`;
       }
 
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/generate-qm-report`, {
+      const resp = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/generate-qm-report`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -116,7 +118,7 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
           },
         }),
         signal: abortRef.current.signal,
-      });
+      }, REPORT_REQUEST_TIMEOUT_MS);
 
       if (!resp.ok) {
         const json = await resp.json().catch(() => ({}));
@@ -156,7 +158,11 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
       setReportGenerated(true);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setReportError(err instanceof Error ? err.message : 'Failed to generate report');
+      setReportError(
+        err instanceof RequestTimeoutError
+          ? 'Report generation timed out. Please retry in a moment.'
+          : err instanceof Error ? err.message : 'Failed to generate report'
+      );
     } finally {
       setIsGenerating(false);
     }
