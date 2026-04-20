@@ -34,6 +34,14 @@ export function useCosmicReading() {
   const [stage, setStage] = useState<'idle' | 'geocoding' | 'calculating' | 'generating' | 'complete'>('idle');
   const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | 'tone' | null>(null);
   const previewRequestRef = useRef(0);
+  const previewScheduleRef = useRef<number | null>(null);
+
+  const clearScheduledPreview = useCallback(() => {
+    if (previewScheduleRef.current !== null) {
+      window.clearTimeout(previewScheduleRef.current);
+      previewScheduleRef.current = null;
+    }
+  }, []);
 
   const generatePreviewAudio = useCallback(async (chart: ChartData, requestId: number) => {
     setPreviewLoading(true);
@@ -90,8 +98,26 @@ export function useCosmicReading() {
     }
   }, []);
 
+  const schedulePreviewAudio = useCallback((chart: ChartData, requestId: number) => {
+    clearScheduledPreview();
+    setPreviewLoading(true);
+    setAudioSource('procedural');
+
+    previewScheduleRef.current = window.setTimeout(() => {
+      previewScheduleRef.current = null;
+
+      if (previewRequestRef.current !== requestId) {
+        setPreviewLoading(false);
+        return;
+      }
+
+      void generatePreviewAudio(chart, requestId);
+    }, 120);
+  }, [clearScheduledPreview, generatePreviewAudio]);
+
   const generateReading = useCallback(async (birthData: BirthData) => {
     previewRequestRef.current += 1;
+    clearScheduledPreview();
     setLoading(true);
     setError(null);
     setProgress(0);
@@ -153,7 +179,7 @@ export function useCosmicReading() {
       setProgress(100);
 
       const previewRequestId = previewRequestRef.current;
-      void generatePreviewAudio(chart, previewRequestId);
+      schedulePreviewAudio(chart, previewRequestId);
 
       return cosmicReading;
 
@@ -167,9 +193,10 @@ export function useCosmicReading() {
     } finally {
       setLoading(false);
     }
-  }, [generatePreviewAudio]);
+  }, [clearScheduledPreview, schedulePreviewAudio]);
 
   const reset = useCallback(() => {
+    clearScheduledPreview();
     setLoading(false);
     setError(null);
     setReading(null);
@@ -185,7 +212,7 @@ export function useCosmicReading() {
       return null;
     });
     previewRequestRef.current += 1;
-  }, []);
+  }, [clearScheduledPreview]);
 
   return {
     loading,
