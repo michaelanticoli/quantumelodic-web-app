@@ -64,7 +64,7 @@ def _sanitize_location(value: str) -> str:
 
 
 def _utc_offset_from_longitude(longitude: float) -> int:
-    return int(math.floor((longitude / 15.0) + 0.5))
+    return round(longitude / 15.0)
 
 
 def _geocode_location(location: str) -> tuple[float, float, float]:
@@ -78,7 +78,7 @@ def _geocode_location(location: str) -> tuple[float, float, float]:
         response = requests.get(
             "https://nominatim.openstreetmap.org/search",
             params={"format": "json", "q": sanitized, "limit": 1},
-            headers={"User-Agent": "Quantumelodic/1.0 (chart calculation fallback)"},
+            headers={"User-Agent": "QuantumMelodic/1.0 (chart calculation fallback)"},
             timeout=10,
         )
         response.raise_for_status()
