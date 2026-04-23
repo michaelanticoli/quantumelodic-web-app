@@ -18,6 +18,13 @@ interface BackendChartResponse {
   ascendant?: { sign?: string } | Record<string, never>;
 }
 
+class ChartServiceUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ChartServiceUnavailableError';
+  }
+}
+
 function normalizeBaseUrl(url: string | undefined) {
   return url?.trim().replace(/\/+$/, '') || null;
 }
@@ -40,6 +47,18 @@ function isChartData(value: unknown): value is ChartData {
     && typeof chart.ascendant === 'string';
 }
 
+function getAscendantSign(ascendant: BackendChartResponse['ascendant'], fallbackSign: string) {
+  if (!ascendant || typeof ascendant !== 'object') {
+    return fallbackSign;
+  }
+
+  if ('sign' in ascendant && typeof ascendant.sign === 'string' && ascendant.sign.trim()) {
+    return ascendant.sign;
+  }
+
+  return fallbackSign;
+}
+
 function normalizeChartData(value: unknown, source: string): ChartData {
   if (isChartData(value)) {
     return {
@@ -52,9 +71,7 @@ function normalizeChartData(value: unknown, source: string): ChartData {
   const planets = Array.isArray(backendChart?.planets) ? backendChart.planets : [];
   const sunSign = planets.find((planet) => planet.name === 'Sun')?.sign || 'Aries';
   const moonSign = planets.find((planet) => planet.name === 'Moon')?.sign || sunSign;
-  const ascendant = ('sign' in (backendChart?.ascendant || {}) && typeof backendChart.ascendant?.sign === 'string')
-    ? backendChart.ascendant.sign
-    : sunSign;
+  const ascendant = getAscendantSign(backendChart?.ascendant, sunSign);
 
   return {
     planets,
@@ -76,20 +93,34 @@ async function readJsonResponse(response: Response) {
 async function fetchSupabaseChart(birthData: Pick<BirthData, 'date' | 'time' | 'location'>, timeoutMs: number) {
   const baseUrl = normalizeBaseUrl(SUPABASE_URL);
   if (!baseUrl) {
-    throw new Error('Supabase chart service is not configured');
+    throw new ChartServiceUnavailableError('Supabase chart service is not configured');
   }
 
-  const response = await fetchWithTimeout(`${baseUrl}/functions/v1/calculate-chart`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      date: birthData.date,
-      time: birthData.time,
-      location: birthData.location,
-    }),
-  }, timeoutMs);
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${baseUrl}/functions/v1/calculate-chart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: birthData.date,
+        time: birthData.time,
+        location: birthData.location,
+      }),
+    }, timeoutMs);
+  } catch (error) {
+    if (error instanceof RequestTimeoutError) {
+      throw error;
+    }
+    if (error instanceof TypeError) {
+      throw new ChartServiceUnavailableError('Supabase chart service is unavailable');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
+    if ([404, 502, 503, 504].includes(response.status)) {
+      throw new ChartServiceUnavailableError(`Supabase chart service responded with ${response.status}`);
+    }
     const errorData = await readJsonResponse(response) as { error?: string } | null;
     throw new Error(errorData?.error || 'Failed to calculate birth chart');
   }
@@ -114,24 +145,32 @@ function toBackendPayload(birthData: Pick<BirthData, 'date' | 'time' | 'location
 }
 
 async function fetchBackendChart(baseUrl: string, birthData: Pick<BirthData, 'date' | 'time' | 'location'>, timeoutMs: number) {
-  const response = await fetchWithTimeout(`${baseUrl}/api/calculate-chart`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(toBackendPayload(birthData)),
-  }, timeoutMs);
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(`${baseUrl}/api/calculate-chart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(toBackendPayload(birthData)),
+    }, timeoutMs);
+  } catch (error) {
+    if (error instanceof RequestTimeoutError) {
+      throw error;
+    }
+    if (error instanceof TypeError) {
+      throw new ChartServiceUnavailableError('Backend chart service is unavailable');
+    }
+    throw error;
+  }
 
   if (!response.ok) {
+    if ([404, 502, 503, 504].includes(response.status)) {
+      throw new ChartServiceUnavailableError(`Backend chart service responded with ${response.status}`);
+    }
     const errorData = await readJsonResponse(response) as { error?: string } | null;
     throw new Error(errorData?.error || 'Backend chart calculation failed');
   }
 
   return normalizeChartData(await response.json(), 'backend-api');
-}
-
-function isServiceUnavailableError(error: unknown) {
-  if (error instanceof RequestTimeoutError) return false;
-  if (!(error instanceof Error)) return false;
-  return /Failed to fetch|fetch failed|NetworkError|ENOTFOUND|ECONNREFUSED|service unavailable/i.test(error.message);
 }
 
 export async function calculateChartData(
@@ -159,7 +198,7 @@ export async function calculateChartData(
     throw new RequestTimeoutError(timeoutMs);
   }
 
-  if (isServiceUnavailableError(primaryError) || isServiceUnavailableError(backendError)) {
+  if (primaryError instanceof ChartServiceUnavailableError || backendError instanceof ChartServiceUnavailableError) {
     throw new Error('Chart service is unavailable right now. Please try again in a moment.');
   }
 

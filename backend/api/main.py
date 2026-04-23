@@ -54,10 +54,17 @@ logger = logging.getLogger(__name__)
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIME_RE = re.compile(r"^\d{2}:\d{2}$")
+_NYC_FALLBACK_LAT = 40.7128
+_NYC_FALLBACK_LON = -74.0060
+_NYC_FALLBACK_UTC_OFFSET = -5.0
 
 
 def _sanitize_location(value: str) -> str:
     return re.sub(r"[<>\"'&;]", "", value).strip()[:200]
+
+
+def _utc_offset_from_longitude(longitude: float) -> int:
+    return int(math.floor((longitude / 15.0) + 0.5))
 
 
 def _geocode_location(location: str) -> tuple[float, float, float]:
@@ -78,15 +85,15 @@ def _geocode_location(location: str) -> tuple[float, float, float]:
         results = response.json()
     except requests.RequestException as exc:
         logger.warning("Geocoding lookup failed for %s; using NYC fallback: %s", sanitized, exc)
-        return 40.7128, -74.0060, -5.0
+        return _NYC_FALLBACK_LAT, _NYC_FALLBACK_LON, _NYC_FALLBACK_UTC_OFFSET
 
     if not results:
-        return 40.7128, -74.0060, -5.0
+        return _NYC_FALLBACK_LAT, _NYC_FALLBACK_LON, _NYC_FALLBACK_UTC_OFFSET
 
     latitude = float(results[0]["lat"])
     longitude = float(results[0]["lon"])
-    utc_offset = round(longitude / 15)
-    return latitude, longitude, float(utc_offset)
+    utc_offset = _utc_offset_from_longitude(longitude)
+    return latitude, longitude, utc_offset
 
 
 def _coerce_frontend_birth_payload(data: dict[str, object]) -> dict[str, object]:
@@ -159,8 +166,8 @@ def create_app() -> Flask:
 
         try:
             data = _coerce_frontend_birth_payload(data)
-        except ValueError as exc:
-            return jsonify({"error": str(exc)}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid birth data provided"}), 400
 
         required = ("year", "month", "day", "hour", "minute", "latitude", "longitude")
         missing = [k for k in required if k not in data]
