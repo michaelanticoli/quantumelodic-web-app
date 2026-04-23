@@ -16,6 +16,7 @@ import json
 import logging
 import math
 import os
+import re
 import sys
 
 # ---------------------------------------------------------------------------
@@ -51,6 +52,75 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_TIME_RE = re.compile(r"^\d{2}:\d{2}$")
+
+
+def _sanitize_location(value: str) -> str:
+    return re.sub(r"[<>\"'&;]", "", value).strip()[:200]
+
+
+def _geocode_location(location: str) -> tuple[float, float, float]:
+    import requests
+
+    sanitized = _sanitize_location(location)
+    if len(sanitized) < 2:
+        raise ValueError("Location must be at least 2 characters")
+
+    response = requests.get(
+        "https://nominatim.openstreetmap.org/search",
+        params={"format": "json", "q": sanitized, "limit": 1},
+        headers={"User-Agent": "Quantumelodic/1.0 (chart calculation fallback)"},
+        timeout=10,
+    )
+    response.raise_for_status()
+
+    results = response.json()
+    if not results:
+        return 40.7128, -74.0060, -5.0
+
+    latitude = float(results[0]["lat"])
+    longitude = float(results[0]["lon"])
+    utc_offset = round(longitude / 15)
+    return latitude, longitude, float(utc_offset)
+
+
+def _coerce_frontend_birth_payload(data: dict[str, object]) -> dict[str, object]:
+    if all(key in data for key in ("year", "month", "day", "hour", "minute", "latitude", "longitude")):
+        return data
+
+    date = str(data.get("date", "")).strip()
+    time = str(data.get("time", "")).strip()
+    if not _DATE_RE.match(date):
+        raise ValueError("Invalid date format. Use YYYY-MM-DD")
+    if not _TIME_RE.match(time):
+        raise ValueError("Invalid time format. Use HH:MM")
+
+    year, month, day = [int(part) for part in date.split("-")]
+    hour, minute = [int(part) for part in time.split(":")]
+
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+    utc_offset = data.get("utc_offset", data.get("timezone"))
+
+    if latitude is None or longitude is None:
+        location = data.get("location")
+        if not isinstance(location, str):
+            raise ValueError("Location or coordinates required")
+        latitude, longitude, utc_offset = _geocode_location(location)
+
+    return {
+        **data,
+        "year": year,
+        "month": month,
+        "day": day,
+        "hour": hour,
+        "minute": minute,
+        "latitude": float(latitude),
+        "longitude": float(longitude),
+        "utc_offset": float(0 if utc_offset is None else utc_offset),
+    }
+
 
 # ---------------------------------------------------------------------------
 # App factory
@@ -82,6 +152,11 @@ def create_app() -> Flask:
     @app.route("/api/calculate-chart", methods=["POST"])
     def calculate_chart():
         data = request.get_json(force=True, silent=True) or {}
+
+        try:
+            data = _coerce_frontend_birth_payload(data)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
 
         required = ("year", "month", "day", "hour", "minute", "latitude", "longitude")
         missing = [k for k in required if k not in data]

@@ -9,9 +9,9 @@
 
 import type { ChartData, PlanetPosition } from '@/types/astrology';
 import { getPlacementMusic } from '@/data/mergedHousesLookup';
-import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
+import { RequestTimeoutError } from '@/lib/fetchWithTimeout';
+import { calculateChartData } from '@/lib/chartService';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -291,14 +291,41 @@ export async function generateReport(
   birthTime: string,  // 'HH:MM'
   location: string,   // 'City, Country'
 ): Promise<LunarReport> {
-  // 1. Call the existing calculate-chart edge function
-  let response: Response;
   try {
-    response = await fetchWithTimeout(`${SUPABASE_URL}/functions/v1/calculate-chart`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: birthDate, time: birthTime, location }),
+    const chartData = await calculateChartData({
+      date: birthDate,
+      time: birthTime,
+      location,
     }, CHART_REQUEST_TIMEOUT_MS);
+    const date = new Date(birthDate);
+
+    // 2. Derive all report sections deterministically from chart
+    const powerDays = derivePowerDays(chartData, date);
+    const natal = deriveNatal(chartData);
+    const peakSummary = derivePeakSummary(chartData, date);
+    const arcPractice = deriveArcPractice(chartData);
+
+    // 3. Enrich with placement-specific musical expressions from canonical dataset
+    const HOUSE_NAMES = ['1st house','2nd house','3rd house','4th house','5th house','6th house',
+      '7th house','8th house','9th house','10th house','11th house','12th house'];
+    const placements: PlacementInsight[] = [];
+    for (const planet of chartData.planets) {
+      // Derive approximate house from degree (simplified whole-sign houses)
+      const houseIdx = Math.floor(planet.degree / 30) % 12;
+      const house = HOUSE_NAMES[houseIdx];
+      const match = getPlacementMusic(planet.name, planet.sign, house);
+      if (match) {
+        placements.push({
+          planet: planet.name,
+          sign: planet.sign,
+          house,
+          definition: match.definition,
+          musicalExpression: match.musicalExpression,
+        });
+      }
+    }
+
+    return { powerDays, natal, peakSummary, arcPractice, chartData, placements };
   } catch (error) {
     if (error instanceof RequestTimeoutError) {
       throw new Error('Chart generation timed out. Please use a more specific location or try again shortly.');
@@ -306,40 +333,4 @@ export async function generateReport(
 
     throw error;
   }
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error((err as any).error || 'Failed to calculate chart');
-  }
-
-  const chartData: ChartData = await response.json();
-  const date = new Date(birthDate);
-
-  // 2. Derive all report sections deterministically from chart
-  const powerDays = derivePowerDays(chartData, date);
-  const natal = deriveNatal(chartData);
-  const peakSummary = derivePeakSummary(chartData, date);
-  const arcPractice = deriveArcPractice(chartData);
-
-  // 3. Enrich with placement-specific musical expressions from canonical dataset
-  const HOUSE_NAMES = ['1st house','2nd house','3rd house','4th house','5th house','6th house',
-    '7th house','8th house','9th house','10th house','11th house','12th house'];
-  const placements: PlacementInsight[] = [];
-  for (const planet of chartData.planets) {
-    // Derive approximate house from degree (simplified whole-sign houses)
-    const houseIdx = Math.floor(planet.degree / 30) % 12;
-    const house = HOUSE_NAMES[houseIdx];
-    const match = getPlacementMusic(planet.name, planet.sign, house);
-    if (match) {
-      placements.push({
-        planet: planet.name,
-        sign: planet.sign,
-        house,
-        definition: match.definition,
-        musicalExpression: match.musicalExpression,
-      });
-    }
-  }
-
-  return { powerDays, natal, peakSummary, arcPractice, chartData, placements };
 }

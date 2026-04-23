@@ -2,7 +2,8 @@ import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
 import { generateProceduralAudio } from '@/utils/proceduralAudio';
-import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
+import { RequestTimeoutError } from '@/lib/fetchWithTimeout';
+import { calculateChartData } from '@/lib/chartService';
 
 const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
@@ -141,22 +142,7 @@ export function useCosmicReading() {
       setStage('calculating');
       setProgress(25);
 
-      const chartResponse = await fetchWithTimeout(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-chart`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: birthData.date,
-          time: birthData.time,
-          location: birthData.location,
-        }),
-      }, CHART_REQUEST_TIMEOUT_MS);
-
-      if (!chartResponse.ok) {
-        const errorData = await chartResponse.json();
-        throw new Error(errorData.error || 'Failed to calculate birth chart');
-      }
-
-      const chart: ChartData = await chartResponse.json();
+      const chart: ChartData = await calculateChartData(birthData, CHART_REQUEST_TIMEOUT_MS);
       setChartData(chart);
       setProgress(50);
 
