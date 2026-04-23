@@ -67,15 +67,19 @@ def _geocode_location(location: str) -> tuple[float, float, float]:
     if len(sanitized) < 2:
         raise ValueError("Location must be at least 2 characters")
 
-    response = requests.get(
-        "https://nominatim.openstreetmap.org/search",
-        params={"format": "json", "q": sanitized, "limit": 1},
-        headers={"User-Agent": "Quantumelodic/1.0 (chart calculation fallback)"},
-        timeout=10,
-    )
-    response.raise_for_status()
+    try:
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"format": "json", "q": sanitized, "limit": 1},
+            headers={"User-Agent": "Quantumelodic/1.0 (chart calculation fallback)"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        results = response.json()
+    except requests.RequestException as exc:
+        logger.warning("Geocoding lookup failed for %s; using NYC fallback: %s", sanitized, exc)
+        return 40.7128, -74.0060, -5.0
 
-    results = response.json()
     if not results:
         return 40.7128, -74.0060, -5.0
 
