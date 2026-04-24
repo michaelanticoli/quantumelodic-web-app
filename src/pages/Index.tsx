@@ -26,7 +26,12 @@ const Index = () => {
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
   const { user, session } = useAuth();
-  const { updateReading } = cosmicCtx;
+  const {
+    audioSource: persistedAudioSource,
+    audioUrl: persistedAudioUrl,
+    setReadingData,
+    updateReading,
+  } = cosmicCtx;
 
   const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? "result" : "input");
 
@@ -44,25 +49,25 @@ const Index = () => {
   } = useCosmicReading();
 
   const reading = cosmicCtx.reading || hookReading;
-  const audioUrl = cosmicCtx.audioUrl || hookAudioUrl || hookReading?.audioUrl || null;
-  const audioSource = cosmicCtx.audioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
+  const audioUrl = persistedAudioUrl || hookAudioUrl || hookReading?.audioUrl || null;
+  const audioSource = persistedAudioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [refreshingAccess, setRefreshingAccess] = useState(false);
 
   useEffect(() => {
     if (!hookReading || !hookAudioUrl) return;
 
-    const persistedAudioSource = hookAudioSource ?? 'procedural';
-    if (cosmicCtx.audioUrl === hookAudioUrl && cosmicCtx.audioSource === persistedAudioSource) {
+    const nextAudioSource = hookAudioSource ?? 'procedural';
+    if (persistedAudioUrl === hookAudioUrl && persistedAudioSource === nextAudioSource) {
       return;
     }
 
-    cosmicCtx.setReadingData({
+    setReadingData({
       ...hookReading,
       audioUrl: hookAudioUrl,
-      audioSource: persistedAudioSource,
-    }, hookAudioUrl, persistedAudioSource);
-  }, [cosmicCtx, hookAudioSource, hookAudioUrl, hookReading]);
+      audioSource: nextAudioSource,
+    }, hookAudioUrl, nextAudioSource);
+  }, [hookAudioSource, hookAudioUrl, hookReading, persistedAudioSource, persistedAudioUrl, setReadingData]);
 
   useEffect(() => {
     if (!session || !reading || reading.id) return;
@@ -206,7 +211,9 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        cosmicCtx.setReadingData(result, null, null);
+        const pendingPreviewUrl = null;
+        const pendingPreviewSource = null;
+        setReadingData(result, pendingPreviewUrl, pendingPreviewSource);
       }
       setAppState("result");
     } catch (err) {
