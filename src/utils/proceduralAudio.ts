@@ -8,6 +8,8 @@ const PREVIEW_DURATION_SECONDS = 8;
 const PREVIEW_SAMPLE_RATE = 22_050;
 const PREVIEW_CHANNELS = 1;
 const MAX_LAYERED_PLANETS = 6;
+const MAX_HARMONIC_FREQUENCY = 4_000;
+const MIN_SUB_FREQUENCY = 30;
 
 // Map zodiac signs to base frequencies (Hz) — rooted in harmonic ratios
 const signFrequencies: Record<string, number> = {
@@ -44,9 +46,13 @@ const planetMultipliers: Record<string, number> = {
  * Returns a blob URL ready for <audio> playback.
  */
 export async function generateProceduralAudio(chart: ChartData): Promise<string> {
+  const webkitOfflineAudioContext =
+    typeof window !== 'undefined'
+      ? (window as Window & { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext
+      : undefined;
   const OfflineContext =
     typeof window !== 'undefined'
-      ? window.OfflineAudioContext || (window as typeof window & { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext
+      ? window.OfflineAudioContext || webkitOfflineAudioContext
       : undefined;
 
   if (!OfflineContext) {
@@ -107,7 +113,7 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
     if (planet.name === 'Sun' || planet.name === 'Moon' || planet.name === 'Venus') {
       const harmonic = ctx.createOscillator();
       harmonic.type = 'triangle';
-      harmonic.frequency.setValueAtTime(Math.min(freq * 1.5, 4_000), 0);
+      harmonic.frequency.setValueAtTime(Math.min(freq * 1.5, MAX_HARMONIC_FREQUENCY), 0);
 
       const hEnv = ctx.createGain();
       hEnv.gain.setValueAtTime(0, 0);
@@ -140,7 +146,7 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
   const moonFreq = signFrequencies[chart.moonSign] || 220;
   const sub = ctx.createOscillator();
   sub.type = 'sine';
-  sub.frequency.setValueAtTime(Math.max(30, moonFreq * 0.35), 0);
+  sub.frequency.setValueAtTime(Math.max(MIN_SUB_FREQUENCY, moonFreq * 0.35), 0);
   const subEnv = ctx.createGain();
   subEnv.gain.setValueAtTime(0, 0);
   subEnv.gain.linearRampToValueAtTime(0.04, 1.8);
