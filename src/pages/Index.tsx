@@ -211,9 +211,8 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        const pendingPreviewUrl = null;
-        const pendingPreviewSource = null;
-        setReadingData(result, pendingPreviewUrl, pendingPreviewSource);
+        // Persist the chart immediately, but wait for a real preview blob before storing procedural audio state.
+        setReadingData(result, null, null);
       }
       setAppState("result");
     } catch (err) {

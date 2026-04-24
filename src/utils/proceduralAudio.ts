@@ -46,21 +46,21 @@ const planetMultipliers: Record<string, number> = {
  * Returns a blob URL ready for <audio> playback.
  */
 export async function generateProceduralAudio(chart: ChartData): Promise<string> {
-  const webkitOfflineAudioContext =
+  const webkitOfflineAudioContextConstructor =
     typeof window !== 'undefined'
       ? (window as Window & { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext
       : undefined;
-  const OfflineContext =
+  const resolvedOfflineAudioContextConstructor =
     typeof window !== 'undefined'
-      ? window.OfflineAudioContext || webkitOfflineAudioContext
+      ? window.OfflineAudioContext || webkitOfflineAudioContextConstructor
       : undefined;
 
-  if (!OfflineContext) {
+  if (!resolvedOfflineAudioContextConstructor) {
     throw new Error('Offline audio rendering is not supported in this browser');
   }
 
   const duration = PREVIEW_DURATION_SECONDS;
-  const ctx = new OfflineContext(PREVIEW_CHANNELS, PREVIEW_SAMPLE_RATE * duration, PREVIEW_SAMPLE_RATE);
+  const ctx = new resolvedOfflineAudioContextConstructor(PREVIEW_CHANNELS, PREVIEW_SAMPLE_RATE * duration, PREVIEW_SAMPLE_RATE);
 
   // Master gain
   const master = ctx.createGain();
