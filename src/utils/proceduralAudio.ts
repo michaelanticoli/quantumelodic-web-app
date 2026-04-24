@@ -97,9 +97,10 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
     // Envelope
     const env = ctx.createGain();
     const attackTime = 0.9 + ((planet.degree % 3) * 0.35);
+    const sustainUntil = duration - 1.5;
     env.gain.setValueAtTime(0, 0);
     env.gain.linearRampToValueAtTime(0.07, attackTime);
-    env.gain.setValueAtTime(0.07, Math.max(attackTime, duration - 1.5));
+    env.gain.setValueAtTime(0.07, sustainUntil);
     env.gain.linearRampToValueAtTime(0, duration);
 
     osc.connect(env);
@@ -116,9 +117,10 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
       harmonic.frequency.setValueAtTime(Math.min(freq * 1.5, MAX_HARMONIC_FREQUENCY), 0);
 
       const hEnv = ctx.createGain();
+      const harmonicSustainUntil = duration - 1.8;
       hEnv.gain.setValueAtTime(0, 0);
       hEnv.gain.linearRampToValueAtTime(0.02, attackTime + 0.6);
-      hEnv.gain.setValueAtTime(0.02, Math.max(attackTime + 0.6, duration - 1.8));
+      hEnv.gain.setValueAtTime(0.02, harmonicSustainUntil);
       hEnv.gain.linearRampToValueAtTime(0, duration);
 
       harmonic.connect(hEnv);
@@ -148,9 +150,10 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
   sub.type = 'sine';
   sub.frequency.setValueAtTime(Math.max(MIN_SUB_FREQUENCY, moonFreq * 0.35), 0);
   const subEnv = ctx.createGain();
+  const subSustainUntil = duration - 1.8;
   subEnv.gain.setValueAtTime(0, 0);
   subEnv.gain.linearRampToValueAtTime(0.04, 1.8);
-  subEnv.gain.setValueAtTime(0.04, Math.max(1.8, duration - 1.8));
+  subEnv.gain.setValueAtTime(0.04, subSustainUntil);
   subEnv.gain.linearRampToValueAtTime(0, duration);
   sub.connect(subEnv);
   subEnv.connect(master);
