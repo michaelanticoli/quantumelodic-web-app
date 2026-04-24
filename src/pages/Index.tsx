@@ -34,6 +34,7 @@ const Index = () => {
     loading,
     error,
     reading: hookReading,
+    audioUrl: hookAudioUrl,
     audioSource: hookAudioSource,
     previewLoading,
     progress,
@@ -43,10 +44,25 @@ const Index = () => {
   } = useCosmicReading();
 
   const reading = cosmicCtx.reading || hookReading;
-  const audioUrl = cosmicCtx.audioUrl || hookReading?.audioUrl || null;
+  const audioUrl = cosmicCtx.audioUrl || hookAudioUrl || hookReading?.audioUrl || null;
   const audioSource = cosmicCtx.audioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [refreshingAccess, setRefreshingAccess] = useState(false);
+
+  useEffect(() => {
+    if (!hookReading || !hookAudioUrl) return;
+
+    const persistedAudioSource = hookAudioSource ?? 'procedural';
+    if (cosmicCtx.audioUrl === hookAudioUrl && cosmicCtx.audioSource === persistedAudioSource) {
+      return;
+    }
+
+    cosmicCtx.setReadingData({
+      ...hookReading,
+      audioUrl: hookAudioUrl,
+      audioSource: persistedAudioSource,
+    }, hookAudioUrl, persistedAudioSource);
+  }, [cosmicCtx, hookAudioSource, hookAudioUrl, hookReading]);
 
   useEffect(() => {
     if (!session || !reading || reading.id) return;
@@ -190,7 +206,7 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? "procedural");
+        cosmicCtx.setReadingData(result, null, null);
       }
       setAppState("result");
     } catch (err) {
