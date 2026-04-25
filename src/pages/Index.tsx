@@ -54,6 +54,14 @@ const Index = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [refreshingAccess, setRefreshingAccess] = useState(false);
 
+  // Safety net: if we're in "result" state but have no reading (race condition
+  // or corrupted session data), automatically fall back to the input form.
+  useEffect(() => {
+    if (appState === "result" && !reading) {
+      setAppState("input");
+    }
+  }, [appState, reading]);
+
   useEffect(() => {
     if (!hookReading || !hookAudioUrl) return;
 

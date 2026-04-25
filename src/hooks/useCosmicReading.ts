@@ -7,6 +7,8 @@ import { calculateChartData } from '@/lib/chartService';
 
 const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
+// Overall hard limit: two serial chart attempts (Supabase + backend) plus headroom.
+const GENERATION_HARD_TIMEOUT_MS = 60_000;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -144,7 +146,17 @@ export function useCosmicReading() {
       setStage('calculating');
       setProgress(25);
 
-      const chart: ChartData = await calculateChartData(birthData, CHART_REQUEST_TIMEOUT_MS);
+      const hardTimeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new RequestTimeoutError(GENERATION_HARD_TIMEOUT_MS, 'Chart generation timed out. Please try again.')),
+          GENERATION_HARD_TIMEOUT_MS,
+        )
+      );
+
+      const chart: ChartData = await Promise.race([
+        calculateChartData(birthData, CHART_REQUEST_TIMEOUT_MS),
+        hardTimeoutPromise,
+      ]);
       setChartData(chart);
       setProgress(50);
 

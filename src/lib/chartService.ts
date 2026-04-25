@@ -90,6 +90,20 @@ async function readJsonResponse(response: Response) {
   }
 }
 
+/**
+ * Read the JSON body of a response with a hard timeout.
+ * If the server sends headers but hangs on the body (e.g., partial response
+ * from a Supabase edge function that crashed mid-stream), this prevents the
+ * app from hanging indefinitely.
+ */
+async function readJsonWithTimeout(response: Response, timeoutMs: number): Promise<unknown> {
+  const jsonPromise = response.json();
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new RequestTimeoutError(timeoutMs)), timeoutMs)
+  );
+  return Promise.race([jsonPromise, timeoutPromise]);
+}
+
 async function fetchSupabaseChart(birthData: Pick<BirthData, 'date' | 'time' | 'location'>, timeoutMs: number) {
   const baseUrl = normalizeBaseUrl(SUPABASE_URL);
   if (!baseUrl) {
@@ -125,7 +139,7 @@ async function fetchSupabaseChart(birthData: Pick<BirthData, 'date' | 'time' | '
     throw new Error(errorData?.error || 'Failed to calculate birth chart');
   }
 
-  return normalizeChartData(await response.json(), 'supabase-edge');
+  return normalizeChartData(await readJsonWithTimeout(response, timeoutMs), 'supabase-edge');
 }
 
 function toBackendPayload(birthData: Pick<BirthData, 'date' | 'time' | 'location'>) {
@@ -170,7 +184,7 @@ async function fetchBackendChart(baseUrl: string, birthData: Pick<BirthData, 'da
     throw new Error(errorData?.error || 'Backend chart calculation failed');
   }
 
-  return normalizeChartData(await response.json(), 'backend-api');
+  return normalizeChartData(await readJsonWithTimeout(response, timeoutMs), 'backend-api');
 }
 
 export async function calculateChartData(
