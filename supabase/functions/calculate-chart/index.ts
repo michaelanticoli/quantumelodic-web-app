@@ -121,21 +121,36 @@ function validateBirthData(data: unknown): { valid: true; data: BirthData } | { 
   };
 }
 
+const GEOCODING_TIMEOUT_MS = 10_000;
+
 // Geocode location using Nominatim (server-side to avoid CORS)
 async function geocodeLocation(location: string): Promise<GeocodingResult> {
   console.log(`Geocoding location: ${location}`);
   
   // Additional sanitization for URL encoding
   const sanitizedLocation = location.replace(/[<>\"'&;]/g, '').trim().substring(0, 200);
-  
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedLocation)}&limit=1`,
-    {
-      headers: {
-        'User-Agent': 'QuantumMelodies/1.0 (cosmic music generation app)'
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GEOCODING_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(sanitizedLocation)}&limit=1`,
+      {
+        headers: {
+          'User-Agent': 'QuantumMelodies/1.0 (cosmic music generation app)'
+        },
+        signal: controller.signal,
       }
-    }
-  );
+    );
+  } catch (err) {
+    clearTimeout(timeoutId);
+    // Geocoding timed out or failed — fall back to NYC coordinates
+    console.warn('Geocoding request failed or timed out, using NYC fallback:', err);
+    return { latitude: 40.7128, longitude: -74.0060, timezone: -5 };
+  }
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     console.error(`Geocoding failed with status: ${response.status}`);

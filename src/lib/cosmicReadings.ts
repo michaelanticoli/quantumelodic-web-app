@@ -63,6 +63,23 @@ export async function fetchUnlockedMusic(session: Session, reading: CosmicReadin
     throw new Error(message);
   }
 
+  // A 200 response that contains JSON (not audio) indicates a server-side
+  // configuration issue (e.g. missing ElevenLabs API key). Detect and surface
+  // this as a clear error rather than trying to play garbage audio.
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('audio/')) {
+    let message = 'Music generation is currently unavailable. Please try again later.';
+    try {
+      const json = await response.json() as { error?: string; unavailable?: boolean };
+      if (json.error) {
+        message = sanitizeErrorMessage(json.error, message);
+      }
+    } catch (error) {
+      console.warn('Unable to parse generate-music unavailable response body:', error);
+    }
+    throw new Error(message);
+  }
+
   const blob = await response.blob();
   return URL.createObjectURL(blob);
 }
