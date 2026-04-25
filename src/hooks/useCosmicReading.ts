@@ -73,6 +73,7 @@ export function useCosmicReading() {
         }
         return url;
       });
+      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'procedural' } : current);
       toast('Cosmic preview ready', {
         description: 'Short procedural preview generated from your chart frequencies.',
       });
@@ -89,6 +90,7 @@ export function useCosmicReading() {
         }
         return null;
       });
+      setReading((current) => current ? { ...current, audioUrl: undefined, audioSource: undefined } : current);
       toast('Reading complete', {
         description: 'Preview audio could not be rendered in your browser — chart data is available.',
       });
@@ -158,6 +160,8 @@ export function useCosmicReading() {
         chartData: chart,
         musicalMode,
         unlockStatus: 'preview',
+        audioSource: undefined,
+        audioUrl: undefined,
       };
 
       setReading(cosmicReading);

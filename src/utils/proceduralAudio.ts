@@ -4,6 +4,13 @@
  */
 import type { ChartData } from '@/types/astrology';
 
+const PREVIEW_DURATION_SECONDS = 8;
+const PREVIEW_SAMPLE_RATE = 22_050;
+const PREVIEW_CHANNELS = 1;
+const MAX_LAYERED_PLANETS = 6;
+const MAX_HARMONIC_FREQUENCY = 4_000;
+const MIN_SUB_FREQUENCY = 30;
+
 // Map zodiac signs to base frequencies (Hz) — rooted in harmonic ratios
 const signFrequencies: Record<string, number> = {
   Aries: 440,       // A4
@@ -39,8 +46,21 @@ const planetMultipliers: Record<string, number> = {
  * Returns a blob URL ready for <audio> playback.
  */
 export async function generateProceduralAudio(chart: ChartData): Promise<string> {
-  const ctx = new OfflineAudioContext(2, 44100 * 15, 44100);
-  const duration = 15;
+  const webkitOfflineAudioContextConstructor =
+    typeof window !== 'undefined'
+      ? (window as Window & { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext
+      : undefined;
+  const resolvedOfflineAudioContextConstructor =
+    typeof window !== 'undefined'
+      ? window.OfflineAudioContext || webkitOfflineAudioContextConstructor
+      : undefined;
+
+  if (!resolvedOfflineAudioContextConstructor) {
+    throw new Error('Offline audio rendering is not supported in this browser');
+  }
+
+  const duration = PREVIEW_DURATION_SECONDS;
+  const ctx = new resolvedOfflineAudioContextConstructor(PREVIEW_CHANNELS, PREVIEW_SAMPLE_RATE * duration, PREVIEW_SAMPLE_RATE);
 
   // Master gain
   const master = ctx.createGain();
@@ -48,10 +68,10 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
   master.connect(ctx.destination);
 
   // Reverb-like effect via delay
-  const delay = ctx.createDelay(1);
-  delay.delayTime.setValueAtTime(0.4, 0);
+  const delay = ctx.createDelay(0.6);
+  delay.delayTime.setValueAtTime(0.28, 0);
   const feedback = ctx.createGain();
-  feedback.gain.setValueAtTime(0.3, 0);
+  feedback.gain.setValueAtTime(0.16, 0);
   delay.connect(feedback);
   feedback.connect(delay);
   delay.connect(master);
@@ -60,7 +80,7 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
   const baseFreq = signFrequencies[chart.sunSign] || 261.63;
 
   // Create layered tones from each planet
-  chart.planets.forEach((planet) => {
+  chart.planets.slice(0, MAX_LAYERED_PLANETS).forEach((planet) => {
     const mult = planetMultipliers[planet.name] || 1;
     const freq = baseFreq * mult;
 
@@ -76,10 +96,11 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
 
     // Envelope
     const env = ctx.createGain();
-    const attackTime = 2 + (planet.degree % 3);
+    const attackTime = 0.9 + ((planet.degree % 3) * 0.35);
+    const sustainUntil = duration - 1.5;
     env.gain.setValueAtTime(0, 0);
-    env.gain.linearRampToValueAtTime(0.08, attackTime);
-    env.gain.setValueAtTime(0.08, duration - 3);
+    env.gain.linearRampToValueAtTime(0.07, attackTime);
+    env.gain.setValueAtTime(0.07, sustainUntil);
     env.gain.linearRampToValueAtTime(0, duration);
 
     osc.connect(env);
@@ -93,12 +114,13 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
     if (planet.name === 'Sun' || planet.name === 'Moon' || planet.name === 'Venus') {
       const harmonic = ctx.createOscillator();
       harmonic.type = 'triangle';
-      harmonic.frequency.setValueAtTime(freq * 1.5, 0);
+      harmonic.frequency.setValueAtTime(Math.min(freq * 1.5, MAX_HARMONIC_FREQUENCY), 0);
 
       const hEnv = ctx.createGain();
+      const harmonicSustainUntil = duration - 1.8;
       hEnv.gain.setValueAtTime(0, 0);
-      hEnv.gain.linearRampToValueAtTime(0.03, attackTime + 1);
-      hEnv.gain.setValueAtTime(0.03, duration - 4);
+      hEnv.gain.linearRampToValueAtTime(0.02, attackTime + 0.6);
+      hEnv.gain.setValueAtTime(0.02, harmonicSustainUntil);
       hEnv.gain.linearRampToValueAtTime(0, duration);
 
       harmonic.connect(hEnv);
@@ -112,9 +134,9 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
     if (planet.isRetrograde) {
       const lfo = ctx.createOscillator();
       lfo.type = 'sine';
-      lfo.frequency.setValueAtTime(0.3, 0);
+      lfo.frequency.setValueAtTime(0.22, 0);
       const lfoGain = ctx.createGain();
-      lfoGain.gain.setValueAtTime(0.02, 0);
+      lfoGain.gain.setValueAtTime(0.01, 0);
       lfo.connect(lfoGain);
       lfoGain.connect(env.gain);
       lfo.start(0);
@@ -126,11 +148,12 @@ export async function generateProceduralAudio(chart: ChartData): Promise<string>
   const moonFreq = signFrequencies[chart.moonSign] || 220;
   const sub = ctx.createOscillator();
   sub.type = 'sine';
-  sub.frequency.setValueAtTime(moonFreq * 0.25, 0);
+  sub.frequency.setValueAtTime(Math.max(MIN_SUB_FREQUENCY, moonFreq * 0.35), 0);
   const subEnv = ctx.createGain();
+  const subSustainUntil = duration - 1.8;
   subEnv.gain.setValueAtTime(0, 0);
-  subEnv.gain.linearRampToValueAtTime(0.06, 4);
-  subEnv.gain.setValueAtTime(0.06, duration - 4);
+  subEnv.gain.linearRampToValueAtTime(0.04, 1.8);
+  subEnv.gain.setValueAtTime(0.04, subSustainUntil);
   subEnv.gain.linearRampToValueAtTime(0, duration);
   sub.connect(subEnv);
   subEnv.connect(master);

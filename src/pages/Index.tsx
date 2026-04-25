@@ -26,7 +26,12 @@ const Index = () => {
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
   const { user, session } = useAuth();
-  const { updateReading } = cosmicCtx;
+  const {
+    audioSource: persistedAudioSource,
+    audioUrl: persistedAudioUrl,
+    setReadingData,
+    updateReading,
+  } = cosmicCtx;
 
   const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? "result" : "input");
 
@@ -34,6 +39,7 @@ const Index = () => {
     loading,
     error,
     reading: hookReading,
+    audioUrl: hookAudioUrl,
     audioSource: hookAudioSource,
     previewLoading,
     progress,
@@ -43,10 +49,25 @@ const Index = () => {
   } = useCosmicReading();
 
   const reading = cosmicCtx.reading || hookReading;
-  const audioUrl = cosmicCtx.audioUrl || hookReading?.audioUrl || null;
-  const audioSource = cosmicCtx.audioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
+  const audioUrl = persistedAudioUrl || hookAudioUrl || hookReading?.audioUrl || null;
+  const audioSource = persistedAudioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [refreshingAccess, setRefreshingAccess] = useState(false);
+
+  useEffect(() => {
+    if (!hookReading || !hookAudioUrl) return;
+
+    const nextAudioSource = hookAudioSource ?? 'procedural';
+    if (persistedAudioUrl === hookAudioUrl && persistedAudioSource === nextAudioSource) {
+      return;
+    }
+
+    setReadingData({
+      ...hookReading,
+      audioUrl: hookAudioUrl,
+      audioSource: nextAudioSource,
+    }, hookAudioUrl, nextAudioSource);
+  }, [hookAudioSource, hookAudioUrl, hookReading, persistedAudioSource, persistedAudioUrl, setReadingData]);
 
   useEffect(() => {
     if (!session || !reading || reading.id) return;
@@ -190,7 +211,8 @@ const Index = () => {
     try {
       const result = await generateReading(data);
       if (result) {
-        cosmicCtx.setReadingData(result, result.audioUrl ?? null, result.audioSource ?? "procedural");
+        // Persist the chart immediately, but wait for a real preview blob before storing procedural audio state.
+        setReadingData(result, null, null);
       }
       setAppState("result");
     } catch (err) {
