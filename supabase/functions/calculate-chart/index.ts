@@ -121,6 +121,8 @@ function validateBirthData(data: unknown): { valid: true; data: BirthData } | { 
   };
 }
 
+const GEOCODING_TIMEOUT_MS = 10_000;
+
 // Geocode location using Nominatim (server-side to avoid CORS)
 async function geocodeLocation(location: string): Promise<GeocodingResult> {
   console.log(`Geocoding location: ${location}`);
@@ -129,7 +131,7 @@ async function geocodeLocation(location: string): Promise<GeocodingResult> {
   const sanitizedLocation = location.replace(/[<>\"'&;]/g, '').trim().substring(0, 200);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+  const timeoutId = setTimeout(() => controller.abort(), GEOCODING_TIMEOUT_MS);
 
   let response: Response;
   try {

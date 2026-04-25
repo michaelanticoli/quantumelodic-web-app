@@ -148,7 +148,7 @@ export function useCosmicReading() {
 
       const hardTimeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(
-          () => reject(new RequestTimeoutError(GENERATION_HARD_TIMEOUT_MS, 'Chart generation timed out. Please try again.')),
+          () => reject(new RequestTimeoutError(GENERATION_HARD_TIMEOUT_MS, 'Chart generation timed out. Please check your internet connection and try again. If the problem persists, try a more specific location.')),
           GENERATION_HARD_TIMEOUT_MS,
         )
       );

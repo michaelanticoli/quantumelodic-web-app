@@ -74,8 +74,8 @@ export async function fetchUnlockedMusic(session: Session, reading: CosmicReadin
       if (json.error) {
         message = sanitizeErrorMessage(json.error, message);
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.warn('Unable to parse generate-music unavailable response body:', error);
     }
     throw new Error(message);
   }

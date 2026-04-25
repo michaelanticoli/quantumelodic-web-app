@@ -97,11 +97,15 @@ async function readJsonResponse(response: Response) {
  * app from hanging indefinitely.
  */
 async function readJsonWithTimeout(response: Response, timeoutMs: number): Promise<unknown> {
-  const jsonPromise = response.json();
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new RequestTimeoutError(timeoutMs)), timeoutMs)
-  );
-  return Promise.race([jsonPromise, timeoutPromise]);
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new RequestTimeoutError(timeoutMs)), timeoutMs);
+  });
+  try {
+    return await Promise.race([response.json(), timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function fetchSupabaseChart(birthData: Pick<BirthData, 'date' | 'time' | 'location'>, timeoutMs: number) {
