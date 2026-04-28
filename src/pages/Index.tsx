@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Loader2, Music2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { CosmicBackground } from "@/components/CosmicBackground";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
 import { AspectLegend } from "@/components/AspectLegend";
@@ -12,26 +12,20 @@ import { GeneratingState } from "@/components/GeneratingState";
 import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
 import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { downloadChartImage, downloadAudio, downloadPdfReport } from "@/utils/downloadHelpers";
-import { ensureCosmicReadingRecord, fetchUnlockedMusic, refreshCosmicReadingAccess, startReadingCheckout } from "@/lib/cosmicReadings";
-import { supabase } from "@/integrations/supabase/client";
 import type { BirthData } from "@/types/astrology";
 
 type AppState = "input" | "generating" | "result";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const cosmicCtx = useCosmicReadingContext();
-  const { user, session } = useAuth();
   const {
     audioSource: persistedAudioSource,
     audioUrl: persistedAudioUrl,
     setReadingData,
-    updateReading,
   } = cosmicCtx;
 
   const [appState, setAppState] = useState<AppState>(cosmicCtx.reading ? "result" : "input");
@@ -52,15 +46,6 @@ const Index = () => {
   const reading = cosmicCtx.reading || hookReading;
   const audioUrl = persistedAudioUrl || hookAudioUrl || hookReading?.audioUrl || null;
   const audioSource = persistedAudioSource || cosmicCtx.reading?.audioSource || hookAudioSource;
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [refreshingAccess, setRefreshingAccess] = useState(false);
-
-  // Song checkout OTP state (for purchasing the AI-generated song without a full account)
-  const [showSongModal, setShowSongModal] = useState(false);
-  const [otpEmail, setOtpEmail] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
-
   // Safety net: if we're in "result" state but have no reading (race condition
   // or corrupted session data), automatically fall back to the input form.
   useEffect(() => {
@@ -84,176 +69,12 @@ const Index = () => {
     }, hookAudioUrl, nextAudioSource);
   }, [hookAudioSource, hookAudioUrl, hookReading, persistedAudioSource, persistedAudioUrl, setReadingData]);
 
-  useEffect(() => {
-    if (!session || !reading || reading.id) return;
-
-    let cancelled = false;
-
-    ensureCosmicReadingRecord(session, reading)
-      .then((record) => {
-        if (cancelled) return;
-        updateReading({
-          id: record.id,
-          unlockStatus: record.unlockStatus,
-        });
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        console.warn("Unable to create reading record:", error);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session, reading, updateReading]);
-
-  useEffect(() => {
-    const readingId = searchParams.get("reading_id");
-    const checkout = searchParams.get("checkout");
-
-    if (!session || !reading?.id || readingId !== reading.id || checkout !== "success") {
-      return;
-    }
-
-    let cancelled = false;
-    setRefreshingAccess(true);
-
-    refreshCosmicReadingAccess(reading.id)
-      .then((data) => {
-        if (cancelled || !data) return;
-        if (data.unlock_status === "unlocked") {
-          updateReading({ unlockStatus: "unlocked" });
-          toast({
-            title: "Purchase confirmed",
-            description: "Your song and downloads are now ready.",
-          });
-          setSearchParams((current) => {
-            current.delete("checkout");
-            return current;
-          }, { replace: true });
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          console.warn("Unable to refresh reading access:", error);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setRefreshingAccess(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session, reading?.id, searchParams, updateReading, toast, setSearchParams]);
-
-  // Handle song purchase — if not signed in, show the OTP modal instead of redirecting to /auth
-  const handleGetSong = async () => {
-    if (!reading) return;
-
-    if (!user || !session) {
-      setShowSongModal(true);
-      return;
-    }
-
-    setCheckoutLoading(true);
-    try {
-      const record = await ensureCosmicReadingRecord(session, reading);
-      updateReading({
-        id: record.id,
-        unlockStatus: record.unlockStatus,
-      });
-
-      if (record.unlockStatus === "unlocked") {
-        toast({ title: "Song already unlocked", description: "Your personalized song is ready." });
-        return;
-      }
-
-      const data = await startReadingCheckout(session, record.id);
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to start checkout";
-      toast({ title: "Checkout unavailable", description: message, variant: "destructive" });
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
-  // Send OTP magic link — lets users sign in without creating a password account
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpEmail) return;
-    setOtpLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: otpEmail,
-        options: { emailRedirectTo: window.location.href },
-      });
-      if (error) throw error;
-      setOtpSent(true);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unable to send link";
-      toast({ title: "Email error", description: message, variant: "destructive" });
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleSongModalClose = () => {
-    setShowSongModal(false);
-    setOtpSent(false);
-    setOtpEmail('');
-  };
-
-  const handleRefreshUnlock = async () => {
-    if (!reading?.id) return;
-    setRefreshingAccess(true);
-    try {
-      const data = await refreshCosmicReadingAccess(reading.id);
-      if (data?.unlock_status === "unlocked") {
-        updateReading({ unlockStatus: "unlocked" });
-        toast({ title: "Access refreshed", description: "Your premium reading is unlocked." });
-      } else {
-        toast({ title: "Still processing", description: "Payment confirmation has not arrived yet." });
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to refresh access";
-      toast({ title: "Refresh failed", description: message, variant: "destructive" });
-    } finally {
-      setRefreshingAccess(false);
-    }
-  };
-
-  const handleDownloadFullMusic = async () => {
-    if (!reading || !session) {
-      throw new Error("Please sign in to download your personalized song");
-    }
-
-    const filenameBase = reading.birthData.name.trim()
-      ? reading.birthData.name.replace(/\s+/g, "-").toLowerCase()
-      : "quantumelodic";
-    const fullAudioUrl = await fetchUnlockedMusic(session, reading);
-    try {
-      await downloadAudio(
-        fullAudioUrl,
-        `${filenameBase}-full-composition.mp3`,
-      );
-    } finally {
-      // Allow time for the browser to begin downloading before revoking the blob URL.
-      setTimeout(() => URL.revokeObjectURL(fullAudioUrl), 10_000);
-    }
-  };
-
   const handleFormSubmit = async (data: BirthData) => {
     setAppState("generating");
     try {
       const result = await generateReading(data);
       if (result) {
-        // Persist the chart immediately, but wait for a real preview blob before storing procedural audio state.
+        // Persist the chart immediately; audio state is updated via context as it arrives.
         setReadingData(result, null, null);
       }
       setAppState("result");
@@ -384,21 +205,6 @@ const Index = () => {
               audioSource={audioSource}
               reading={reading}
               previewLoading={previewLoading && !audioUrl}
-              isUnlocked={true}
-              songPurchased={reading.unlockStatus === "unlocked"}
-              isSignedIn={Boolean(user && session)}
-              checkoutLoading={checkoutLoading}
-              refreshingAccess={refreshingAccess}
-              showSongModal={showSongModal}
-              otpEmail={otpEmail}
-              otpSent={otpSent}
-              otpLoading={otpLoading}
-              onGetSong={handleGetSong}
-              onSongModalClose={handleSongModalClose}
-              onOtpEmailChange={setOtpEmail}
-              onOtpSubmit={handleSendOtp}
-              onRefreshAccess={handleRefreshUnlock}
-              onDownloadMusic={handleDownloadFullMusic}
               onBack={handleBack}
               onExplore={() => navigate("/explore")}
             />
@@ -434,23 +240,6 @@ interface ResultsViewProps {
   audioSource?: "elevenlabs" | "procedural" | "tone" | null;
   reading: import("@/types/astrology").CosmicReading;
   previewLoading: boolean;
-  isUnlocked: boolean;
-  /** Whether the user has purchased the AI-generated song */
-  songPurchased: boolean;
-  /** Whether the user is currently signed in */
-  isSignedIn: boolean;
-  checkoutLoading: boolean;
-  refreshingAccess: boolean;
-  showSongModal: boolean;
-  otpEmail: string;
-  otpSent: boolean;
-  otpLoading: boolean;
-  onGetSong: () => Promise<void>;
-  onSongModalClose: () => void;
-  onOtpEmailChange: (email: string) => void;
-  onOtpSubmit: (e: React.FormEvent) => Promise<void>;
-  onRefreshAccess: () => Promise<void>;
-  onDownloadMusic: () => Promise<void>;
   onBack: () => void;
   onExplore: () => void;
 }
@@ -463,21 +252,6 @@ const ResultsView = ({
   audioSource,
   reading,
   previewLoading,
-  isUnlocked,
-  songPurchased,
-  isSignedIn,
-  checkoutLoading,
-  refreshingAccess,
-  showSongModal,
-  otpEmail,
-  otpSent,
-  otpLoading,
-  onGetSong,
-  onSongModalClose,
-  onOtpEmailChange,
-  onOtpSubmit,
-  onRefreshAccess,
-  onDownloadMusic,
   onBack,
   onExplore,
 }: ResultsViewProps) => {
@@ -554,9 +328,6 @@ const ResultsView = ({
       .toString()
       .padStart(2, "0")}`;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const audioCaption = audioSource === "tone"
-    ? "Tone.js synthesis · planetary composition"
-    : "Short preview · chart-derived frequencies";
 
   const handleDownloadChart = async () => {
     setIsDownloading("chart");
@@ -581,10 +352,15 @@ const ResultsView = ({
   };
 
   const handleDownloadMusic = async () => {
-    if (!songPurchased) return;
+    if (!audioUrl) return;
     setIsDownloading("music");
     try {
-      await onDownloadMusic();
+      const filenameBase = name.trim()
+        ? name.replace(/\s+/g, "-").toLowerCase()
+        : "quantumelodic";
+      await downloadAudio(audioUrl, `${filenameBase}-cosmic-composition.mp3`);
+    } catch (e) {
+      console.error(e);
     } finally {
       setIsDownloading(null);
     }
@@ -691,111 +467,16 @@ const ResultsView = ({
         <PlanetDetailsTable planets={chartData.planets} />
       </div>
 
-      {/* "Get your cosmic song" premium CTA — shown when song hasn't been purchased yet */}
-      {!songPurchased && (
+      {/* Song status — composing indicator while ElevenLabs generates */}
+      {previewLoading && !audioUrl && (
         <motion.div
-          className="mb-6 rounded-2xl border border-primary/25 bg-card/70 backdrop-blur-sm overflow-hidden"
-          initial={{ opacity: 0, y: 12 }}
+          className="mb-6 rounded-2xl border border-primary/15 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3"
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.2 }}
         >
-          {/* Decorative top accent */}
-          <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-          <div className="p-5">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-full border border-primary/30 bg-primary/10 p-2 shrink-0">
-                <Music2 className="w-4 h-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">Your Cosmic Symphony Awaits</p>
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                  Your full chart and report are yours — free, always. Want to hear your natal chart transformed into a personalized AI-generated musical composition?
-                </p>
-
-                {/* Song modal / OTP form */}
-                <AnimatePresence>
-                  {showSongModal && (
-                    <motion.div
-                      className="mt-4 rounded-xl border border-primary/15 bg-background/60 p-4"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                    >
-                      {otpSent ? (
-                        <div className="text-center py-2">
-                          <p className="text-sm font-medium text-foreground">Check your email ✓</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            We sent a sign-in link to <span className="text-primary">{otpEmail}</span>. Click it to continue to checkout — no password needed.
-                          </p>
-                          <button
-                            onClick={onSongModalClose}
-                            className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            Close
-                          </button>
-                        </div>
-                      ) : (
-                        <form onSubmit={(e) => void onOtpSubmit(e)}>
-                          <p className="text-xs text-muted-foreground mb-3">
-                            Enter your email to receive a secure sign-in link — no password or account creation required.
-                          </p>
-                          <div className="flex gap-2">
-                            <input
-                              type="email"
-                              required
-                              value={otpEmail}
-                              onChange={(e) => onOtpEmailChange(e.target.value)}
-                              placeholder="your@email.com"
-                              className="flex-1 min-w-0 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60"
-                            />
-                            <button
-                              type="submit"
-                              disabled={otpLoading || !otpEmail}
-                              className="inline-flex items-center gap-1.5 rounded-lg bg-primary/20 border border-primary/40 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/30 transition-all disabled:opacity-50"
-                            >
-                              {otpLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                              Send link
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={onSongModalClose}
-                            className="mt-2 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </form>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {!showSongModal && (
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <button
-                      onClick={() => void onGetSong()}
-                      disabled={checkoutLoading}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-amber-500 px-4 py-3 text-sm font-medium tracking-wide text-primary-foreground disabled:opacity-60"
-                    >
-                      {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-                      Get my AI-generated Song
-                    </button>
-                    {reading.id && isSignedIn && (
-                      <button
-                        onClick={() => void onRefreshAccess()}
-                        disabled={refreshingAccess}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm text-muted-foreground disabled:opacity-60"
-                      >
-                        {refreshingAccess ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        Refresh access
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
+          <p className="text-sm text-muted-foreground">Composing your cosmic symphony…</p>
         </motion.div>
       )}
 
@@ -849,9 +530,14 @@ const ResultsView = ({
 
         {audioUrl ? (
           <>
+            {audioSource === "elevenlabs" && (
+              <p className="text-[10px] text-primary/50 tracking-widest text-center mb-2 uppercase">
+                AI-generated · ElevenLabs cosmic composition
+              </p>
+            )}
             {(audioSource === "procedural" || audioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
-                {audioCaption}
+                Procedural preview · AI composition composing…
               </p>
             )}
             <div className="w-full max-w-xs mx-auto mb-2">
@@ -929,7 +615,7 @@ const ResultsView = ({
         >
           {isDownloading === "pdf" ? "…" : "⬇ Report"}
         </button>
-        {songPurchased && audioUrl ? (
+        {audioUrl ? (
           <button
             onClick={handleDownloadMusic}
             disabled={!!isDownloading && isDownloading !== "share-copied"}

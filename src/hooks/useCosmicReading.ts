@@ -4,11 +4,14 @@ import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
 import { generateProceduralAudio } from '@/utils/proceduralAudio';
 import { RequestTimeoutError } from '@/lib/fetchWithTimeout';
 import { calculateChartData } from '@/lib/chartService';
+import { generateFreeMusic } from '@/lib/cosmicReadings';
 
 const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
 // Overall hard limit: two serial chart attempts (Supabase + backend) plus headroom.
 const GENERATION_HARD_TIMEOUT_MS = 60_000;
+// ElevenLabs can take up to 90 s for a 30-second clip.
+const ELEVENLABS_TIMEOUT_MS = 90_000;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -77,7 +80,7 @@ export function useCosmicReading() {
       });
       setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'procedural' } : current);
       toast('Cosmic preview ready', {
-        description: 'Short procedural preview generated from your chart frequencies.',
+        description: 'Procedural preview playing — your AI-generated cosmic song is composing in the background.',
       });
     } catch (audioErr) {
       if (previewRequestRef.current !== requestId) {
@@ -93,13 +96,49 @@ export function useCosmicReading() {
         return null;
       });
       setReading((current) => current ? { ...current, audioUrl: undefined, audioSource: undefined } : current);
-      toast('Reading complete', {
-        description: 'Preview audio could not be rendered in your browser — chart data is available.',
-      });
     } finally {
       if (previewRequestRef.current === requestId) {
         setPreviewLoading(false);
       }
+    }
+  }, []);
+
+  /**
+   * Generate the full ElevenLabs AI-composed song in the background.
+   * Free for all users — no authentication required.
+   */
+  const generateElevenLabsAudio = useCallback(async (chart: ChartData, birthData: BirthData, requestId: number) => {
+    try {
+      const elPromise = generateFreeMusic(
+        chart.sunSign,
+        chart.moonSign,
+        chart.ascendant,
+        birthData.name || 'Unknown',
+        chart.planets,
+      );
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('ElevenLabs timed out')), ELEVENLABS_TIMEOUT_MS)
+      );
+
+      const url = await Promise.race([elPromise, timeoutPromise]);
+
+      if (previewRequestRef.current !== requestId) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      setAudioUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return url;
+      });
+      setAudioSource('elevenlabs');
+      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'elevenlabs' } : current);
+      toast('🎵 Your cosmic song is ready', {
+        description: 'Your AI-generated natal composition is now playing.',
+      });
+    } catch (err) {
+      console.warn('ElevenLabs generation failed:', err);
+      // Procedural preview already playing — no need to surface this error to the user
     }
   }, []);
 
@@ -160,7 +199,7 @@ export function useCosmicReading() {
       setChartData(chart);
       setProgress(50);
 
-      // Stage 3: Finalize chart result, then generate preview audio in the background
+      // Stage 3: Finalize chart result, then generate audio in the background
       setStage('generating');
       setProgress(60);
       setProgress(70);
@@ -171,7 +210,7 @@ export function useCosmicReading() {
         birthData,
         chartData: chart,
         musicalMode,
-        unlockStatus: 'preview',
+        unlockStatus: 'unlocked',
         audioSource: undefined,
         audioUrl: undefined,
       };
@@ -181,7 +220,10 @@ export function useCosmicReading() {
       setProgress(100);
 
       const previewRequestId = previewRequestRef.current;
+
+      // Start procedural preview immediately (fast), then replace with ElevenLabs when ready.
       schedulePreviewAudio(chart, previewRequestId);
+      void generateElevenLabsAudio(chart, birthData, previewRequestId);
 
       return cosmicReading;
 
@@ -195,7 +237,7 @@ export function useCosmicReading() {
     } finally {
       setLoading(false);
     }
-  }, [clearScheduledPreview, schedulePreviewAudio]);
+  }, [clearScheduledPreview, schedulePreviewAudio, generateElevenLabsAudio]);
 
   const reset = useCallback(() => {
     clearScheduledPreview();
