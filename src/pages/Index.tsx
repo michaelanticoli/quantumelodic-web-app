@@ -203,6 +203,12 @@ const Index = () => {
     }
   };
 
+  const handleSongModalClose = () => {
+    setShowSongModal(false);
+    setOtpSent(false);
+    setOtpEmail('');
+  };
+
   const handleRefreshUnlock = async () => {
     if (!reading?.id) return;
     setRefreshingAccess(true);
@@ -388,7 +394,7 @@ const Index = () => {
               otpSent={otpSent}
               otpLoading={otpLoading}
               onGetSong={handleGetSong}
-              onSongModalClose={() => { setShowSongModal(false); setOtpSent(false); setOtpEmail(''); }}
+              onSongModalClose={handleSongModalClose}
               onOtpEmailChange={setOtpEmail}
               onOtpSubmit={handleSendOtp}
               onRefreshAccess={handleRefreshUnlock}

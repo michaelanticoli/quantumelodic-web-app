@@ -98,6 +98,8 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
         method: 'POST',
         headers,
         body: JSON.stringify({
+          // 'full' generates the complete 5-section report for all users (report is free).
+          // The backend no longer gates on auth for this mode.
           accessMode: 'full',
           readingId,
           name: subjectName || 'Unknown',
