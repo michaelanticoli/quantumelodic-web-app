@@ -316,42 +316,8 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    if (accessMode === "full") {
-      const authHeader = req.headers.get("Authorization");
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: "Authentication required" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const supabaseClient = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-        { auth: { persistSession: false } }
-      );
-
-      const token = authHeader.replace("Bearer ", "");
-      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-      if (userError) throw new Error(`Authentication error: ${userError.message}`);
-      if (!userData.user?.id) throw new Error("User not authenticated");
-      if (typeof readingId !== "string" || !readingId) throw new Error("readingId is required");
-
-      const { data: storedReading, error: storedReadingError } = await supabaseClient
-        .from("cosmic_readings")
-        .select("id, unlock_status")
-        .eq("id", readingId)
-        .eq("user_id", userData.user.id)
-        .maybeSingle();
-
-      if (storedReadingError) throw storedReadingError;
-      if (!storedReading || storedReading.unlock_status !== "unlocked") {
-        return new Response(JSON.stringify({ error: "Reading is locked" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
+    // The full Quantumelodic report is free for all users — no auth check required.
+    // (The AI-generated song is the premium paid feature.)
 
     // Helper: convert absolute longitude to sign-relative degree string
     const toRelDeg = (deg: number): string => {
