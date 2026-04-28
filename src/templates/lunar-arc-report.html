@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lunar Arc Report — MOONtuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400;500&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:     #1A1918;
+    --mid:     #6A6560;
+    --light:   #A09890;
+    --rule:    #D9D3C9;
+    --paper:   #F9F7F4;
+    --gold:    #B89D6A;
+    --gold-lt: #D4BF96;
+    --page-w:  560px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #EDE8E1;
+    font-family: 'Jost', sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: var(--page-w);
+    background: var(--paper);
+    margin: 0 auto 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    min-height: 760px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px 60px 52px;
+  }
+
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .brand {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .report-type {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--light);
+    text-align: right;
+  }
+
+  .cover-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 32px;
+    padding: 20px 0;
+  }
+
+  .cover-main-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 13px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--mid);
+  }
+
+  .cover-name {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 56px;
+    letter-spacing: 0.02em;
+    line-height: 1.0;
+    color: var(--ink);
+  }
+
+  .cover-meta {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--light);
+  }
+
+  .cover-phase-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cover-phase-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .cover-phase-name {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 28px;
+    color: var(--ink);
+  }
+
+  .cover-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+  }
+
+  .generated {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--light);
+  }
+
+  /* ── SECTION PAGES ── */
+  .section-page {
+    min-height: 700px;
+    display: flex;
+    flex-direction: column;
+    padding: 56px 60px 48px;
+    gap: 0;
+  }
+
+  .section-eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 38px;
+    line-height: 1.05;
+    color: var(--ink);
+    margin-bottom: 28px;
+  }
+
+  .section-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .full-rule {
+    width: 100%;
+    height: 1px;
+    background: var(--rule);
+    margin: 0 0 28px;
+    position: relative;
+  }
+
+  .full-rule::before {
+    content: '';
+    position: absolute;
+    left: 0; top: -1px;
+    width: 56px; height: 3px;
+    background: var(--gold);
+  }
+
+  /* ── Natal signature section ── */
+  .natal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .natal-cell {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .natal-cell:nth-child(odd) { padding-right: 28px; border-right: 1px solid var(--rule); }
+  .natal-cell:nth-child(even) { padding-left: 28px; }
+
+  .natal-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 6px;
+  }
+
+  .natal-value {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 22px;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .natal-sub {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--mid);
+    margin-top: 2px;
+  }
+
+  /* Archetype block */
+  .archetype-block {
+    margin-top: 28px;
+    padding: 24px;
+    border: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .archetype-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .archetype-name {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 30px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .archetype-desc {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--mid);
+  }
+
+  /* Keywords row */
+  .keywords-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .keyword {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    padding: 6px 10px;
+  }
+
+  /* ── Peak windows section ── */
+  .peak-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 4px;
+  }
+
+  .peak-item {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule);
+    gap: 20px;
+  }
+
+  .peak-date {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--ink);
+  }
+
+  .peak-type {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-top: 2px;
+  }
+
+  .peak-desc {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--mid);
+  }
+
+  .peak-amp {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .peak-item.eclipse .peak-date { color: var(--mid); }
+  .peak-item.eclipse .peak-amp { color: var(--light); }
+
+  .soft-window {
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: transparent;
+    border-left: 2px solid var(--rule);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .soft-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--light);
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+
+  .soft-text {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--mid);
+    line-height: 1.5;
+  }
+
+  /* ── Arc Practice section ── */
+  .practice-intro {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.65;
+    color: var(--mid);
+    margin-bottom: 28px;
+  }
+
+  .practice-phases {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    margin-bottom: 28px;
+  }
+
+  .practice-phase {
+    background: var(--paper);
+    padding: 20px 16px;
+  }
+
+  .pp-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .pp-title {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .pp-text {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--mid);
+  }
+
+  .declaration-block {
+    padding: 28px;
+    border: 1px solid var(--gold-lt);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .declaration-sigil svg { display: block; }
+
+  .declaration-text-block {}
+
+  .decl-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .decl-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 24px;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .decl-text {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--mid);
+  }
+
+  /* ── Arc narrative section ── */
+  .arc-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    margin-top: 4px;
+  }
+
+  .arc-col-title {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .arc-col-text {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--mid);
+  }
+
+  .shadow-block {
+    margin-top: 28px;
+    grid-column: 1 / -1;
+    padding: 24px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .shadow-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 10px;
+  }
+
+  .shadow-text {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  /* ── Closing ── */
+  .closing-page {
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px;
+    text-align: center;
+  }
+
+  .closing-moon {
+    display: flex;
+    justify-content: center;
+  }
+
+  .closing-headline {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 32px;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+
+  .closing-headline em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .closing-body {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--mid);
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .closing-url {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .closing-fine {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--light);
+  }
+
+  @media print {
+    body { background: white; }
+    .page { margin: 0; page-break-after: always; width: 100%; }
+  }
+
+  @media (max-width: 620px) {
+    :root { --page-w: 100vw; }
+    .cover, .section-page, .closing-page { padding: 40px 32px; }
+    .natal-grid { grid-template-columns: 1fr; }
+    .natal-cell:nth-child(odd) { border-right: none; padding-right: 0; }
+    .natal-cell:nth-child(even) { padding-left: 0; }
+    .practice-phases { grid-template-columns: 1fr; }
+    .arc-columns { grid-template-columns: 1fr; }
+    .peak-item { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════ COVER ══════════════════════════ -->
+<div class="page cover">
+  <div class="header-row">
+    <div class="brand">MOONtuner</div>
+    <div class="report-type">Personal Lunar Arc Report</div>
+  </div>
+
+  <div class="cover-center">
+    <div class="cover-main-title">Generated for</div>
+
+    <!-- Cover lunar arc sigil -->
+    <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
+      <!-- Outer ring -->
+      <circle cx="70" cy="70" r="64" stroke="#D9D3C9" stroke-width="0.75"/>
+      <!-- Orbit ring -->
+      <circle cx="70" cy="70" r="44" stroke="#D9D3C9" stroke-width="0.5" stroke-dasharray="4 4"/>
+      <!-- Inner ring -->
+      <circle cx="70" cy="70" r="24" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Moon body -->
+      <circle cx="70" cy="70" r="14" fill="#1A1918"/>
+      <!-- Waxing crescent overlay — the natal phase -->
+      <path d="M 70 56 A 14 14 0 0 1 70 84 A 9 9 0 0 0 70 56 Z" fill="#F9F7F4"/>
+      <!-- Axis lines -->
+      <line x1="70" y1="6" x2="70" y2="46" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="70" y1="94" x2="70" y2="134" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="6" y1="70" x2="46" y2="70" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="94" y1="70" x2="134" y2="70" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Phase marker at top — natal return point -->
+      <circle cx="70" cy="26" r="4" fill="#B89D6A"/>
+      <!-- Radial tick marks -->
+      <line x1="134" y1="70" x2="130" y2="70" stroke="#B89D6A" stroke-width="1"/>
+      <line x1="6" y1="70" x2="10" y2="70" stroke="#D9D3C9" stroke-width="0.75"/>
+      <!-- Diagonal subtle -->
+      <line x1="24.7" y1="24.7" x2="36.7" y2="36.7" stroke="#D9D3C9" stroke-width="0.4"/>
+      <line x1="103.3" y1="103.3" x2="115.3" y2="115.3" stroke="#D9D3C9" stroke-width="0.4"/>
+    </svg>
+
+    <div class="cover-name">Michael</div>
+    <div class="cover-meta">1985 · 04 · 24 &nbsp;·&nbsp; 12:55 &nbsp;·&nbsp; New York City</div>
+
+    <div style="width:40px;height:1px;background:var(--rule);"></div>
+
+    <div class="cover-phase-block">
+      <div class="cover-phase-label">Natal Lunar Signature</div>
+      <div class="cover-phase-name">Waxing Crescent · 47.58°</div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div class="generated">Generated April 7, 2026</div>
+    <div class="generated">moontuner.xyz</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 1: NATAL SIGNATURE ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 01</div>
+  <div class="section-title">Your Natal<br><em>Lunar Signature</em></div>
+  <div class="full-rule"></div>
+
+  <div class="natal-grid">
+    <div class="natal-cell">
+      <div class="natal-label">Phase</div>
+      <div class="natal-value">Waxing Crescent</div>
+      <div class="natal-sub">47.58° of illumination</div>
+    </div>
+    <div class="natal-cell">
+      <div class="natal-label">Archetype</div>
+      <div class="natal-value">The Sprout</div>
+      <div class="natal-sub">The Pioneer</div>
+    </div>
+    <div class="natal-cell">
+      <div class="natal-label">Element</div>
+      <div class="natal-value">Earth Rising</div>
+      <div class="natal-sub">Grounded momentum</div>
+    </div>
+    <div class="natal-cell">
+      <div class="natal-label">Modality</div>
+      <div class="natal-value">Fixed Emergence</div>
+      <div class="natal-sub">Sustained initiation</div>
+    </div>
+    <div class="natal-cell">
+      <div class="natal-label">Somatic Zone</div>
+      <div class="natal-value">Throat · Voice</div>
+      <div class="natal-sub">Declaration, expression</div>
+    </div>
+    <div class="natal-cell">
+      <div class="natal-label">Solfeggio</div>
+      <div class="natal-value">417 Hz</div>
+      <div class="natal-sub">Facilitating change</div>
+    </div>
+  </div>
+
+  <div class="archetype-block">
+    <div>
+      <div class="archetype-label">What this means for you</div>
+      <div class="archetype-name">The Waxing Crescent Pioneer</div>
+      <div class="archetype-desc">
+        Born during the Waxing Crescent, you carry the surge of first momentum — the sprout breaking through resistance. Your innate courage to take initial action, even without guarantees, sets you apart. The challenge for you is follow-through; you may be drawn to new beginnings before completing current cycles.
+        <br><br>
+        Your monthly returns are optimal for pushing through resistance, declaring intentions publicly, sending the message you have been drafting, and making the first move in any situation requiring courage over certainty.
+      </div>
+    </div>
+    <!-- Small crescent sigil -->
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style="flex-shrink:0">
+      <circle cx="32" cy="32" r="28" stroke="#D9D3C9" stroke-width="0.75"/>
+      <path d="M 32 4 A 28 28 0 0 1 32 60 A 17 17 0 0 0 32 4 Z" fill="#1A1918"/>
+      <circle cx="32" cy="32" r="14" stroke="#D9D3C9" stroke-width="0.4" stroke-dasharray="3 3"/>
+    </svg>
+  </div>
+
+  <div class="keywords-row">
+    <div class="keyword">Breakthrough</div>
+    <div class="keyword">Courage</div>
+    <div class="keyword">First Steps</div>
+    <div class="keyword">Declaration</div>
+    <div class="keyword">Momentum</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 2: PEAK WINDOWS ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 02</div>
+  <div class="section-title">Three Peak<br><em>Windows</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.65;color:var(--mid);margin-bottom:24px;">
+    These are the three highest-resonance moments of your arc year — when your natal crescent geometry aligns with near-perfect precision.
+  </div>
+
+  <!-- Three peak highlights -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--rule);margin-bottom:28px;">
+    <div style="background:var(--paper);padding:20px 16px;text-align:center;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Peak 01</div>
+      <div style="font-family:'Cormorant',serif;font-size:22px;color:var(--ink);">April 21</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.2em;color:var(--gold-lt);margin-top:4px;">Full Amplitude</div>
+    </div>
+    <div style="background:var(--paper);padding:20px 16px;text-align:center;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Peak 02</div>
+      <div style="font-family:'Cormorant',serif;font-size:22px;color:var(--ink);">May 20</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.2em;color:var(--gold-lt);margin-top:4px;">Full Amplitude</div>
+    </div>
+    <div style="background:var(--paper);padding:20px 16px;text-align:center;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Peak 03</div>
+      <div style="font-family:'Cormorant',serif;font-size:22px;color:var(--ink);">June 18</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.2em;color:var(--gold-lt);margin-top:4px;">Full Amplitude</div>
+    </div>
+  </div>
+
+  <!-- Full 12-month arc list -->
+  <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:14px;">12-Month Lunar Arc · April 2026 – October 2027</div>
+
+  <div class="peak-list">
+    <div class="peak-item">
+      <div><div class="peak-date">April 21</div><div class="peak-type">Initiation · Peak</div></div>
+      <div class="peak-desc">Your first return lands with near-perfect geometric precision. The crescent asks one thing: begin.</div>
+      <div class="peak-amp">100%</div>
+    </div>
+    <div class="peak-item">
+      <div><div class="peak-date">May 20</div><div class="peak-type">Initiation · Peak</div></div>
+      <div class="peak-desc">Spring momentum extends. Carry what you started and push it one step further.</div>
+      <div class="peak-amp">100%</div>
+    </div>
+    <div class="peak-item">
+      <div><div class="peak-date">June 18</div><div class="peak-type">Initiation · Peak</div></div>
+      <div class="peak-desc">Summer amplitude peaks. Best for public declarations and anything requiring courage over certainty.</div>
+      <div class="peak-amp">100%</div>
+    </div>
+    <div class="peak-item eclipse">
+      <div><div class="peak-date" style="color:var(--mid);">August 16</div><div class="peak-type">Initiation · Eclipse</div></div>
+      <div class="peak-desc">Eclipse season compresses timing. Potent but accelerated — hold structure loosely.</div>
+      <div class="peak-amp" style="color:var(--light);">95%</div>
+    </div>
+    <div class="peak-item">
+      <div><div class="peak-date">October 14</div><div class="peak-type">Initiation · Peak</div></div>
+      <div class="peak-desc">Autumn amplitude. Your natal surge meets the year's strongest forward energy.</div>
+      <div class="peak-amp">100%</div>
+    </div>
+    <div class="peak-item">
+      <div><div class="peak-date">December 13</div><div class="peak-type">Initiation · Peak</div></div>
+      <div class="peak-desc">The arc year's highest-resonance window. Full amplitude, minimal friction.</div>
+      <div class="peak-amp">100%</div>
+    </div>
+    <div class="peak-item eclipse">
+      <div><div class="peak-date" style="color:var(--mid);">February 10</div><div class="peak-type">Initiation · Eclipse</div></div>
+      <div class="peak-desc">Eclipse compression. Potent and accelerated — the initiation still lands.</div>
+      <div class="peak-amp" style="color:var(--light);">91%</div>
+    </div>
+    <div class="peak-item">
+      <div><div class="peak-date">April 10</div><div class="peak-type">Initiation · Peak</div></div>
+      <div class="peak-desc">Spring clarity. What you initiated at your peak — this month you push it across the threshold.</div>
+      <div class="peak-amp">100%</div>
+    </div>
+  </div>
+
+  <div class="soft-window">
+    <div class="soft-label">Softest Window</div>
+    <div class="soft-text">February — use for behind-the-scenes preparation, not for launch. Rest the arc.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 3: ARC PRACTICE ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 03</div>
+  <div class="section-title">Arc<br><em>Practice</em></div>
+  <div class="full-rule"></div>
+
+  <div class="practice-intro">
+    The three phases of your power day: what to do before, during, and after your Waxing Crescent return.
+  </div>
+
+  <div class="practice-phases">
+    <div class="practice-phase">
+      <div class="pp-label">Before · 48 hours</div>
+      <div class="pp-title">Declutter</div>
+      <div class="pp-text">Reduce noise. Stop adding to the list. What you carry into your power day is what you work with. Travel light.</div>
+    </div>
+    <div class="practice-phase">
+      <div class="pp-label">During · Your return</div>
+      <div class="pp-title">Begin</div>
+      <div class="pp-text">This is the window for a single, specific act of beginning. Not planning. Not preparing. Send the email. Make the call. The act itself.</div>
+    </div>
+    <div class="practice-phase">
+      <div class="pp-label">After · 72 hours</div>
+      <div class="pp-title">Follow through</div>
+      <div class="pp-text">Don't immediately abandon what you started. Walk with the momentum before the cycle pulls attention elsewhere.</div>
+    </div>
+  </div>
+
+  <!-- The Declaration Practice -->
+  <div class="declaration-block">
+    <div class="declaration-sigil">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <circle cx="28" cy="28" r="24" stroke="#D4BF96" stroke-width="0.75"/>
+        <!-- Upward arrow / momentum sigil -->
+        <line x1="28" y1="42" x2="28" y2="14" stroke="#B89D6A" stroke-width="1"/>
+        <line x1="28" y1="14" x2="20" y2="22" stroke="#B89D6A" stroke-width="1"/>
+        <line x1="28" y1="14" x2="36" y2="22" stroke="#B89D6A" stroke-width="1"/>
+        <!-- Base circle -->
+        <circle cx="28" cy="42" r="3" fill="#B89D6A"/>
+        <!-- Outer orbit tick -->
+        <line x1="28" y1="4" x2="28" y2="8" stroke="#D4BF96" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="declaration-text-block">
+      <div class="decl-label">The Declaration Practice</div>
+      <div class="decl-title">I am beginning.</div>
+      <div class="decl-text">
+        On your power day, write one sentence that begins with "I am beginning." Not "I want to." Not "I plan to."
+        Then do one physical act — however small — that makes the sentence true. Send one message. Write one page. Make one call.
+        <br><br>
+        The crescent does not build cathedrals on power day. It plants the thing that becomes one.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 4: THE ARC YEAR ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 04</div>
+  <div class="section-title">The Waxing Crescent<br><em>Arc Year</em></div>
+  <div class="full-rule"></div>
+
+  <div class="arc-columns">
+    <div>
+      <div class="arc-col-title">The Curriculum</div>
+      <div class="arc-col-text">
+        Over 12 months, your power days trace a curriculum. The first three months ask you to establish — to name what this arc is for. The middle months ask you to sustain the thing you started under pressure, distraction, and doubt. The final months ask you to complete with the same intention you began with.
+      </div>
+    </div>
+    <div>
+      <div class="arc-col-title">The Work</div>
+      <div class="arc-col-text">
+        Most people initiate well. The Waxing Crescent archetype is exceptional at beginnings. The arc year's work is to become equally powerful at staying. The arc does not ask you to abandon your nature. It asks you to develop the half of yourself that completes what you start.
+      </div>
+    </div>
+
+    <div class="shadow-block">
+      <div class="shadow-label">Where This Pattern Breaks</div>
+      <div class="shadow-text">
+        The Waxing Crescent shadow is the unfinished trail — the list of starts without completions. Your risk is using each new power day as a reason to pivot away from the previous one. The cycle will always offer a fresh beginning. The discipline is recognizing when a beginning is growth and when it is avoidance.
+        <br><br>
+        One useful rule: before your power day, audit what you started at the previous return. What does it need to move forward? That answer is often the actual power day work.
+      </div>
+    </div>
+  </div>
+
+  <!-- Instruction block -->
+  <div style="margin-top:28px;padding:20px 0;border-top:1px solid var(--rule);">
+    <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Monthly Instruction</div>
+    <div style="font-family:'Cormorant',serif;font-style:italic;font-size:22px;color:var(--ink);line-height:1.4;">
+      Take the smallest physical step toward your goal.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 1: HOW TO READ ══════════════════════════ -->
+<div class="page section-page" style="min-height:640px;">
+  <div class="section-eyebrow">Reference 01</div>
+  <div class="section-title">How to<br><em>Read This Report</em></div>
+  <div class="full-rule"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;flex:1;">
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Your Natal Phase</div>
+        <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">The phase the Moon occupied at the exact moment of your birth. It never changes. It is the energetic archetype through which you naturally initiate, build, and release — every cycle, for life.</div>
+      </div>
+
+      <div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Your Lunar Return</div>
+        <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">Each month when the Moon returns to the same phase and degree as your birth, you experience a lunar return. This is your personal power day — the peak moment of your monthly cycle.</div>
+      </div>
+
+      <div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Amplitude %</div>
+        <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">How geometrically precise the return is. 100% means the Moon has returned to within fractions of a degree of your natal position — maximum resonance. 91–95% indicates an eclipse compression window.</div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">The Arc Year</div>
+        <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">The 12-month span from one birthday to the next, tracked through the lens of your natal phase. Each return is a chapter. The arc year is the curriculum.</div>
+      </div>
+
+      <div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Eclipse Windows</div>
+        <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">When your lunar return falls near a solar or lunar eclipse, the timing is compressed and accelerated. The initiation still lands — but events may move faster than planned. Initiate with intention, hold structure loosely.</div>
+      </div>
+
+      <div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">The Soft Window</div>
+        <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">Every arc year has a lowest-resonance month. This is not a failure period — it is the fallow phase, the necessary rest between arcs. Use it for behind-the-scenes preparation, not launch.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase archetype mini-reference -->
+  <div style="margin-top:28px;padding:20px 24px;border:1px solid var(--rule);">
+    <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:14px;">The Eight Archetypes at a Glance</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--rule);">
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">New Moon</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Seeker</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--gold);">Waxing Crescent</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--gold);margin-top:2px;">Pioneer ← You</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">First Quarter</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Builder</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">Waxing Gibbous</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Analyst</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">Full Moon</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Illuminator</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">Waning Gibbous</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Teacher</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">Last Quarter</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Editor</div></div>
+      <div style="background:var(--paper);padding:10px 12px;"><div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--ink);">Waning Crescent</div><div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);margin-top:2px;">Mystic</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 2: ECLIPSE GUIDE ══════════════════════════ -->
+<div class="page section-page" style="min-height:600px;">
+  <div class="section-eyebrow">Reference 02</div>
+  <div class="section-title">Working with<br><em>Eclipse Windows</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:18px;line-height:1.65;color:var(--mid);margin-bottom:28px;">
+    Eclipses occur 4–6 times per year. When your lunar return falls within 14 days of an eclipse, the rules of engagement change.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);margin-bottom:28px;">
+    <div style="background:var(--paper);padding:20px 18px;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">What Changes</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:13px;line-height:1.8;color:var(--mid);">
+        Eclipse energy compresses lunar timing. What would unfold over weeks may happen in days. Decisions made in eclipse windows tend to be irreversible — the universe treats them as commitments.
+      </div>
+    </div>
+    <div style="background:var(--paper);padding:20px 18px;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">What Stays the Same</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:13px;line-height:1.8;color:var(--mid);">
+        Your natal phase archetype still applies. The Waxing Crescent still initiates — eclipses amplify and accelerate, they don't change your fundamental nature. Initiate, but hold your structure loosely.
+      </div>
+    </div>
+    <div style="background:var(--paper);padding:20px 18px;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Solar Eclipse Returns</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:13px;line-height:1.8;color:var(--mid);">
+        A solar eclipse near your return initiates a longer arc — seeds planted here may take 6–18 months to fully emerge. These are the most significant initiations of your year.
+      </div>
+    </div>
+    <div style="background:var(--paper);padding:20px 18px;">
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Lunar Eclipse Returns</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:13px;line-height:1.8;color:var(--mid);">
+        A lunar eclipse near your return brings revelation and emotional clarity. Something hidden becomes visible. Prepare to see clearly — and to act on what you see.
+      </div>
+    </div>
+  </div>
+
+  <!-- Your eclipse windows this arc year -->
+  <div style="border-left:2px solid var(--gold);padding:16px 20px;">
+    <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Your Eclipse Windows This Arc Year</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:20px;align-items:baseline;">
+        <div style="font-family:'Cormorant',serif;font-size:18px;color:var(--ink);min-width:90px;">August 16</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:12px;color:var(--mid);">95% amplitude · Eclipse compression · Initiate with intention, allow accelerated pace</div>
+      </div>
+      <div style="display:flex;gap:20px;align-items:baseline;">
+        <div style="font-family:'Cormorant',serif;font-size:18px;color:var(--ink);min-width:90px;">February 10</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:12px;color:var(--mid);">91% amplitude · Eclipse compression · Potent and accelerated — the initiation still lands fully</div>
+      </div>
+      <div style="display:flex;gap:20px;align-items:baseline;">
+        <div style="font-family:'Cormorant',serif;font-size:18px;color:var(--ink);min-width:90px;">July 7</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:12px;color:var(--mid);">95% amplitude · Eclipse compression · End-of-arc window — compress and clarify</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 1: ECLIPSE WINDOWS ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Reference 01</div>
+  <div class="section-title">Eclipse Windows<br><em>Explained</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:18px;line-height:1.65;color:var(--mid);margin-bottom:28px;">
+    Two months in your arc year are marked as Eclipse Windows. Here is what that means for your power days — and what it doesn't.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);margin-bottom:28px;">
+    <div style="background:var(--paper);padding:22px 18px;">
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">What Changes</div>
+      <div style="font-family:'Cormorant',serif;font-weight:300;font-size:17px;color:var(--ink);margin-bottom:10px;">The pace, not the power.</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12.5px;line-height:1.75;color:var(--mid);">Eclipse energy compresses time. Events that would normally unfold over weeks may arrive in days. Your return is still valid — often more potent — but the timing accelerates. What you initiate may move faster than you planned.</div>
+    </div>
+    <div style="background:var(--paper);padding:22px 18px;">
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:10px;">What Doesn't Change</div>
+      <div style="font-family:'Cormorant',serif;font-weight:300;font-size:17px;color:var(--ink);margin-bottom:10px;">Your natal signature.</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12.5px;line-height:1.75;color:var(--mid);">The Waxing Crescent archetype remains. Your instruction is still to begin. The eclipse does not change the nature of your power — only the pressure of the container it arrives in.</div>
+    </div>
+  </div>
+
+  <div style="border-left:2px solid var(--gold);padding-left:20px;margin-bottom:28px;">
+    <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">The Eclipse Principle</div>
+    <div style="font-family:'Cormorant',serif;font-style:italic;font-size:20px;line-height:1.5;color:var(--ink);">Initiate, but hold your structure loosely. What begins in an eclipse window tends to evolve beyond your original plan — often in better directions than you designed.</div>
+  </div>
+
+  <div style="border-top:1px solid var(--rule);padding-top:24px;">
+    <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:16px;">Your Eclipse Windows This Arc Year</div>
+    <div style="display:flex;flex-direction:column;gap:0;">
+      <div style="display:grid;grid-template-columns:120px 1fr auto;padding:14px 0;border-bottom:1px solid var(--rule);gap:16px;align-items:center;">
+        <div style="font-family:'Cormorant',serif;font-size:20px;color:var(--mid);">August 16</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">Solar or Lunar eclipse in or near your return window. Energy compressed and intensified.</div>
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--light);">95%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:120px 1fr auto;padding:14px 0;border-bottom:1px solid var(--rule);gap:16px;align-items:center;">
+        <div style="font-family:'Cormorant',serif;font-size:20px;color:var(--mid);">February 10</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">Eclipse season compresses the softest month. Potent but accelerated — not a rest window this cycle.</div>
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--light);">91%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:120px 1fr auto;padding:14px 0;gap:16px;align-items:center;">
+        <div style="font-family:'Cormorant',serif;font-size:20px;color:var(--mid);">July 7</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">Late-arc eclipse window. Events set in motion here complete the arc year's curriculum.</div>
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--light);">95%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 2: MONTHLY TRACKING GRID ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Reference 02</div>
+  <div class="section-title">Monthly<br><em>Arc Tracker</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.65;color:var(--mid);margin-bottom:24px;">
+    Return to this page each month. Note what you initiated, what you completed, and what the cycle revealed. Over time, your pattern becomes visible.
+  </div>
+
+  <!-- Tracker grid — 11 return months -->
+  <div style="display:flex;flex-direction:column;gap:0;">
+
+    <!-- Header row -->
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:8px 0;border-bottom:2px solid var(--rule);gap:12px;">
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Return Date</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">What I initiated · What I learned</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);text-align:right;">Amplitude</div>
+    </div>
+
+    <!-- Months -->
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Apr 21</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">May 20</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Jun 18</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--mid);">Aug 16</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);text-align:right;">95% ☽</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Oct 14</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Dec 13</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--mid);">Feb 10</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);text-align:right;">91% ☽</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Apr 10</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Jun 8</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;border-bottom:1px solid var(--rule);gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--mid);">Jul 7</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);text-align:right;">95% ☽</div>
+    </div>
+    <div style="display:grid;grid-template-columns:90px 1fr 80px;padding:14px 0;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--ink);">Oct 3</div>
+      <div style="border-bottom:1px solid var(--rule);height:20px;margin-top:8px;"></div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--gold);text-align:right;">100%</div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;display:flex;gap:20px;align-items:center;">
+    <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--light);">☽ Eclipse window</div>
+    <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);">100% Full amplitude</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CLOSING PAGE ══════════════════════════ -->
+<div class="page closing-page">
+  <div></div>
+
+  <!-- Closing sigil -->
+  <div class="closing-moon">
+    <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="44" stroke="#D9D3C9" stroke-width="0.75"/>
+      <circle cx="50" cy="50" r="28" stroke="#D9D3C9" stroke-width="0.5"/>
+      <circle cx="50" cy="50" r="12" fill="#1A1918"/>
+      <path d="M 50 38 A 12 12 0 0 1 50 62 A 8 8 0 0 0 50 38 Z" fill="#F9F7F4"/>
+      <circle cx="50" cy="50" r="44" stroke="#B89D6A" stroke-width="0.4" stroke-dasharray="2 4"/>
+      <line x1="50" y1="6" x2="50" y2="22" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="50" y1="78" x2="50" y2="94" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="6" y1="50" x2="22" y2="50" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="78" y1="50" x2="94" y2="50" stroke="#D9D3C9" stroke-width="0.5"/>
+    </svg>
+  </div>
+
+  <div class="closing-headline">
+    The Moon Reflects.<br><em>You Transform.</em>
+  </div>
+
+  <div class="closing-body">
+    This report is your compass for the coming year. Return to it monthly. Over time, you will develop an intuitive relationship with your natal lunar rhythm — one that informs not just your planning, but your entire way of being.
+  </div>
+
+  <div class="closing-url">moontuner.xyz</div>
+
+  <div class="closing-fine">© MOONtuner · Personal Lunar Arc Report · All rights reserved</div>
+</div>
+
+</body>
+</html>

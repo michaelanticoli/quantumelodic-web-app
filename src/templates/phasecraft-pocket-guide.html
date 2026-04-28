@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Phasecraft Pocket Guide — MOONtuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400;500&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:     #1A1918;
+    --mid:     #6A6560;
+    --light:   #A09890;
+    --rule:    #D9D3C9;
+    --paper:   #F9F7F4;
+    --gold:    #B89D6A;
+    --gold-lt: #D4BF96;
+    --page-w:  520px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #EDE8E1;
+    font-family: 'Jost', sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Page wrapper ── */
+  .page {
+    width: var(--page-w);
+    min-height: 680px;
+    background: var(--paper);
+    margin: 0 auto 2px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    min-height: 700px;
+    justify-content: space-between;
+    padding: 56px 52px 48px;
+  }
+
+  .cover-top {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .brand-mark {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .cover-rule {
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+    margin: 20px 0;
+  }
+
+  .cover-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 52px;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .cover-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .cover-subtitle {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--mid);
+    margin-top: 16px;
+  }
+
+  .cover-sigil {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+  }
+
+  .cover-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .cover-desc {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--mid);
+    max-width: 260px;
+  }
+
+  .cover-url {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--light);
+  }
+
+  /* ── Phase pages ── */
+  .phase-page {
+    padding: 52px 52px 44px;
+    justify-content: space-between;
+  }
+
+  .phase-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 24px;
+  }
+
+  .phase-number {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--light);
+    margin-bottom: 8px;
+  }
+
+  .phase-name {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 44px;
+    line-height: 1.0;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .phase-theme {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-top: 6px;
+  }
+
+  .phase-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--rule);
+    margin: 28px 0;
+    position: relative;
+  }
+
+  .phase-divider::after {
+    content: '';
+    position: absolute;
+    left: 0; top: -1px;
+    width: 48px; height: 3px;
+    background: var(--gold);
+  }
+
+  .phase-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .question-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 26px;
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .move-block {
+    border-left: 2px solid var(--gold);
+    padding-left: 20px;
+  }
+
+  .move-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .move-text {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .phase-desc {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--mid);
+  }
+
+  .phase-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .phase-count {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--light);
+  }
+
+  .phase-dot-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .phase-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    border: 1px solid var(--light);
+    background: transparent;
+  }
+
+  .phase-dot.active {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* ── Closing page ── */
+  .closing {
+    min-height: 700px;
+    padding: 56px 52px 48px;
+    justify-content: space-between;
+  }
+
+  .closing-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 38px;
+    line-height: 1.1;
+    color: var(--ink);
+    max-width: 320px;
+  }
+
+  .closing-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .closing-body {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--mid);
+    max-width: 360px;
+  }
+
+  .closing-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cta-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .cta-text {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--ink);
+  }
+
+  .cta-url {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold);
+    display: inline-block;
+    padding-bottom: 2px;
+  }
+
+  /* ── Print ── */
+  @media print {
+    body { background: white; }
+    .page { margin: 0; page-break-after: always; width: 100%; min-height: 100vh; }
+  }
+
+  @media (max-width: 580px) {
+    :root { --page-w: 100vw; }
+    .cover, .phase-page, .closing { padding: 40px 32px 36px; }
+    .cover-title { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════ COVER ══════════════════════════ -->
+<div class="page cover">
+  <div class="cover-top">
+    <div class="brand-mark">MOONtuner</div>
+    <div class="cover-rule"></div>
+    <div class="cover-title">
+      The<br>
+      <em>Phasecraft</em><br>
+      Pocket Guide
+    </div>
+    <div class="cover-subtitle">Eight phases · Eight questions · One complete cycle</div>
+  </div>
+
+  <div class="cover-sigil">
+    <!-- Eight-phase lunar cycle diagram -->
+    <svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer circle -->
+      <circle cx="110" cy="110" r="95" stroke="#D9D3C9" stroke-width="0.75"/>
+      <!-- Middle circle -->
+      <circle cx="110" cy="110" r="60" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Inner circle -->
+      <circle cx="110" cy="110" r="28" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Center dot -->
+      <circle cx="110" cy="110" r="2.5" fill="#B89D6A"/>
+
+      <!-- Eight phase nodes on outer ring, starting top -->
+      <!-- N, NE, E, SE, S, SW, W, NW -->
+      <!-- Phase 1: New Moon - top (N) -->
+      <circle cx="110" cy="15" r="8" fill="#1A1918"/>
+      <!-- Phase 2: Waxing Crescent - NE -->
+      <path d="M 161.5 33.5 A 8 8 0 1 1 161.5 49 A 5 5 0 0 0 161.5 33.5Z" fill="#1A1918"/>
+      <circle cx="161.5" cy="41" r="8" fill="none" stroke="#1A1918" stroke-width="1"/>
+      <!-- Phase 3: First Quarter - E -->
+      <path d="M 197 110 A 8 8 0 0 0 197 94 L 205 94 L 205 126 Z" fill="#1A1918"/>
+      <circle cx="197" cy="110" r="8" fill="none" stroke="#1A1918" stroke-width="1"/>
+      <!-- Phase 4: Waxing Gibbous - SE -->
+      <circle cx="161.5" cy="179" r="8" fill="#1A1918"/>
+      <path d="M 155.5 172 A 8 8 0 0 0 155.5 186 Z" fill="#F9F7F4"/>
+      <!-- Phase 5: Full Moon - S -->
+      <circle cx="110" cy="205" r="8" fill="none" stroke="#B89D6A" stroke-width="1.5"/>
+      <circle cx="110" cy="205" r="5" fill="#B89D6A" opacity="0.3"/>
+      <!-- Phase 6: Waning Gibbous - SW -->
+      <circle cx="58.5" cy="179" r="8" fill="#1A1918"/>
+      <path d="M 64.5 172 A 8 8 0 0 1 64.5 186 Z" fill="#F9F7F4"/>
+      <!-- Phase 7: Last Quarter - W -->
+      <path d="M 23 110 A 8 8 0 0 1 23 94 L 15 94 L 15 126 Z" fill="#1A1918"/>
+      <circle cx="23" cy="110" r="8" fill="none" stroke="#1A1918" stroke-width="1"/>
+      <!-- Phase 8: Waning Crescent - NW -->
+      <path d="M 58.5 33.5 A 8 8 0 1 0 58.5 49 A 5 5 0 0 1 58.5 33.5Z" fill="#1A1918"/>
+      <circle cx="58.5" cy="41" r="8" fill="none" stroke="#1A1918" stroke-width="1"/>
+
+      <!-- Connecting radial lines -->
+      <line x1="110" y1="23" x2="110" y2="82" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="155.7" y1="44.3" x2="127.4" y2="72.6" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="189" y1="110" x2="138" y2="110" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="155.7" y1="175.7" x2="127.4" y2="147.4" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="110" y1="197" x2="110" y2="138" stroke="#B89D6A" stroke-width="0.5" opacity="0.7"/>
+      <line x1="64.3" y1="175.7" x2="92.6" y2="147.4" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="31" y1="110" x2="82" y2="110" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="64.3" y1="44.3" x2="92.6" y2="72.6" stroke="#D9D3C9" stroke-width="0.5"/>
+
+      <!-- Phase labels — tiny -->
+      <text x="110" y="8" text-anchor="middle" font-family="Jost" font-weight="200" font-size="6" fill="#A09890" letter-spacing="1">NEW</text>
+      <text x="110" y="216" text-anchor="middle" font-family="Jost" font-weight="200" font-size="6" fill="#B89D6A" letter-spacing="1">FULL</text>
+    </svg>
+  </div>
+
+  <div class="cover-footer">
+    <div class="cover-desc">What each lunar phase asks of you — and the single move it calls for.</div>
+    <div class="cover-url">moontuner.xyz</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 01: NEW MOON ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 01 of 08</div>
+      <div class="phase-name">New<br>Moon</div>
+      <div class="phase-theme">Initiation</div>
+    </div>
+    <!-- New Moon sigil: perfect circle with center point, radiating potential -->
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#1A1918" stroke-width="1"/>
+      <circle cx="44" cy="44" r="3" fill="#1A1918"/>
+      <circle cx="44" cy="44" r="20" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Cardinal axis lines, very thin -->
+      <line x1="44" y1="8" x2="44" y2="24" stroke="#D9D3C9" stroke-width="0.75"/>
+      <line x1="44" y1="64" x2="44" y2="80" stroke="#D9D3C9" stroke-width="0.75"/>
+      <line x1="8" y1="44" x2="24" y2="44" stroke="#D9D3C9" stroke-width="0.75"/>
+      <line x1="64" y1="44" x2="80" y2="44" stroke="#D9D3C9" stroke-width="0.75"/>
+      <!-- Diagonal -->
+      <line x1="18" y1="18" x2="29" y2="29" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="59" y1="59" x2="70" y2="70" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="70" y1="18" x2="59" y2="29" stroke="#D9D3C9" stroke-width="0.5"/>
+      <line x1="18" y1="70" x2="29" y2="59" stroke="#D9D3C9" stroke-width="0.5"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What am I choosing to begin?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Write one intention. Not a goal — the why beneath the what.</div>
+    </div>
+
+    <div class="phase-desc">The sky is dark and the cycle begins in silence. Not absence — pure potential. The breath held before the first word. This is the only moment in the cycle when nothing has been set in motion yet. Use it with precision.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 01 · New Moon</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 02: WAXING CRESCENT ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 02 of 08</div>
+      <div class="phase-name">Waxing<br>Crescent</div>
+      <div class="phase-theme">Momentum</div>
+    </div>
+    <!-- Crescent sigil with upward arrow energy -->
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Waxing crescent shape -->
+      <path d="M 44 8 A 36 36 0 0 1 44 80 A 22 22 0 0 0 44 8 Z" fill="#1A1918"/>
+      <!-- vertical axis -->
+      <line x1="44" y1="8" x2="44" y2="80" stroke="#D9D3C9" stroke-width="0.4" stroke-dasharray="3 3"/>
+      <!-- Sacred triangle at center -->
+      <polygon points="44,28 56,56 32,56" fill="none" stroke="#B89D6A" stroke-width="0.75"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What am I actually doing to build this?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Take one concrete action. Not a plan — a move.</div>
+    </div>
+
+    <div class="phase-desc">The first sliver of light. The direction is set and the arc is young. Build the habit of moving toward what you said you wanted. The crescent does not wait for conditions to be ideal. It moves.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 02 · Waxing Crescent</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div>
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 03: FIRST QUARTER ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 03 of 08</div>
+      <div class="phase-name">First<br>Quarter</div>
+      <div class="phase-theme">Decision</div>
+    </div>
+    <!-- Half-circle divided, decision geometry -->
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Right half filled -->
+      <path d="M 44 8 A 36 36 0 0 1 44 80 Z" fill="#1A1918"/>
+      <!-- Vertical dividing line -->
+      <line x1="44" y1="8" x2="44" y2="80" stroke="#F9F7F4" stroke-width="1"/>
+      <!-- Horizontal axis -->
+      <line x1="8" y1="44" x2="80" y2="44" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Square at center — decision symbol -->
+      <rect x="36" y="36" width="16" height="16" fill="none" stroke="#B89D6A" stroke-width="0.75" transform="rotate(45 44 44)"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"Am I willing to do what this actually requires?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Name the one thing you are avoiding. Decide whether you will do it.</div>
+    </div>
+
+    <div class="phase-desc">Half the sky is lit. The arc meets its first real resistance. The commitment is tested and you decide whether you mean it. This phase does not reward hesitation. It rewards honest reckoning.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 03 · First Quarter</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 04: WAXING GIBBOUS ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 04 of 08</div>
+      <div class="phase-name">Waxing<br>Gibbous</div>
+      <div class="phase-theme">Refinement</div>
+    </div>
+    <!-- Almost full, detail-oriented geometry -->
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Gibbous shape — most filled, small slice dark -->
+      <path d="M 44 8 A 36 36 0 1 1 28 14 A 20 20 0 0 1 44 8 Z" fill="#1A1918"/>
+      <!-- Inner spiral -->
+      <path d="M 44 44 Q 52 36 44 28 Q 36 20 28 28 Q 20 36 28 44" fill="none" stroke="#B89D6A" stroke-width="0.75"/>
+      <!-- Center cross -->
+      <line x1="40" y1="44" x2="48" y2="44" stroke="#B89D6A" stroke-width="0.75"/>
+      <line x1="44" y1="40" x2="44" y2="48" stroke="#B89D6A" stroke-width="0.75"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What still needs to be better before this is complete?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Do the quality check you have been postponing.</div>
+    </div>
+
+    <div class="phase-desc">Almost full. The arc is at its most productive and most critical. The craftsperson's eye turns on the work — not to doubt it, but to make it ready. Refinement is not overthinking. It is respect for what you are building.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 04 · Waxing Gibbous</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 05: FULL MOON ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 05 of 08</div>
+      <div class="phase-name">Full<br>Moon</div>
+      <div class="phase-theme">Revelation</div>
+    </div>
+    <!-- Full moon — maximum light, radiating lines -->
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" fill="#1A1918"/>
+      <circle cx="44" cy="44" r="36" stroke="#B89D6A" stroke-width="1"/>
+      <!-- Radiating lines -->
+      <line x1="44" y1="4" x2="44" y2="12" stroke="#B89D6A" stroke-width="1"/>
+      <line x1="44" y1="76" x2="44" y2="84" stroke="#B89D6A" stroke-width="1"/>
+      <line x1="4" y1="44" x2="12" y2="44" stroke="#B89D6A" stroke-width="1"/>
+      <line x1="76" y1="44" x2="84" y2="44" stroke="#B89D6A" stroke-width="1"/>
+      <line x1="14.7" y1="14.7" x2="20.4" y2="20.4" stroke="#B89D6A" stroke-width="0.75"/>
+      <line x1="73.3" y1="73.3" x2="67.6" y2="67.6" stroke="#B89D6A" stroke-width="0.75"/>
+      <line x1="73.3" y1="14.7" x2="67.6" y2="20.4" stroke="#B89D6A" stroke-width="0.75"/>
+      <line x1="14.7" y1="73.3" x2="20.4" y2="67.6" stroke="#B89D6A" stroke-width="0.75"/>
+      <!-- Inner rings -->
+      <circle cx="44" cy="44" r="24" stroke="#B89D6A" stroke-width="0.4" opacity="0.5"/>
+      <circle cx="44" cy="44" r="12" stroke="#B89D6A" stroke-width="0.4" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What is this showing me that I need to see?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Sit with what the full light reveals. Do not explain or fix it yet.</div>
+    </div>
+
+    <div class="phase-desc">Everything is visible. A mirror, not a celebration. What was built is fully illuminated — including what you hoped would stay in shadow. The full moon does not reward action. It rewards honest witnessing.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 05 · Full Moon</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot active" style="background:#B89D6A;border-color:#B89D6A;"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 06: WANING GIBBOUS ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 06 of 08</div>
+      <div class="phase-name">Waning<br>Gibbous</div>
+      <div class="phase-theme">Integration</div>
+    </div>
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Mirrored gibbous — receding -->
+      <path d="M 44 8 A 36 36 0 1 0 60 14 A 20 20 0 0 0 44 8 Z" fill="#1A1918"/>
+      <!-- Descending spiral -->
+      <path d="M 44 44 Q 36 36 44 28 Q 52 20 60 28 Q 68 36 60 44" fill="none" stroke="#D4BF96" stroke-width="0.75"/>
+      <!-- horizontal integration bar -->
+      <line x1="28" y1="44" x2="60" y2="44" stroke="#D9D3C9" stroke-width="0.5"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What did this cycle teach me that I haven't absorbed yet?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Write the one insight from this arc that belongs in your permanent record.</div>
+    </div>
+
+    <div class="phase-desc">The light recedes slowly. What was revealed settles into meaning. You carry what you learned and begin to understand what it asks of you. The lesson is only complete when it changes how you act.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 06 · Waning Gibbous</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div><div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 07: LAST QUARTER ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 07 of 08</div>
+      <div class="phase-name">Last<br>Quarter</div>
+      <div class="phase-theme">Release</div>
+    </div>
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Left half filled — mirror of First Quarter -->
+      <path d="M 44 8 A 36 36 0 0 0 44 80 Z" fill="#1A1918"/>
+      <line x1="44" y1="8" x2="44" y2="80" stroke="#F9F7F4" stroke-width="1"/>
+      <line x1="8" y1="44" x2="80" y2="44" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Open diamond -->
+      <rect x="36" y="36" width="16" height="16" fill="none" stroke="#D9D3C9" stroke-width="0.75" transform="rotate(45 44 44)"/>
+      <!-- Small x at center -->
+      <line x1="40" y1="40" x2="48" y2="48" stroke="#B89D6A" stroke-width="0.75"/>
+      <line x1="48" y1="40" x2="40" y2="48" stroke="#B89D6A" stroke-width="0.75"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What is finished that I am still carrying?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Name three things that are done. Acknowledge the completion. Set them down.</div>
+    </div>
+
+    <div class="phase-desc">Half the sky is dark again. The audit arrives — not about feeling, but about what is structurally complete. What you maintain out of habit rather than meaning. This phase is the practice of honest completion.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 07 · Last Quarter</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot active"></div>
+      <div class="phase-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PHASE 08: WANING CRESCENT ══════════════════════════ -->
+<div class="page phase-page">
+  <div class="phase-header">
+    <div>
+      <div class="phase-number">Phase 08 of 08</div>
+      <div class="phase-name">Waning<br>Crescent</div>
+      <div class="phase-theme">Surrender</div>
+    </div>
+    <!-- Thin crescent, vesica piscis fragment -->
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <circle cx="44" cy="44" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Thin waning crescent — left side -->
+      <path d="M 44 8 A 36 36 0 0 0 44 80 A 22 22 0 0 1 44 8 Z" fill="#1A1918"/>
+      <!-- Vesica piscis lines -->
+      <ellipse cx="44" cy="44" rx="18" ry="36" fill="none" stroke="#D9D3C9" stroke-width="0.4"/>
+      <!-- Center horizontal -->
+      <line x1="26" y1="44" x2="62" y2="44" stroke="#D9D3C9" stroke-width="0.4"/>
+    </svg>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div class="phase-body">
+    <div>
+      <div class="question-label">The Question</div>
+      <div class="question-text">"What am I willing to let go of completely?"</div>
+    </div>
+
+    <div class="move-block">
+      <div class="move-label">The Move</div>
+      <div class="move-text">Do nothing. Let the space be space.</div>
+    </div>
+
+    <div class="phase-desc">The thinnest sliver before dark. Not preparation and not recovery — actual rest that requires no justification. The cycle has done what it came to do. The discipline here is the willingness to stop.</div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Phase 08 · Waning Crescent</div>
+    <div class="phase-dot-row">
+      <div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div><div class="phase-dot"></div>
+      <div class="phase-dot active"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE: PHASE INDEX ══════════════════════════ -->
+<div class="page phase-page" style="min-height:700px;">
+  <div>
+    <div class="phase-number" style="margin-bottom:8px;">Reference</div>
+    <div class="phase-name" style="font-size:36px;">The Eight<br>Phase Index</div>
+    <div class="phase-theme">A complete cycle at a glance</div>
+  </div>
+  <div class="phase-divider"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);flex:1;">
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" fill="#1A1918"/><circle cx="11" cy="11" r="3" fill="#1A1918"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">New Moon</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Initiation</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Set intention. Name the why. Begin in silence.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="#D9D3C9" stroke-width="0.75"/><path d="M11 2A9 9 0 0 1 11 20A5.5 5.5 0 0 0 11 2Z" fill="#1A1918"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">Waxing Crescent</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Momentum</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Take one concrete action. Build the habit.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="#D9D3C9" stroke-width="0.75"/><path d="M11 2A9 9 0 0 1 11 20Z" fill="#1A1918"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">First Quarter</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Decision</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Name what you're avoiding. Decide whether you mean it.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" fill="#1A1918"/><path d="M11 2A9 9 0 0 0 5 18A5.5 5.5 0 0 1 11 2Z" fill="#F9F7F4"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">Waxing Gibbous</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Refinement</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Do the quality check. Craft before completion.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" fill="#1A1918"/><circle cx="11" cy="11" r="9" stroke="#B89D6A" stroke-width="1"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">Full Moon</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Revelation</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Witness what is illuminated. Don't fix it yet.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" fill="#1A1918"/><path d="M11 2A9 9 0 0 1 17 18A5.5 5.5 0 0 0 11 2Z" fill="#F9F7F4"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">Waning Gibbous</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Integration</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Record the insight that belongs in your permanent record.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="#D9D3C9" stroke-width="0.75"/><path d="M11 2A9 9 0 0 0 11 20Z" fill="#1A1918"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">Last Quarter</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Release</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Name three completions. Acknowledge them. Set them down.</div>
+    </div>
+
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="9" stroke="#D9D3C9" stroke-width="0.75"/><path d="M11 2A9 9 0 0 0 11 20A5.5 5.5 0 0 1 11 2Z" fill="#1A1918"/></svg>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.2em;color:var(--ink);">Waning Crescent</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;">Surrender</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Do nothing. Let the space be space. The cycle is complete.</div>
+    </div>
+
+  </div>
+
+  <div class="phase-footer" style="margin-top:16px;">
+    <div class="phase-count">Phasecraft Reference · MOONtuner</div>
+    <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--light);">moontuner.xyz</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE: HOW THE NATAL PHASE WORKS ══════════════════════════ -->
+<div class="page phase-page" style="min-height:700px;">
+  <div style="margin-bottom:24px;">
+    <div class="phase-number" style="margin-bottom:8px;">Reference</div>
+    <div class="phase-name" style="font-size:36px;line-height:1.05;">How the<br>Natal Phase Works</div>
+  </div>
+
+  <div class="phase-divider"></div>
+
+  <div style="display:flex;flex-direction:column;gap:24px;flex:1;">
+
+    <div>
+      <div class="question-label">What is a natal lunar phase?</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:13px;line-height:1.8;color:var(--mid);margin-top:8px;">
+        At the moment of your birth, the Moon occupied a specific position in its orbit around the Earth — a precise angle relative to the Sun. That angle determines your natal lunar phase. It is not your moon sign (which changes every 2–3 days), but the <em style="font-style:italic;color:var(--ink);">shape of the light</em> at the moment you arrived.
+      </div>
+    </div>
+
+    <div>
+      <div class="question-label">What is a lunar return?</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:13px;line-height:1.8;color:var(--mid);margin-top:8px;">
+        Once per month — approximately every 29.5 days — the Moon returns to the exact phase angle it held at your birth. This is your lunar return, also called your power day. For a Waxing Crescent native, this means the Moon reaches that same 45–90° separation from the Sun each month. This is when your natal energy is most accessible.
+      </div>
+    </div>
+
+    <div style="background:transparent;border:1px solid var(--rule);padding:20px;">
+      <div class="question-label" style="margin-bottom:12px;">The Eight Phase Archetypes — at a glance</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        <div style="padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">New Moon</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Visionary · Pure potential</div>
+        </div>
+        <div style="padding:10px 0 10px 12px;border-bottom:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">Waxing Crescent</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Pioneer · Brave beginnings</div>
+        </div>
+        <div style="padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">First Quarter</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Builder · Decisive action</div>
+        </div>
+        <div style="padding:10px 0 10px 12px;border-bottom:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">Waxing Gibbous</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Craftsperson · Refinement</div>
+        </div>
+        <div style="padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">Full Moon</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Illuminator · Full seeing</div>
+        </div>
+        <div style="padding:10px 0 10px 12px;border-bottom:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">Waning Gibbous</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Teacher · Sharing wisdom</div>
+        </div>
+        <div style="padding:10px 12px 10px 0;border-right:1px solid var(--rule);">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">Last Quarter</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Editor · Conscious release</div>
+        </div>
+        <div style="padding:10px 0 10px 12px;">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.2em;color:var(--ink);">Waning Crescent</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;color:var(--mid);margin-top:3px;">The Mystic · Sacred surrender</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="question-label">Key terms</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--ink);padding-top:1px;">Arc Year</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">The 12-month cycle from one birthday to the next, structured by your monthly lunar returns.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--ink);padding-top:1px;">Power Day</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">Your monthly lunar return — the 24-hour window when natal phase energy is most accessible.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--ink);padding-top:1px;">Eclipse Window</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">Months when an eclipse falls near your return — the energy is amplified and accelerated.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:12px;">
+          <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--ink);padding-top:1px;">Amplitude</div>
+          <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.6;color:var(--mid);">The geometric precision of your return — 100% means exact phase match, lower means slight variance.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-footer">
+    <div class="phase-count">Reference · Phasecraft Framework</div>
+    <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.3em;color:var(--light);">moontuner.xyz</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CLOSING ══════════════════════════ -->
+<div class="page closing">
+  <div>
+    <div class="brand-mark">MOONtuner</div>
+    <div class="cover-rule" style="margin-top:20px;"></div>
+    <div class="closing-title">
+      You were born into<br>one of these <em>phases.</em>
+    </div>
+  </div>
+
+  <div class="closing-body">
+    Your natal lunar phase shapes how you initiate, build, release, and rest — every single month. Knowing it changes how you read your own momentum, your own resistance, and your own rest.
+  </div>
+
+  <!-- Small signature sigil -->
+  <div style="display:flex;justify-content:center;">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="32" r="28" stroke="#D9D3C9" stroke-width="0.75"/>
+      <circle cx="32" cy="32" r="16" stroke="#D9D3C9" stroke-width="0.5"/>
+      <circle cx="32" cy="32" r="4" fill="none" stroke="#B89D6A" stroke-width="1"/>
+      <line x1="32" y1="4" x2="32" y2="16" stroke="#D9D3C9" stroke-width="0.75"/>
+      <line x1="32" y1="48" x2="32" y2="60" stroke="#D9D3C9" stroke-width="0.75"/>
+      <line x1="4" y1="32" x2="16" y2="32" stroke="#D9D3C9" stroke-width="0.75"/>
+      <line x1="48" y1="32" x2="60" y2="32" stroke="#D9D3C9" stroke-width="0.75"/>
+    </svg>
+  </div>
+
+  <div class="closing-cta">
+    <div class="cta-label">Discover your natal phase</div>
+    <div class="cta-text">Get your Lunar Arc Report and find your personal power days.</div>
+    <div class="cta-url">moontuner.xyz</div>
+  </div>
+
+  <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">
+    Phasecraft Framework · © MOONtuner · All rights reserved
+  </div>
+</div>
+
+</body>
+</html>

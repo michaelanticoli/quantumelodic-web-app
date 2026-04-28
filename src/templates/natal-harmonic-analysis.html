@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astro-Harmonic Natal Analysis — MOONtuner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cormorant+SC:wght@300;400;500&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:     #1A1918;
+    --mid:     #6A6560;
+    --light:   #A09890;
+    --rule:    #D9D3C9;
+    --paper:   #F9F7F4;
+    --gold:    #B89D6A;
+    --gold-lt: #D4BF96;
+    --page-w:  580px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #EDE8E1;
+    font-family: 'Jost', sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    width: var(--page-w);
+    background: var(--paper);
+    margin: 0 auto 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    min-height: 760px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 60px 60px 52px;
+    gap: 0;
+  }
+
+  .cover-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .brand {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .report-tier {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--light);
+    text-align: right;
+  }
+
+  .cover-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 36px;
+    padding: 24px 0;
+  }
+
+  .cover-report-name {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .report-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .report-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 48px;
+    line-height: 1.0;
+    color: var(--ink);
+  }
+
+  .report-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  /* Chart diagram placeholder */
+  .chart-diagram {
+    display: flex;
+    justify-content: center;
+  }
+
+  .cover-identity {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .identity-cell {
+    padding: 16px 0;
+    text-align: center;
+  }
+
+  .identity-cell + .identity-cell {
+    border-left: 1px solid var(--rule);
+  }
+
+  .id-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 5px;
+  }
+
+  .id-value {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--ink);
+  }
+
+  .id-mode {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--gold);
+    margin-top: 2px;
+  }
+
+  .cover-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .cover-meta {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--light);
+    line-height: 1.8;
+  }
+
+  .cover-url {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  /* ── GENERAL SECTION LAYOUT ── */
+  .section-page {
+    min-height: 700px;
+    display: flex;
+    flex-direction: column;
+    padding: 56px 60px 48px;
+  }
+
+  .section-eyebrow {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 38px;
+    line-height: 1.05;
+    color: var(--ink);
+    margin-bottom: 28px;
+  }
+
+  .section-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .full-rule {
+    width: 100%;
+    height: 1px;
+    background: var(--rule);
+    margin: 0 0 28px;
+    position: relative;
+  }
+
+  .full-rule::before {
+    content: '';
+    position: absolute;
+    left: 0; top: -1px;
+    width: 56px; height: 3px;
+    background: var(--gold);
+  }
+
+  /* ── Planetary placements section ── */
+  .planet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .planet-row {
+    display: grid;
+    grid-template-columns: 28px 100px 80px 1fr;
+    align-items: start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+    gap: 16px;
+  }
+
+  .planet-glyph {
+    font-size: 18px;
+    line-height: 1;
+    padding-top: 3px;
+  }
+
+  .planet-name-block {}
+
+  .planet-name {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+  }
+
+  .planet-position {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    color: var(--light);
+    margin-top: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  .planet-sign-block {}
+
+  .planet-sign {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .planet-element {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-top: 2px;
+  }
+
+  .planet-interpretation {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--mid);
+  }
+
+  /* ── Musical translation section ── */
+  .music-intro {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.65;
+    color: var(--mid);
+    margin-bottom: 28px;
+  }
+
+  .key-signature {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    border: 1px solid var(--gold-lt);
+    margin-bottom: 24px;
+  }
+
+  .ks-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--light);
+  }
+
+  .ks-value {
+    font-family: 'Cormorant', serif;
+    font-weight: 400;
+    font-size: 28px;
+    color: var(--ink);
+  }
+
+  .ks-desc {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--mid);
+  }
+
+  .music-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .music-row {
+    display: grid;
+    grid-template-columns: 28px 100px 1fr;
+    align-items: start;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    gap: 16px;
+  }
+
+  .music-planet-name {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+  }
+
+  .music-sign {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-top: 2px;
+  }
+
+  .music-voice {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .music-interpretation {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--mid);
+  }
+
+  /* ── Whole composition section ── */
+  .composition-intro {
+    font-family: 'Cormorant', serif;
+    font-style: italic;
+    font-size: 20px;
+    line-height: 1.65;
+    color: var(--mid);
+    margin-bottom: 28px;
+    border-left: 2px solid var(--gold);
+    padding-left: 20px;
+  }
+
+  .layer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--rule);
+    margin-bottom: 28px;
+  }
+
+  .layer-cell {
+    background: var(--paper);
+    padding: 20px 18px;
+  }
+
+  .layer-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .layer-planets {
+    font-family: 'Cormorant SC', serif;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .layer-desc {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--mid);
+  }
+
+  .composition-statement {
+    padding: 24px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .comp-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    font-size: 9px;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--light);
+    margin-bottom: 10px;
+  }
+
+  .comp-text {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  /* ── Closing ── */
+  .closing-page {
+    min-height: 460px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px;
+    text-align: center;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { margin: 0; page-break-after: always; width: 100%; }
+  }
+
+  @media (max-width: 640px) {
+    :root { --page-w: 100vw; }
+    .cover, .section-page, .closing-page { padding: 40px 28px; }
+    .planet-row { grid-template-columns: 28px 1fr; }
+    .music-row { grid-template-columns: 28px 1fr; }
+    .layer-grid { grid-template-columns: 1fr; }
+    .cover-identity { grid-template-columns: 1fr; }
+    .identity-cell + .identity-cell { border-left: none; border-top: 1px solid var(--rule); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════ COVER ══════════════════════════ -->
+<div class="page cover">
+  <div class="cover-header">
+    <div class="brand">MOONtuner</div>
+    <div class="report-tier">Astro-Harmonic<br>Natal Analysis</div>
+  </div>
+
+  <div class="cover-body">
+    <div class="cover-report-name">
+      <div class="report-label">Cosmic Chart — Generated for</div>
+      <div class="report-title">
+        Michael's<br>
+        <em>Cosmic Chart</em>
+      </div>
+    </div>
+
+    <!-- Natal chart sigil / wheel -->
+    <div class="chart-diagram">
+      <svg width="220" height="220" viewBox="0 0 220 220" fill="none">
+        <!-- House rings -->
+        <circle cx="110" cy="110" r="100" stroke="#D9D3C9" stroke-width="0.75"/>
+        <circle cx="110" cy="110" r="78" stroke="#D9D3C9" stroke-width="0.5"/>
+        <circle cx="110" cy="110" r="56" stroke="#D9D3C9" stroke-width="0.5"/>
+        <circle cx="110" cy="110" r="30" stroke="#D9D3C9" stroke-width="0.5"/>
+
+        <!-- 12 house divisions (30° each) -->
+        <line x1="110" y1="10" x2="110" y2="210" stroke="#D9D3C9" stroke-width="0.4"/>
+        <line x1="10" y1="110" x2="210" y2="110" stroke="#D9D3C9" stroke-width="0.4"/>
+        <!-- Diagonals 30/60° -->
+        <line x1="60" y1="23.4" x2="160" y2="196.6" stroke="#D9D3C9" stroke-width="0.3"/>
+        <line x1="160" y1="23.4" x2="60" y2="196.6" stroke="#D9D3C9" stroke-width="0.3"/>
+        <line x1="23.4" y1="60" x2="196.6" y2="160" stroke="#D9D3C9" stroke-width="0.3"/>
+        <line x1="196.6" y1="60" x2="23.4" y2="160" stroke="#D9D3C9" stroke-width="0.3"/>
+        <line x1="23.4" y1="160" x2="196.6" y2="60" stroke="#D9D3C9" stroke-width="0.3"/>
+        <line x1="23.4" y1="60" x2="196.6" y2="160" stroke="#D9D3C9" stroke-width="0.3"/>
+
+        <!-- Ascendant axis — Scorpio rising: roughly 7 o'clock -->
+        <line x1="10" y1="110" x2="210" y2="110" stroke="#B89D6A" stroke-width="0.75"/>
+        <!-- ASC marker -->
+        <circle cx="10" cy="110" r="3" fill="#B89D6A"/>
+        <text x="5" y="107" font-family="Jost" font-weight="200" font-size="7" fill="#B89D6A">ASC</text>
+
+        <!-- Planet positions — approximate -->
+        <!-- Sun ☉ Taurus ~34° — 2nd house area -->
+        <circle cx="152" cy="65" r="4" fill="#B89D6A"/>
+        <text x="158" y="64" font-family="Jost" font-weight="300" font-size="8" fill="#B89D6A">☉</text>
+
+        <!-- Moon ☽ Gemini ~87° — 3rd house -->
+        <circle cx="168" cy="95" r="3.5" fill="#1A1918" stroke="#D9D3C9" stroke-width="0.75"/>
+        <text x="173" y="94" font-family="Jost" font-weight="300" font-size="8" fill="#D9D3C9">☽</text>
+
+        <!-- Mercury ☿ Aries ~9° -->
+        <circle cx="133" cy="44" r="3" fill="none" stroke="#A09890" stroke-width="0.75"/>
+        <text x="138" y="43" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">☿</text>
+
+        <!-- Venus ♀ Aries ~6° -->
+        <circle cx="120" cy="38" r="3" fill="none" stroke="#A09890" stroke-width="0.75"/>
+        <text x="125" y="37" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">♀</text>
+
+        <!-- Mars ♂ Taurus ~59° -->
+        <circle cx="162" cy="78" r="3.5" fill="none" stroke="#A09890" stroke-width="0.75"/>
+        <text x="167" y="77" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">♂</text>
+
+        <!-- Jupiter ♃ Aquarius ~314° -->
+        <circle cx="58" cy="155" r="3.5" fill="none" stroke="#D9D3C9" stroke-width="0.5"/>
+        <text x="44" y="154" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">♃</text>
+
+        <!-- Saturn ♄ Scorpio ~236° -->
+        <circle cx="38" cy="115" r="3.5" fill="none" stroke="#D9D3C9" stroke-width="0.5"/>
+        <text x="24" y="114" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">♄</text>
+
+        <!-- Aspect lines (simplified) — gold for major trines, light for squares -->
+        <!-- Sun-Moon sextile -->
+        <line x1="152" y1="65" x2="168" y2="95" stroke="#B89D6A" stroke-width="0.5" opacity="0.6"/>
+        <!-- Sun-Saturn opposition -->
+        <line x1="152" y1="65" x2="38" y2="115" stroke="#D9D3C9" stroke-width="0.4" opacity="0.5"/>
+        <!-- Moon-Jupiter trine -->
+        <line x1="168" y1="95" x2="58" y2="155" stroke="#B89D6A" stroke-width="0.4" opacity="0.5"/>
+
+        <!-- MC at top -->
+        <text x="105" y="8" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">MC</text>
+        <!-- IC at bottom -->
+        <text x="107" y="216" font-family="Jost" font-weight="200" font-size="7" fill="#A09890">IC</text>
+
+        <!-- Center note -->
+        <text x="110" y="114" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="12" fill="#B89D6A">F</text>
+        <text x="110" y="127" text-anchor="middle" font-family="Jost" font-weight="200" font-size="7" letter-spacing="1" fill="#A09890">IONIAN</text>
+      </svg>
+    </div>
+
+    <div class="cover-identity">
+      <div class="identity-cell">
+        <div class="id-label">Sun</div>
+        <div class="id-value">Taurus</div>
+        <div class="id-mode">34° · Earth</div>
+      </div>
+      <div class="identity-cell">
+        <div class="id-label">Moon</div>
+        <div class="id-value">Gemini</div>
+        <div class="id-mode">87° · Air</div>
+      </div>
+      <div class="identity-cell">
+        <div class="id-label">Ascendant</div>
+        <div class="id-value">Scorpio</div>
+        <div class="id-mode">229° · Water</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div class="cover-meta">
+      Born 1985 · 04 · 24 &nbsp;·&nbsp; 19:55<br>
+      New York City
+    </div>
+    <div class="cover-url">moontuner.xyz</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 1: PLANETARY POSITIONS ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 01</div>
+  <div class="section-title">Planetary Positions<br><em>&amp; Meanings</em></div>
+  <div class="full-rule"></div>
+
+  <div class="planet-list">
+    <div class="planet-row">
+      <div class="planet-glyph">☉</div>
+      <div class="planet-name-block"><div class="planet-name">Sun</div><div class="planet-position">34°46' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Taurus</div><div class="planet-element">Earth · Fixed</div></div>
+      <div class="planet-interpretation">Your Sun in Taurus grounds your identity in sensual beauty and patient persistence. Like a rich bass drone, you provide warmth and stability, finding power in sustained, luxurious tones.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">☽</div>
+      <div class="planet-name-block"><div class="planet-name">Moon</div><div class="planet-position">87°40' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Gemini</div><div class="planet-element">Air · Mutable</div></div>
+      <div class="planet-interpretation">Your Moon in Gemini processes emotions through communication. Your inner world is a busy conversation — adaptable, curious, and sometimes scattered. Feelings become language.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">☿</div>
+      <div class="planet-name-block"><div class="planet-name">Mercury</div><div class="planet-position">9°11' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Aries</div><div class="planet-element">Fire · Cardinal</div></div>
+      <div class="planet-interpretation">Mercury in Aries gives you a rapid-fire mind. You think in bold strokes, speak with directness, and your ideas arrive like sudden percussion hits — sharp and decisive.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♀</div>
+      <div class="planet-name-block"><div class="planet-name">Venus</div><div class="planet-position">6°00' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Aries</div><div class="planet-element">Fire · Cardinal</div></div>
+      <div class="planet-interpretation">Venus in Aries loves passionately and impulsively. In relationships, you are the exciting opening riff — bold, thrilling, and unapologetically direct.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♂</div>
+      <div class="planet-name-block"><div class="planet-name">Mars</div><div class="planet-position">59°04' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Taurus</div><div class="planet-element">Earth · Fixed</div></div>
+      <div class="planet-interpretation">Mars in Taurus channels energy with stubborn determination. Your willpower is a relentless bass ostinato — slow to start but unstoppable once moving.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♃</div>
+      <div class="planet-name-block"><div class="planet-name">Jupiter</div><div class="planet-position">314°26' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Aquarius</div><div class="planet-element">Air · Fixed</div></div>
+      <div class="planet-interpretation">Jupiter in Aquarius expands through innovation and humanitarian vision. Your abundance flows from collective progress — like a revolutionary new genre of music.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♄</div>
+      <div class="planet-name-block"><div class="planet-name">Saturn</div><div class="planet-position">236°20' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Scorpio</div><div class="planet-element">Water · Fixed</div></div>
+      <div class="planet-interpretation">Saturn in Scorpio tests your willingness to transform. You are learning to face your deepest fears and emerge with hard-won wisdom and unshakeable power.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♅</div>
+      <div class="planet-name-block"><div class="planet-name">Uranus</div><div class="planet-position">257°32' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Sagittarius</div><div class="planet-element">Fire · Mutable</div></div>
+      <div class="planet-interpretation">Uranus in Sagittarius brings revolution to belief systems and global perspectives. Your generation expands horizons through technology and cultural cross-pollination.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♆</div>
+      <div class="planet-name-block"><div class="planet-name">Neptune</div><div class="planet-position">273°31' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Capricorn</div><div class="planet-element">Earth · Cardinal</div></div>
+      <div class="planet-interpretation">Neptune in Capricorn dissolves boundaries in institutions. Idealism meets pragmatism as your generation reimagines how society is structured.</div>
+    </div>
+    <div class="planet-row">
+      <div class="planet-glyph">♇</div>
+      <div class="planet-name-block"><div class="planet-name">Pluto</div><div class="planet-position">213°19' · Direct</div></div>
+      <div class="planet-sign-block"><div class="planet-sign">Scorpio</div><div class="planet-element">Water · Fixed</div></div>
+      <div class="planet-interpretation">Pluto in Scorpio is at home — transforming power, death, sexuality, and the hidden with volcanic intensity. Your generation confronts the shadow.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 2: MUSICAL TRANSLATION ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 02</div>
+  <div class="section-title">Musical<br><em>Translation</em></div>
+  <div class="full-rule"></div>
+
+  <div class="music-intro">
+    Your chart resonates in F Ionian. Each planetary placement contributes a unique voice to your cosmic symphony — an instrument, a role, a tonal character.
+  </div>
+
+  <div class="key-signature">
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="17" stroke="#D4BF96" stroke-width="0.75"/>
+      <text x="20" y="26" text-anchor="middle" font-family="Cormorant" font-size="20" fill="#B89D6A">F</text>
+    </svg>
+    <div>
+      <div class="ks-label">Musical Mode</div>
+      <div class="ks-value">F Ionian</div>
+    </div>
+    <div style="border-left:1px solid var(--rule);padding-left:20px;">
+      <div class="ks-desc">The major scale — warm, grounded, resolved. A tonal home rooted in Earth energy with full harmonic range.</div>
+    </div>
+  </div>
+
+  <div class="music-list">
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">☉</div>
+      <div><div class="music-planet-name">Sun</div><div class="music-sign">Taurus</div></div>
+      <div>
+        <div class="music-voice">Radiant brass and strings — the central melody</div>
+        <div class="music-interpretation">Sustained legato warmth and rich lower harmonics. The keynote of the entire composition — everything else orbits this voice.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">☽</div>
+      <div><div class="music-planet-name">Moon</div><div class="music-sign">Gemini</div></div>
+      <div>
+        <div class="music-voice">Silver flute and harp — the emotional undertow</div>
+        <div class="music-interpretation">Playful call-and-response dialogue and rapid ornamentation. The emotional melody that colors every phrase with curiosity and motion.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">☿</div>
+      <div><div class="music-planet-name">Mercury</div><div class="music-sign">Aries</div></div>
+      <div>
+        <div class="music-voice">Quick woodwinds and bells — rhythmic dialogue</div>
+        <div class="music-interpretation">Fierce staccato attack and driving tempo. The mental percussion of the composition — decisive, sharp, forward.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♀</div>
+      <div><div class="music-planet-name">Venus</div><div class="music-sign">Aries</div></div>
+      <div>
+        <div class="music-voice">Lush strings and voice — harmonic sweetness</div>
+        <div class="music-interpretation">Bold, thrilling opening phrase. Beauty delivered with directness — no slow build, just an immediate declaration of beauty.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♂</div>
+      <div><div class="music-planet-name">Mars</div><div class="music-sign">Taurus</div></div>
+      <div>
+        <div class="music-voice">Driving percussion and distorted brass — the pulse</div>
+        <div class="music-interpretation">Sustained legato warmth beneath relentless rhythm. The unstoppable bass ostinato — the engine of the piece.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♃</div>
+      <div><div class="music-planet-name">Jupiter</div><div class="music-sign">Aquarius</div></div>
+      <div>
+        <div class="music-voice">Majestic organ and full orchestra — harmonic range</div>
+        <div class="music-interpretation">Unexpected electronic shifts and asymmetric time signatures. The generational instrument that expands beyond the key.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♄</div>
+      <div><div class="music-planet-name">Saturn</div><div class="music-sign">Scorpio</div></div>
+      <div>
+        <div class="music-voice">Deep cello and low strings — structural anchor</div>
+        <div class="music-interpretation">Intense crescendo from whisper to overwhelming power. The composer's discipline — the form that holds everything else in place.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♅</div>
+      <div><div class="music-planet-name">Uranus</div><div class="music-sign">Sagittarius</div></div>
+      <div>
+        <div class="music-voice">Erratic synthesizers and glitches — pattern disruption</div>
+        <div class="music-interpretation">Adventurous world-music motifs and wide intervallic leaps. The unexpected element that keeps the composition from becoming predictable.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♆</div>
+      <div><div class="music-planet-name">Neptune</div><div class="music-sign">Capricorn</div></div>
+      <div>
+        <div class="music-voice">Ethereal choir and ambient washes — atmosphere</div>
+        <div class="music-interpretation">Structured ascending passages with formal discipline. The reverb field — the space that makes all other sounds possible.</div>
+      </div>
+    </div>
+    <div class="music-row">
+      <div style="font-size:16px;padding-top:2px;">♇</div>
+      <div><div class="music-planet-name">Pluto</div><div class="music-sign">Scorpio</div></div>
+      <div>
+        <div class="music-voice">Subterranean sub-bass and industrial drones — foundation</div>
+        <div class="music-interpretation">The lowest frequency of the composition — barely audible but felt in everything. Rumbling beneath all other voices.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ SECTION 3: THE WHOLE COMPOSITION ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Section 03</div>
+  <div class="section-title">The Whole<br><em>Composition</em></div>
+  <div class="full-rule"></div>
+
+  <div class="composition-intro">
+    Imagine a living composition for 10 instruments, each representing a planet in your chart. This is not metaphor — this is the actual structure of your energetic signature.
+  </div>
+
+  <div class="layer-grid">
+    <div class="layer-cell">
+      <div class="layer-label">The Foreground</div>
+      <div class="layer-planets">Sun · Moon · Mercury · Venus · Mars</div>
+      <div class="layer-desc">The inner planets form the daily melodies, rhythms, and harmonies. These are the voices you hear most clearly — the sounds of your immediate experience, personality, and relationships.</div>
+    </div>
+    <div class="layer-cell">
+      <div class="layer-label">The Architecture</div>
+      <div class="layer-planets">Jupiter · Saturn · Uranus · Neptune · Pluto</div>
+      <div class="layer-desc">The outer planets provide the deep structure — key changes, structural movements, and generational themes. These unfold over years and decades, not months.</div>
+    </div>
+  </div>
+
+  <div class="composition-statement">
+    <div class="comp-label">The Central Voice</div>
+    <div class="comp-text">
+      Your central melody — the Sun in Taurus — establishes the key and character of the entire composition. The Moon in Gemini provides the emotional undercurrent that colours every phrase. The Ascendant in Scorpio sets the opening tone — the first impression the listener receives.
+      <br><br>
+      The dominant Earth element grounds the composition in rich, sustained harmonies and deliberate pacing. Deep bass lines, warm string pads, and a steady, unhurried pulse form the foundation. Everything builds from here.
+    </div>
+  </div>
+
+  <!-- Final sigil — the whole composition glyph -->
+  <div style="display:flex;justify-content:center;padding:32px 0 8px;">
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+      <!-- Outer -->
+      <circle cx="60" cy="60" r="54" stroke="#D9D3C9" stroke-width="0.75"/>
+      <!-- Inner rings -->
+      <circle cx="60" cy="60" r="36" stroke="#D9D3C9" stroke-width="0.5"/>
+      <circle cx="60" cy="60" r="18" stroke="#D9D3C9" stroke-width="0.5"/>
+      <!-- Axes -->
+      <line x1="6" y1="60" x2="114" y2="60" stroke="#D9D3C9" stroke-width="0.4"/>
+      <line x1="60" y1="6" x2="60" y2="114" stroke="#D9D3C9" stroke-width="0.4"/>
+      <!-- Triangles — earth element / trine geometry -->
+      <polygon points="60,18 96,76 24,76" fill="none" stroke="#B89D6A" stroke-width="0.75"/>
+      <polygon points="60,102 24,44 96,44" fill="none" stroke="#D4BF96" stroke-width="0.5"/>
+      <!-- Center -->
+      <circle cx="60" cy="60" r="4" fill="#B89D6A"/>
+      <!-- F note at center -->
+      <text x="60" y="57" text-anchor="middle" font-family="Cormorant" font-style="italic" font-size="10" fill="#F9F7F4">F</text>
+    </svg>
+  </div>
+
+  <div style="text-align:center;">
+    <div style="font-family:'Cormorant',serif;font-style:italic;font-size:17px;line-height:1.65;color:var(--mid);max-width:380px;margin:0 auto;">
+      Together, they create a composition that is entirely yours: unrepeatable, constantly evolving, and profoundly beautiful. This is the music of your cosmos.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 1: ASPECTS AS INTERVALS ══════════════════════════ -->
+<div class="page section-page" style="min-height:700px;">
+  <div class="section-eyebrow">Reference 01</div>
+  <div class="section-title">Aspects as<br><em>Musical Intervals</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:18px;line-height:1.65;color:var(--mid);margin-bottom:28px;">
+    An aspect is the angular relationship between two planets. In Quantumelodic analysis, each aspect corresponds directly to a musical interval — from perfect consonance to maximum tension.
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:0;margin-bottom:28px;">
+
+    <!-- Conjunction -->
+    <div style="display:grid;grid-template-columns:140px 80px 80px 1fr;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);gap:16px;">
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;color:var(--ink);">Conjunction</div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);letter-spacing:0.2em;margin-top:2px;">0°</div>
+      </div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">Unison</div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#7A9E7A;">Consonant</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Two voices singing the same note. Energies merge and amplify — pure unity. The most powerful aspect in the chart.</div>
+    </div>
+
+    <!-- Sextile -->
+    <div style="display:grid;grid-template-columns:140px 80px 80px 1fr;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);gap:16px;">
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;color:var(--ink);">Sextile</div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);letter-spacing:0.2em;margin-top:2px;">60°</div>
+      </div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">Major Third</div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#7A9E7A;">Consonant</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">A pleasant major chord. Natural opportunity and supportive flow — energies want to collaborate with minimal effort.</div>
+    </div>
+
+    <!-- Square -->
+    <div style="display:grid;grid-template-columns:140px 80px 80px 1fr;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);gap:16px;">
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;color:var(--ink);">Square</div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);letter-spacing:0.2em;margin-top:2px;">90°</div>
+      </div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">Tritone</div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#B07070;">Dissonant</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">The devil's interval — maximum tension demanding resolution. Medieval musicians called it diabolus in musica. Not a problem: dissonance drives evolution.</div>
+    </div>
+
+    <!-- Trine -->
+    <div style="display:grid;grid-template-columns:140px 80px 80px 1fr;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);gap:16px;">
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;color:var(--ink);">Trine</div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);letter-spacing:0.2em;margin-top:2px;">120°</div>
+      </div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">Perfect Fifth</div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#7A9E7A;">Consonant</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">The most consonant interval after unison — the basis of all harmony. Natural talent and effortless flow. These energies need no work: trust and follow.</div>
+    </div>
+
+    <!-- Opposition -->
+    <div style="display:grid;grid-template-columns:140px 80px 80px 1fr;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);gap:16px;">
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.15em;color:var(--ink);">Opposition</div>
+        <div style="font-family:'Jost';font-weight:200;font-size:9px;color:var(--light);letter-spacing:0.2em;margin-top:2px;">180°</div>
+      </div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">Octave</div>
+      <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#B07070;">Tension</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">The same note at opposite ends of the register. Polarized — creates both tension and recognition. Integration through awareness transforms polarity into partnership.</div>
+    </div>
+  </div>
+
+  <!-- Orb precision guide -->
+  <div style="padding:20px 24px;background:transparent;border:1px solid var(--rule);">
+    <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:14px;">Orb Precision — How Loudly the Interval Sings</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--rule);">
+      <div style="background:var(--paper);padding:14px 12px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);margin-bottom:4px;">Exact · 0–1°</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Maximum power. Singing at full volume.</div>
+      </div>
+      <div style="background:var(--paper);padding:14px 12px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--ink);margin-bottom:4px;">Tight · 1–3°</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Strong resonance, clearly felt.</div>
+      </div>
+      <div style="background:var(--paper);padding:14px 12px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--ink);margin-bottom:4px;">Moderate · 3–6°</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Present but softer — background melody.</div>
+      </div>
+      <div style="background:var(--paper);padding:14px 12px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--light);margin-bottom:4px;">Wide · 6°+</div>
+        <div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Subtle — barely audible overtone.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 2: ELEMENTS & MODALITIES ══════════════════════════ -->
+<div class="page section-page" style="min-height:660px;">
+  <div class="section-eyebrow">Reference 02</div>
+  <div class="section-title">Elements, Modalities<br><em>&amp; Musical Signatures</em></div>
+  <div class="full-rule"></div>
+
+  <!-- Elements -->
+  <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:14px;">The Four Elements as Frequency</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);margin-bottom:32px;">
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.2em;color:var(--ink);">Fire △</div>
+        <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">C</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Fast vibrations, initiating energy. Bold, warm, cardinal in nature. Aries · Leo · Sagittarius</div>
+      <div style="margin-top:8px;font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--light);">warm red-orange tones</div>
+    </div>
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.2em;color:var(--ink);">Earth ▽</div>
+        <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">F</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Slow, steady vibrations, stabilizing. Patient, sensual, grounding. Taurus · Virgo · Capricorn</div>
+      <div style="margin-top:8px;font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--light);">grounded green-brown tones</div>
+    </div>
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.2em;color:var(--ink);">Air ◇</div>
+        <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">G</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Light, rapid oscillations, connecting. Curious, communicative, bridging. Gemini · Libra · Aquarius</div>
+      <div style="margin-top:8px;font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--light);">bright yellow-blue tones</div>
+    </div>
+    <div style="background:var(--paper);padding:18px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:13px;letter-spacing:0.2em;color:var(--ink);">Water ○</div>
+        <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;color:var(--gold);">E♭</div>
+      </div>
+      <div style="font-family:'Jost';font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Flowing, emotional vibrations, receptive. Intuitive, deep, feeling-based. Cancer · Scorpio · Pisces</div>
+      <div style="margin-top:8px;font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--light);">cool blue-violet tones</div>
+    </div>
+  </div>
+
+  <!-- Modalities -->
+  <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--light);margin-bottom:14px;">The Three Modalities as Rhythm</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--rule);margin-bottom:28px;">
+    <div style="background:var(--paper);padding:18px 14px;">
+      <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);margin-bottom:6px;">Cardinal</div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:13px;color:var(--gold);margin-bottom:8px;">Strong downbeat</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Initiating energy. The first beat of the measure. Aries · Cancer · Libra · Capricorn</div>
+    </div>
+    <div style="background:var(--paper);padding:18px 14px;">
+      <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);margin-bottom:6px;">Fixed</div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:13px;color:var(--gold);margin-bottom:8px;">Sustained note</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Sustaining energy. The long held tone. Taurus · Leo · Scorpio · Aquarius</div>
+    </div>
+    <div style="background:var(--paper);padding:18px 14px;">
+      <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);margin-bottom:6px;">Mutable</div>
+      <div style="font-family:'Cormorant',serif;font-style:italic;font-size:13px;color:var(--gold);margin-bottom:8px;">Syncopated bridge</div>
+      <div style="font-family:'Jost';font-weight:300;font-size:11.5px;line-height:1.65;color:var(--mid);">Transitioning energy. The bridge between movements. Gemini · Virgo · Sagittarius · Pisces</div>
+    </div>
+  </div>
+
+  <!-- Your chart summary -->
+  <div style="padding:18px 20px;border-left:2px solid var(--gold);">
+    <div style="font-family:'Jost';font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Your Chart in Summary</div>
+    <div style="font-family:'Cormorant',serif;font-weight:300;font-size:16px;line-height:1.7;color:var(--ink);">
+      The dominant Earth element grounds this composition in rich, sustained harmonies and deliberate pacing — the bass note beneath everything. Sun and Mars in Taurus establish Fixed endurance as the primary rhythmic signature. The Gemini Moon introduces Air's rapid oscillation into this Earth foundation — curiosity and motion threaded through patient depth.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 3: HOUSE SYSTEM ══════════════════════════ -->
+<div class="page section-page" style="min-height:660px;">
+  <div class="section-eyebrow">Reference 03</div>
+  <div class="section-title">The Houses<br><em>as Octaves</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:17px;line-height:1.65;color:var(--mid);margin-bottom:24px;">
+    The twelve houses map the twelve areas of life. In the Quantumelodic system, each house corresponds to a harmonic interval — a position in the octave of your lived experience.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);">
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">1</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Self &amp; Identity · Root Note</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Your fundamental frequency — the keynote of your entire symphony.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">2</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Resources &amp; Values · Second</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">The harmonic that grounds your material reality.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">3</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Communication · Third</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">The melody of your thoughts and expression.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">4</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Home &amp; Roots · Fourth</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Your bass line — the foundation that supports everything.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">5</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Creativity &amp; Joy · Fifth</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">The perfect fifth — pure creative expression and play.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">6</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Service &amp; Health · Sixth</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">The tuning process — daily rhythms, refinement.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">7</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Relationships · Seventh</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">The leading tone — seeking resolution through union.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">8</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Transformation · Octave</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Death and rebirth — transformation into higher frequency.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">9</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Wisdom &amp; Expansion · Ninth</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Extended harmony — reaching beyond the octave.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">10</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Career &amp; Legacy · Tenth</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Your public performance — the song the world hears.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">11</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Community &amp; Vision · Eleventh</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">Collective harmony — your tribe and future vision.</div></div>
+    </div>
+    <div style="background:var(--paper);padding:14px 16px;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;">
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.15em;color:var(--gold);">12</div>
+      <div><div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.1em;color:var(--ink);margin-bottom:3px;">Spirituality &amp; Unity · Twelfth</div><div style="font-family:'Jost';font-weight:300;font-size:11px;line-height:1.6;color:var(--mid);">The cosmic sustain — all notes dissolve to infinite silence.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 1: 12 SIGNS AS MUSICAL KEYS ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Reference 01</div>
+  <div class="section-title">The 12 Signs as<br><em>Musical Keys</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.65;color:var(--mid);margin-bottom:24px;">
+    Every zodiac sign corresponds to a tonic note, a modal scale, an element, and a sonic character. Together these form the Quantumelodic framework — the system that translates your chart into music.
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);">
+    <!-- Row headers -->
+    <div style="background:var(--paper);display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;background:#F2EDE6;">
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Sign</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Note</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Mode</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Element</div>
+    </div>
+    <div style="background:var(--paper);display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;background:#F2EDE6;">
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Sign</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Note</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Mode</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:8px;letter-spacing:0.35em;text-transform:uppercase;color:var(--light);">Element</div>
+    </div>
+
+    <!-- Signs left column -->
+    <div style="background:var(--paper);display:flex;flex-direction:column;gap:0;">
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Aries</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">C</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Phrygian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Fire</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Taurus</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">D♭</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Ionian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Earth</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);background:rgba(184,157,106,0.05);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Gemini</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">D</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Mixolydian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Air</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Cancer</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">E♭</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Aeolian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Water</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Leo</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">E</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Lydian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Fire</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Virgo</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">F</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Dorian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Earth</div>
+      </div>
+    </div>
+
+    <!-- Signs right column -->
+    <div style="background:var(--paper);display:flex;flex-direction:column;gap:0;">
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Libra</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">G♭</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Ionian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Air</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Scorpio</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">G</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Locrian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Water</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Sagittarius</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">A♭</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Mixolydian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Fire</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Capricorn</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">A</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Dorian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Earth</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule);">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Aquarius</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">B♭</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Lydian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Air</div>
+      </div>
+      <div style="display:grid;grid-template-columns:100px 48px 90px 1fr;gap:8px;padding:10px 14px;">
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Pisces</div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">B</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--mid);">Phrygian</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Water</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;font-family:'Cormorant',serif;font-style:italic;font-size:14px;line-height:1.7;color:var(--light);">
+    Source: The Quantumelodic Base Tonic Interval Matrix — a 12×12 zodiacal-chromatic system mapping each sign's tonal root and modal character. Your Sun sign determines the key of your chart; your Moon and Ascendant add secondary tonalities.
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 2: ASPECTS AS INTERVALS ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Reference 02</div>
+  <div class="section-title">Aspects as<br><em>Musical Intervals</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.65;color:var(--mid);margin-bottom:28px;">
+    Every planetary aspect corresponds to a musical interval — a specific relationship between two notes. Consonant aspects flow; dissonant aspects push for resolution. Both are necessary for a complete composition.
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:0;">
+
+    <div style="display:grid;grid-template-columns:32px 90px 110px 1fr 80px;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <!-- Conjunction -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#1A1918" stroke-width="1"/><circle cx="14" cy="14" r="4" fill="#1A1918"/></svg>
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Conjunction</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--light);margin-top:2px;">0°</div>
+      </div>
+      <div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">Unison</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);margin-top:2px;">Two voices, one note</div>
+      </div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Energies merge and amplify. Pure consonance — like an octave, this creates unity and power. Use this unified energy intentionally.</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--gold);text-align:right;padding-top:3px;">Consonant</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:32px 90px 110px 1fr 80px;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <!-- Sextile -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#D9D3C9" stroke-width="0.75"/><polygon points="14,3 24.5,20 3.5,20" fill="none" stroke="#1A1918" stroke-width="0.75"/></svg>
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Sextile</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--light);margin-top:2px;">60°</div>
+      </div>
+      <div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">Major Third</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);margin-top:2px;">Pleasant harmony</div>
+      </div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Consonant and supportive. Like notes that naturally complement each other, creating opportunity and ease. These energies want to collaborate.</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--gold);text-align:right;padding-top:3px;">Consonant</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:32px 90px 110px 1fr 80px;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <!-- Square -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#D9D3C9" stroke-width="0.75"/><rect x="7" y="7" width="14" height="14" fill="none" stroke="#1A1918" stroke-width="0.75"/></svg>
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Square</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--light);margin-top:2px;">90°</div>
+      </div>
+      <div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">Tritone</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);margin-top:2px;">The Devil's Interval</div>
+      </div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Maximum dissonance. What medieval musicians called <em>diabolus in musica</em>. Dissonance drives evolution — we don't avoid it, we learn from it. Conscious action transforms friction into growth.</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--mid);text-align:right;padding-top:3px;">Dissonant</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:32px 90px 110px 1fr 80px;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <!-- Trine -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#D9D3C9" stroke-width="0.75"/><polygon points="14,3 24.5,22 3.5,22" fill="none" stroke="#B89D6A" stroke-width="1"/></svg>
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Trine</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--light);margin-top:2px;">120°</div>
+      </div>
+      <div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">Perfect Fifth</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);margin-top:2px;">Effortless flow</div>
+      </div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Divine consonance. Like the perfect fifth that forms the basis of all harmony, this creates natural talent and ease. These energies flow — trust and follow their lead.</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--gold);text-align:right;padding-top:3px;">Consonant</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:32px 90px 110px 1fr 80px;gap:14px;padding:16px 0;align-items:start;">
+      <!-- Opposition -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="11" stroke="#D9D3C9" stroke-width="0.75"/><line x1="3" y1="14" x2="25" y2="14" stroke="#1A1918" stroke-width="1"/><circle cx="5" cy="14" r="2" fill="#1A1918"/><circle cx="23" cy="14" r="2" fill="#1A1918"/></svg>
+      <div>
+        <div style="font-family:'Cormorant SC',serif;font-size:12px;letter-spacing:0.15em;color:var(--ink);">Opposition</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--light);margin-top:2px;">180°</div>
+      </div>
+      <div>
+        <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">Octave</div>
+        <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);margin-top:2px;">Polarized consonance</div>
+      </div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.7;color:var(--mid);">Like an octave — the same note at opposite ends. Both tension and recognition. These forces want to become conscious partners. Integration through awareness.</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:10px;letter-spacing:0.15em;color:var(--mid);text-align:right;padding-top:3px;">Dissonant</div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:24px;padding:16px 20px;border-left:2px solid var(--gold);">
+    <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">The Harmonic Principle</div>
+    <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.6;color:var(--ink);">We do not seek only consonance. The complete composition requires dissonance — without tension, there is no movement, no resolution, no growth. A chart full of trines is comfortable but static. A chart with squares has evolutionary pressure.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ REFERENCE 3: 12 HOUSES AS HARMONIC OCTAVES ══════════════════════════ -->
+<div class="page section-page">
+  <div class="section-eyebrow">Reference 03</div>
+  <div class="section-title">The 12 Houses as<br><em>Harmonic Octaves</em></div>
+  <div class="full-rule"></div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.65;color:var(--mid);margin-bottom:24px;">
+    Each of the 12 astrological houses corresponds to a harmonic position in the musical scale — from the root note of self to the cosmic sustain of the twelfth. Together they trace a complete octave of human experience.
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:0;">
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">I</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Root Note</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Self &amp; Identity</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">Your fundamental frequency — the keynote of your entire symphony. Everything else is built from here.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">II</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Second</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Resources &amp; Values</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The harmonic that grounds your material reality. What you find worth sustaining.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">III</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Third</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Communication &amp; Mind</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The melody of your thoughts. How you translate inner experience into language and connection.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">IV</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Fourth</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Home &amp; Roots</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">Your bass line — the foundational rhythm that supports everything above. Origin and belonging.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">V</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Perfect Fifth</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Creativity &amp; Joy</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The most resonant interval — pure creative expression and authentic playfulness. Where you make for the joy of making.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">VI</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Sixth</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Service &amp; Health</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The tuning process — where you refine and harmonize your daily rhythms. The body as instrument.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">VII</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Seventh</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Relationships</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The leading tone — seeking resolution through partnership. One half-step from the octave; craving union.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">VIII</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Octave</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Transformation</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The death and rebirth of the note — transformation into a higher frequency. The same self, one octave up.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">IX</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Ninth</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Wisdom &amp; Expansion</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">Extended harmony — reaching beyond the octave into philosophical and cultural resonance. The note that carries.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">X</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Tenth</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Career &amp; Legacy</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">Your public performance — the song you sing for the world to hear. Mastery made visible.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">XI</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Eleventh</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Community &amp; Vision</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">Collective harmony — the orchestra of your tribe. Where individual frequency becomes shared resonance.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:28px 70px 100px 1fr;gap:14px;padding:12px 0;align-items:start;">
+      <div style="font-family:'Cormorant',serif;font-size:16px;color:var(--gold);">XII</div>
+      <div style="font-family:'Cormorant SC',serif;font-size:11px;letter-spacing:0.12em;color:var(--ink);">Twelfth</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:10px;color:var(--light);">Spirituality &amp; Unity</div>
+      <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;line-height:1.65;color:var(--mid);">The cosmic sustain — where all notes dissolve back into infinite silence. The reverb field of the chart.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CLOSING ══════════════════════════ -->
+<div class="page closing-page">
+  <div></div>
+
+  <div style="display:flex;justify-content:center;">
+    <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+      <!-- Vesica piscis with moon symbol -->
+      <circle cx="44" cy="44" r="38" stroke="#D9D3C9" stroke-width="0.75"/>
+      <circle cx="44" cy="44" r="24" stroke="#D9D3C9" stroke-width="0.5"/>
+      <ellipse cx="44" cy="44" rx="20" ry="38" fill="none" stroke="#D9D3C9" stroke-width="0.4"/>
+      <circle cx="44" cy="44" r="8" fill="#1A1918"/>
+      <circle cx="44" cy="44" r="38" stroke="#B89D6A" stroke-width="0.4" stroke-dasharray="2 4"/>
+    </svg>
+  </div>
+
+  <div style="font-family:'Cormorant',serif;font-weight:300;font-size:28px;line-height:1.2;color:var(--ink);">
+    Find yourself<br>in the <em style="color:var(--gold);">frequency.</em>
+  </div>
+
+  <div style="font-family:'Cormorant',serif;font-style:italic;font-size:16px;line-height:1.7;color:var(--mid);max-width:340px;margin:0 auto;">
+    Your chart is not a prediction. It is a map of your original frequency — the sonic signature you brought into this world. Return to it as the instrument you are still learning to play.
+  </div>
+
+  <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:11px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold);">
+    moontuner.xyz
+  </div>
+
+  <div style="font-family:'Jost',sans-serif;font-weight:200;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--light);">
+    Generated by MOONtuner · Quantumelodic Analysis · © All rights reserved
+  </div>
+</div>
+
+</body>
+</html>
