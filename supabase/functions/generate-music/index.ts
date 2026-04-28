@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -354,53 +353,7 @@ serve(async (req) => {
       );
     }
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const readingId = getReadingId(rawData);
-    if (!readingId) {
-      return new Response(
-        JSON.stringify({ error: 'readingId is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const supabaseServiceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { persistSession: false } }
-    );
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseServiceClient.auth.getUser(token);
-    if (userError) {
-      throw new Error(`Authentication error: ${userError.message}`);
-    }
-    if (!userData.user?.id) {
-      throw new Error('User not authenticated');
-    }
-
-    const { data: storedReading, error: storedReadingError } = await supabaseServiceClient
-      .from('cosmic_readings')
-      .select('id, unlock_status')
-      .eq('id', readingId)
-      .eq('user_id', userData.user.id)
-      .maybeSingle();
-
-    if (storedReadingError) {
-      throw storedReadingError;
-    }
-    if (!storedReading || storedReading.unlock_status !== 'unlocked') {
-      return new Response(
-        JSON.stringify({ error: 'Reading is locked' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Music generation is free for all users — no auth or unlock check required.
 
     const { sunSign, moonSign } = validation.data;
 
