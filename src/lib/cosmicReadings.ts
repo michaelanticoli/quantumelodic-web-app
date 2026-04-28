@@ -8,8 +8,9 @@ function sanitizeErrorMessage(message: string | undefined, fallback: string) {
 }
 
 export async function ensureCosmicReadingRecord(_session: Session, reading: CosmicReading) {
-  // cosmic_readings table not yet provisioned — return preview-only stub
-  return { id: reading.id ?? null, unlockStatus: reading.unlockStatus ?? 'preview' } as const;
+  // Full reading (chart, analytics, report) is free — always return unlocked.
+  // The only premium add-on is the AI-generated song.
+  return { id: reading.id ?? null, unlockStatus: 'unlocked' } as const;
 }
 
 export async function refreshCosmicReadingAccess(_readingId: string) {
