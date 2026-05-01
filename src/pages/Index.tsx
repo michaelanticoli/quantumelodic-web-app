@@ -530,14 +530,9 @@ const ResultsView = ({
 
         {audioUrl ? (
           <>
-            {audioSource === "elevenlabs" && (
-              <p className="text-[10px] text-primary/50 tracking-widest text-center mb-2 uppercase">
-                AI-generated · ElevenLabs cosmic composition
-              </p>
-            )}
             {(audioSource === "procedural" || audioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
-                Procedural preview · AI composition composing…
+                Deterministic chart composition
               </p>
             )}
             <div className="w-full max-w-xs mx-auto mb-2">
