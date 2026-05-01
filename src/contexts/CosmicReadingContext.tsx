@@ -3,7 +3,7 @@ import type { CosmicReading } from '@/types/astrology';
 import { chartToScore } from '@/utils/chartToScore';
 import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
 
-type AudioSource = 'procedural' | 'tone' | null;
+type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
 
 const SESSION_KEY = 'moontuner_reading';
 const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
