@@ -3,14 +3,12 @@ import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
 import { RequestTimeoutError } from '@/lib/fetchWithTimeout';
 import { calculateChartData } from '@/lib/chartService';
-import { chartToScore } from '@/utils/chartToScore';
-import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
 
-const PREVIEW_RENDER_TIMEOUT_MS = 25_000;
+const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
 // Overall hard limit: two serial chart attempts (Supabase + backend) plus headroom.
 const GENERATION_HARD_TIMEOUT_MS = 60_000;
-const PREVIEW_COMPOSITION_SECONDS = 18;
+const PREVIEW_COMPOSITION_SECONDS = 12;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -53,6 +51,13 @@ export function useCosmicReading() {
     setAudioSource('tone');
 
     try {
+      // Load Tone only after the chart result exists. A top-level Tone import can
+      // create AudioContexts during the birth-form flow and stall weaker clients.
+      const [{ chartToScore }, { renderPreviewScoreToAudioUrl }] = await Promise.all([
+        import('@/utils/chartToScore'),
+        import('@/utils/tonePlayer'),
+      ]);
+
       const previewPromise = renderPreviewScoreToAudioUrl(
         chartToScore(chart),
         PREVIEW_COMPOSITION_SECONDS,
@@ -119,7 +124,7 @@ export function useCosmicReading() {
       }
 
       void generatePreviewAudio(chart, requestId);
-    }, 120);
+    }, 800);
   }, [clearScheduledPreview, generatePreviewAudio]);
 
   const generateReading = useCallback(async (birthData: BirthData) => {
