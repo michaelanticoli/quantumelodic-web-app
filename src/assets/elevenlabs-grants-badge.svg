@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 56" fill="none">
+  <g transform="translate(8 14)">
+    <rect x="0" y="12" width="3" height="6" rx="1" fill="currentColor"/>
+    <rect x="6" y="8" width="3" height="14" rx="1" fill="currentColor"/>
+    <rect x="12" y="2" width="3" height="26" rx="1" fill="currentColor"/>
+    <rect x="18" y="8" width="3" height="14" rx="1" fill="currentColor"/>
+    <rect x="24" y="12" width="3" height="6" rx="1" fill="currentColor"/>
+  </g>
+  <text x="44" y="22" font-family="Jost, Inter, sans-serif" font-size="9" font-weight="300" letter-spacing="3" fill="currentColor" opacity="0.7">POWERED BY</text>
+  <text x="44" y="40" font-family="Jost, Inter, sans-serif" font-size="14" font-weight="500" letter-spacing="2" fill="currentColor">ElevenLabs Grants</text>
+</svg>

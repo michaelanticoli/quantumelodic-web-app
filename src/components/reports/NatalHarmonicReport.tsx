@@ -11,7 +11,7 @@
 import { useMemo } from 'react';
 import type { ChartData, BirthData } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
-import elevenLabsBadgeUrl from '@/assets/elevenlabs-grants-badge-svg';
+import elevenLabsBadgeUrl from '@/assets/elevenlabs-grants-badge.svg';
 
 interface Props {
   birthData: BirthData;
