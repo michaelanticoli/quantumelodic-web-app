@@ -16,7 +16,12 @@ import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
 import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
 import { useToast } from "@/hooks/use-toast";
 import { generateChartMusic } from "@/lib/cosmicReadings";
-import { downloadChartImage, downloadAudio, downloadNatalHarmonicPdf } from "@/utils/downloadHelpers";
+import {
+  createDownloadableAudioUrl,
+  createNatalHarmonicPdfUrl,
+  downloadChartImage,
+  triggerFileDownload,
+} from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
 type AppState = "input" | "generating" | "result";
@@ -277,14 +282,32 @@ const ResultsView = ({
   const [localAudioUrl, setLocalAudioUrl] = useState<string | null>(audioUrl ?? null);
   const [localAudioSource, setLocalAudioSource] = useState<"elevenlabs" | "procedural" | "tone" | null>(audioSource ?? null);
   const [localMusicLoading, setLocalMusicLoading] = useState(false);
+  const [preparedPdf, setPreparedPdf] = useState<{ url: string; filename: string } | null>(null);
+  const [preparedAudio, setPreparedAudio] = useState<{ url: string; filename: string } | null>(null);
 
   const activeAudioUrl = localAudioUrl || audioUrl || null;
   const activeAudioSource = localAudioSource || audioSource || null;
+  const filenameBase = useMemo(
+    () => (name.trim() ? name.trim().replace(/\s+/g, "-").toLowerCase() : "quantumelodic"),
+    [name],
+  );
+  const musicFilename = `${filenameBase}-cosmic-composition.mp3`;
+  const reportFilename = `${filenameBase}-natal-harmonic.pdf`;
 
   useEffect(() => {
     setLocalAudioUrl(audioUrl ?? null);
     setLocalAudioSource(audioSource ?? null);
   }, [audioSource, audioUrl]);
+
+  useEffect(() => () => {
+    if (preparedPdf?.url.startsWith("blob:")) URL.revokeObjectURL(preparedPdf.url);
+  }, [preparedPdf]);
+
+  useEffect(() => () => {
+    if (preparedAudio?.url.startsWith("blob:") && preparedAudio.url !== activeAudioUrl) {
+      URL.revokeObjectURL(preparedAudio.url);
+    }
+  }, [activeAudioUrl, preparedAudio]);
 
   // QuantumMelodic canonicals (qm_planets, qm_signs, qm_aspects, qm_houses)
   const { dataReady: qmReady, buildReading } = useQuantumMelodicData();
