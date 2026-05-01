@@ -365,6 +365,7 @@ const ResultsView = ({
       await downloadChartImage("chart-wheel-container", `${name.replace(/\s+/g, "-").toLowerCase()}-chart.png`);
     } catch (e) {
       console.error(e);
+        toast({ title: "Chart download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
@@ -384,6 +385,7 @@ const ResultsView = ({
       await downloadNatalHarmonicPdf(filename);
     } catch (e) {
       console.error(e);
+      toast({ title: "Report download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
@@ -656,6 +658,13 @@ const ResultsView = ({
                 <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
               </div>
             </div>
+
+            <audio
+              className="mt-3 w-full"
+              controls
+              preload="metadata"
+              src={activeAudioUrl}
+            />
 
             <div className="flex items-center justify-center gap-8">
               <button
