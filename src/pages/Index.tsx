@@ -264,6 +264,14 @@ const ResultsView = ({
   const [duration, setDuration] = useState(0);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [audioError, setAudioError] = useState(false);
+  const [showFullReport, setShowFullReport] = useState(false);
+
+  // QuantumMelodic canonicals (qm_planets, qm_signs, qm_aspects, qm_houses)
+  const { dataReady: qmReady, buildReading } = useQuantumMelodicData();
+  const qmReading = useMemo(
+    () => (qmReady ? buildReading(chartData.planets) : null),
+    [qmReady, buildReading, chartData.planets],
+  );
 
   useEffect(() => {
     if (!audioUrl) return;
