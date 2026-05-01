@@ -395,6 +395,10 @@ const ResultsView = ({
   };
 
   const handleDownloadPdf = async () => {
+    if (preparedPdf) {
+      triggerFileDownload(preparedPdf.url, preparedPdf.filename);
+      return;
+    }
     if (!qmReading) {
       toast({ title: "Report is still loading", description: "The harmonic dataset is still preparing. Try again in a moment." });
       return;
@@ -404,8 +408,13 @@ const ResultsView = ({
     // Wait one frame so the report mounts before capturing
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
-      const filename = `${(name || "moontuner").replace(/\s+/g, "-").toLowerCase()}-natal-harmonic.pdf`;
-      await downloadNatalHarmonicPdf(filename);
+      const url = await createNatalHarmonicPdfUrl();
+      setPreparedPdf((current) => {
+        if (current?.url.startsWith("blob:")) URL.revokeObjectURL(current.url);
+        return { url, filename: reportFilename };
+      });
+      triggerFileDownload(url, reportFilename);
+      toast({ title: "Report ready", description: "If it did not download automatically, use the PDF ready link below." });
     } catch (e) {
       console.error(e);
       toast({ title: "Report download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
@@ -417,6 +426,7 @@ const ResultsView = ({
   const handleGenerateMusic = async () => {
     setLocalMusicLoading(true);
     setAudioError(false);
+    setPreparedAudio(null);
     try {
       const result = await generateChartMusic(
         chartData.sunSign,
@@ -441,16 +451,23 @@ const ResultsView = ({
   };
 
   const handleDownloadMusic = async () => {
+    if (preparedAudio) {
+      triggerFileDownload(preparedAudio.url, preparedAudio.filename);
+      return;
+    }
     if (!activeAudioUrl) {
       await handleGenerateMusic();
       return;
     }
     setIsDownloading("music");
     try {
-      const filenameBase = name.trim()
-        ? name.replace(/\s+/g, "-").toLowerCase()
-        : "quantumelodic";
-      await downloadAudio(activeAudioUrl, `${filenameBase}-cosmic-composition.mp3`);
+      const url = await createDownloadableAudioUrl(activeAudioUrl);
+      setPreparedAudio((current) => {
+        if (current?.url.startsWith("blob:") && current.url !== activeAudioUrl) URL.revokeObjectURL(current.url);
+        return { url, filename: musicFilename };
+      });
+      triggerFileDownload(url, musicFilename);
+      toast({ title: "Song ready", description: "If it did not download automatically, use the MP3 ready link below." });
     } catch (e) {
       console.error(e);
       toast({ title: "Song download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
