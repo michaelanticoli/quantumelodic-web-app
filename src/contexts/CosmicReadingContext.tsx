@@ -61,8 +61,7 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Re-generate audio (blob URLs don't survive navigation). Try ElevenLabs first
-    // via the same code path as the initial render; falls back to Tone.js on failure.
+    // Re-generate audio (blob URLs don't survive navigation) through ElevenLabs.
     const renderPromise = import('@/lib/cosmicReadings').then(({ generateChartMusic }) =>
       generateChartMusic(
         saved.reading.chartData.sunSign,
