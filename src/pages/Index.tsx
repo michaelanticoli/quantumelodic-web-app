@@ -371,6 +371,10 @@ const ResultsView = ({
   };
 
   const handleDownloadPdf = async () => {
+    if (!qmReading) {
+      toast({ title: "Report is still loading", description: "The harmonic dataset is still preparing. Try again in a moment." });
+      return;
+    }
     setIsDownloading("pdf");
     setShowFullReport(true);
     // Wait one frame so the report mounts before capturing
@@ -385,16 +389,46 @@ const ResultsView = ({
     }
   };
 
+  const handleGenerateMusic = async () => {
+    setLocalMusicLoading(true);
+    setAudioError(false);
+    try {
+      const result = await generateChartMusic(
+        chartData.sunSign,
+        chartData.moonSign,
+        chartData.ascendant,
+        name || "Unknown",
+        chartData.planets,
+      );
+      setLocalAudioUrl((current) => {
+        if (current && current !== result.url && current.startsWith("blob:")) URL.revokeObjectURL(current);
+        return result.url;
+      });
+      setLocalAudioSource(result.source);
+      onMusicReady(result.url, result.source);
+      toast({ title: "Song ready", description: "Your generated composition can now be played or downloaded." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Music generation failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setLocalMusicLoading(false);
+    }
+  };
+
   const handleDownloadMusic = async () => {
-    if (!audioUrl) return;
+    if (!activeAudioUrl) {
+      await handleGenerateMusic();
+      return;
+    }
     setIsDownloading("music");
     try {
       const filenameBase = name.trim()
         ? name.replace(/\s+/g, "-").toLowerCase()
         : "quantumelodic";
-      await downloadAudio(audioUrl, `${filenameBase}-cosmic-composition.mp3`);
+      await downloadAudio(activeAudioUrl, `${filenameBase}-cosmic-composition.mp3`);
     } catch (e) {
       console.error(e);
+      toast({ title: "Song download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
