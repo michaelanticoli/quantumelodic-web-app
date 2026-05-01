@@ -1,17 +1,16 @@
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import type { BirthData, ChartData, CosmicReading } from '@/types/astrology';
-import { generateProceduralAudio } from '@/utils/proceduralAudio';
 import { RequestTimeoutError } from '@/lib/fetchWithTimeout';
 import { calculateChartData } from '@/lib/chartService';
-import { generateFreeMusic } from '@/lib/cosmicReadings';
+import { chartToScore } from '@/utils/chartToScore';
+import { renderPreviewScoreToAudioUrl } from '@/utils/tonePlayer';
 
-const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
+const PREVIEW_RENDER_TIMEOUT_MS = 25_000;
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
 // Overall hard limit: two serial chart attempts (Supabase + backend) plus headroom.
 const GENERATION_HARD_TIMEOUT_MS = 60_000;
-// ElevenLabs can take up to 90 s for a 30-second clip.
-const ELEVENLABS_TIMEOUT_MS = 90_000;
+const PREVIEW_COMPOSITION_SECONDS = 18;
 
 // Musical modes associated with each zodiac sign
 const signModes: Record<string, string> = {
@@ -51,10 +50,13 @@ export function useCosmicReading() {
 
   const generatePreviewAudio = useCallback(async (chart: ChartData, requestId: number) => {
     setPreviewLoading(true);
-    setAudioSource('procedural');
+    setAudioSource('tone');
 
     try {
-      const previewPromise = generateProceduralAudio(chart).then((url) => ({ kind: 'ready' as const, url }));
+      const previewPromise = renderPreviewScoreToAudioUrl(
+        chartToScore(chart),
+        PREVIEW_COMPOSITION_SECONDS,
+      ).then((url) => ({ kind: 'ready' as const, url }));
       const timeoutPromise = new Promise<{ kind: 'timeout' }>((resolve) =>
         setTimeout(() => resolve({ kind: 'timeout' }), PREVIEW_RENDER_TIMEOUT_MS)
       );
@@ -78,9 +80,9 @@ export function useCosmicReading() {
         }
         return url;
       });
-      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'procedural' } : current);
+      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'tone' } : current);
       toast('Cosmic preview ready', {
-        description: 'Procedural preview playing — your AI-generated cosmic song is composing in the background.',
+        description: 'Your deterministic chart composition is ready to play.',
       });
     } catch (audioErr) {
       if (previewRequestRef.current !== requestId) {
@@ -103,49 +105,10 @@ export function useCosmicReading() {
     }
   }, []);
 
-  /**
-   * Generate the full ElevenLabs AI-composed song in the background.
-   * Free for all users — no authentication required.
-   */
-  const generateElevenLabsAudio = useCallback(async (chart: ChartData, birthData: BirthData, requestId: number) => {
-    try {
-      const elPromise = generateFreeMusic(
-        chart.sunSign,
-        chart.moonSign,
-        chart.ascendant,
-        birthData.name || 'Unknown',
-        chart.planets,
-      );
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('ElevenLabs timed out')), ELEVENLABS_TIMEOUT_MS)
-      );
-
-      const url = await Promise.race([elPromise, timeoutPromise]);
-
-      if (previewRequestRef.current !== requestId) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-
-      setAudioUrl((current) => {
-        if (current) URL.revokeObjectURL(current);
-        return url;
-      });
-      setAudioSource('elevenlabs');
-      setReading((current) => current ? { ...current, audioUrl: url, audioSource: 'elevenlabs' } : current);
-      toast('🎵 Your cosmic song is ready', {
-        description: 'Your AI-generated natal composition is now playing.',
-      });
-    } catch (err) {
-      console.warn('ElevenLabs generation failed:', err);
-      // Procedural preview already playing — no need to surface this error to the user
-    }
-  }, []);
-
   const schedulePreviewAudio = useCallback((chart: ChartData, requestId: number) => {
     clearScheduledPreview();
     setPreviewLoading(true);
-    setAudioSource('procedural');
+    setAudioSource('tone');
 
     previewScheduleRef.current = window.setTimeout(() => {
       previewScheduleRef.current = null;
@@ -221,9 +184,8 @@ export function useCosmicReading() {
 
       const previewRequestId = previewRequestRef.current;
 
-      // Start procedural preview immediately (fast), then replace with ElevenLabs when ready.
+      // Render the deterministic Tone.js composition after the result screen is visible.
       schedulePreviewAudio(chart, previewRequestId);
-      void generateElevenLabsAudio(chart, birthData, previewRequestId);
 
       return cosmicReading;
 
@@ -237,7 +199,7 @@ export function useCosmicReading() {
     } finally {
       setLoading(false);
     }
-  }, [clearScheduledPreview, schedulePreviewAudio, generateElevenLabsAudio]);
+  }, [clearScheduledPreview, schedulePreviewAudio]);
 
   const reset = useCallback(() => {
     clearScheduledPreview();
