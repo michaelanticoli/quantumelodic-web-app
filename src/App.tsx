@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,16 +9,17 @@ import { CosmicReadingProvider } from "@/contexts/CosmicReadingContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
-import About from "./pages/About";
-import Learn from "./pages/Learn";
-import Guide from "./pages/Guide";
-import ChartExplorer from "./pages/ChartExplorer";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Academy from "./pages/Academy";
-import LunarReports from "./pages/LunarReports";
-import Glossary from "./pages/Glossary";
-import NotFound from "./pages/NotFound";
+
+const About = lazy(() => import("./pages/About"));
+const Learn = lazy(() => import("./pages/Learn"));
+const Guide = lazy(() => import("./pages/Guide"));
+const ChartExplorer = lazy(() => import("./pages/ChartExplorer"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Academy = lazy(() => import("./pages/Academy"));
+const LunarReports = lazy(() => import("./pages/LunarReports"));
+const Glossary = lazy(() => import("./pages/Glossary"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -46,19 +47,21 @@ const App = () => {
               <Toaster />
               <Sonner />
               <Analytics />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/learn" element={<Learn />} />
-                <Route path="/guide" element={<Guide />} />
-                <Route path="/explore" element={<ChartExplorer />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/academy" element={<Academy />} />
-                <Route path="/lunar-reports" element={<LunarReports />} />
-                <Route path="/glossary" element={<Glossary />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/learn" element={<Learn />} />
+                  <Route path="/guide" element={<Guide />} />
+                  <Route path="/explore" element={<ChartExplorer />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/academy" element={<Academy />} />
+                  <Route path="/lunar-reports" element={<LunarReports />} />
+                  <Route path="/glossary" element={<Glossary />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
               <PixelPerfectOverlay 
                 isOpen={pixelPerfectMode} 
                 onClose={() => setPixelPerfectMode(false)} 
