@@ -591,16 +591,39 @@ const ResultsView = ({
           disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === "pdf" ? "Saving…" : "Report PDF"}
+          {isDownloading === "pdf" ? "Saving…" : preparedPdf ? "PDF Ready" : "Report PDF"}
         </button>
         <button
           onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
           disabled={previewLoading || localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
         >
-          {previewLoading || localMusicLoading || isDownloading === "music" ? "Working…" : activeAudioUrl ? "Song MP3" : "Make Song"}
+          {previewLoading || localMusicLoading || isDownloading === "music" ? "Working…" : preparedAudio ? "MP3 Ready" : activeAudioUrl ? "Song MP3" : "Make Song"}
         </button>
       </motion.div>
+
+      {(preparedPdf || preparedAudio) && (
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {preparedPdf && (
+            <a
+              href={preparedPdf.url}
+              download={preparedPdf.filename}
+              className="block text-center py-2.5 rounded-xl border border-accent/35 text-accent text-[10px] tracking-widest uppercase hover:bg-accent/8 transition-all"
+            >
+              Download prepared PDF
+            </a>
+          )}
+          {preparedAudio && (
+            <a
+              href={preparedAudio.url}
+              download={preparedAudio.filename}
+              className="block text-center py-2.5 rounded-xl border border-highlight/35 text-highlight text-[10px] tracking-widest uppercase hover:bg-highlight/8 transition-all"
+            >
+              Download prepared MP3
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Planet Details Table */}
       <div className="mb-6">
