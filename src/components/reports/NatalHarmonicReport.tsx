@@ -66,7 +66,7 @@ export function NatalHarmonicReport({ birthData, chartData, reading }: Props) {
   const topAspects = [...reading.aspects].sort((a, b) => a.orb - b.orb).slice(0, 8);
 
   return (
-    <div className="natal-harmonic-report">
+    <div id="natal-harmonic-report-root" className="natal-harmonic-report">
       {/* Scoped print + screen styles */}
       <style>{REPORT_CSS}</style>
 
@@ -443,4 +443,18 @@ const REPORT_CSS = `
 .natal-harmonic-report .comp-text { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 17px; line-height: 1.7; color: var(--ink); }
 
 .natal-harmonic-report .closing-page { min-height: 460px; display: flex; flex-direction: column; justify-content: space-between; padding: 60px; text-align: center; align-items: center; gap: 28px; }
+
+@media print {
+  body { background: #fff !important; }
+  .natal-harmonic-report { background: #fff !important; padding: 0 !important; }
+  .natal-harmonic-report .mt-page {
+    width: 100% !important;
+    margin: 0 !important;
+    page-break-after: always;
+    break-after: page;
+    box-shadow: none !important;
+  }
+  .natal-harmonic-report .mt-page:last-child { page-break-after: auto; break-after: auto; }
+}
 `;
+
