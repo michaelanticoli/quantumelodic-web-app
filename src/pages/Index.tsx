@@ -555,10 +555,10 @@ const ResultsView = ({
         </button>
         <button
           onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
-          disabled={localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
+          disabled={previewLoading || localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
         >
-          {localMusicLoading || isDownloading === "music" ? "Working…" : activeAudioUrl ? "Song MP3" : "Make Song"}
+          {previewLoading || localMusicLoading || isDownloading === "music" ? "Working…" : activeAudioUrl ? "Song MP3" : "Make Song"}
         </button>
       </motion.div>
 
@@ -719,10 +719,10 @@ const ResultsView = ({
         </button>
         <button
           onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
-          disabled={localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
+          disabled={previewLoading || localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
         >
-          {localMusicLoading || isDownloading === "music" ? "…" : activeAudioUrl ? "⬇ Song" : "Make Song"}
+          {previewLoading || localMusicLoading || isDownloading === "music" ? "…" : activeAudioUrl ? "⬇ Song" : "Make Song"}
         </button>
       </motion.div>
 
