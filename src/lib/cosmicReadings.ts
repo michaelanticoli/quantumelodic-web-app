@@ -3,7 +3,7 @@ import { fetchWithTimeout } from '@/lib/fetchWithTimeout';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-const MUSIC_TIMEOUT_MS = 60_000;
+const MUSIC_TIMEOUT_MS = 120_000;
 
 export async function ensureCosmicReadingRecord(_session: unknown, reading: CosmicReading) {
   return { id: reading.id ?? null, unlockStatus: 'unlocked' } as const;
@@ -19,9 +19,9 @@ export interface MusicGenerationResult {
 }
 
 /**
- * Generate music for a reading. Tries the ElevenLabs-backed `generate-music`
- * edge function first (full QM-enriched composition); on any failure falls back
- * to the local deterministic Tone.js render so the user always hears something.
+ * Generate music for a reading through the ElevenLabs-backed `generate-music`
+ * edge function. This stays network-bound so generation never locks the UI with
+ * a CPU-heavy local offline render.
  */
 export async function generateChartMusic(
   sunSign: string,
@@ -55,29 +55,16 @@ export async function generateChartMusic(
       return { url: URL.createObjectURL(blob), source: 'elevenlabs' };
     }
 
-    // Edge function returned a JSON error / unavailable flag — fall through to local
-    console.warn('ElevenLabs music unavailable, falling back to Tone.js', response.status, contentType);
+    let message = `Music generation failed with status ${response.status}`;
+    if (contentType.includes('application/json')) {
+      const data = await response.json().catch(() => null) as { error?: string } | null;
+      message = data?.error || message;
+    }
+    throw new Error(message);
   } catch (err) {
-    console.warn('ElevenLabs music request failed, falling back to Tone.js:', err);
+    console.warn('ElevenLabs music request failed:', err);
+    throw err;
   }
-
-  // 2. Fallback: deterministic Tone.js composition
-  const [{ chartToScore }, { renderPreviewScoreToAudioUrl }] = await Promise.all([
-    import('@/utils/chartToScore'),
-    import('@/utils/tonePlayer'),
-  ]);
-
-  const url = await renderPreviewScoreToAudioUrl(
-    chartToScore({
-      planets,
-      sunSign,
-      moonSign,
-      ascendant,
-      source: `local-tone:${name || 'unknown'}`,
-    }),
-    18,
-  );
-  return { url, source: 'tone' };
 }
 
 // Legacy alias retained for any older callers

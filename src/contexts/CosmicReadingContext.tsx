@@ -4,7 +4,6 @@ import type { CosmicReading } from '@/types/astrology';
 type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
 
 const SESSION_KEY = 'moontuner_reading';
-const PREVIEW_RENDER_TIMEOUT_MS = 75_000;
 
 interface CosmicReadingContextValue {
   reading: CosmicReading | null;
@@ -49,42 +48,16 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioReady, setAudioReady] = useState(false);
 
-  // Hydrate from sessionStorage on mount, then re-render audio from chart data
+  // Hydrate from sessionStorage on mount without auto-regenerating music.
+  // Blob URLs don't survive reloads, and silently calling ElevenLabs here would
+  // spend generations and make the app feel frozen before the user asks for audio.
   useEffect(() => {
     const saved = loadFromSession();
     if (!saved) return;
     setReading(saved.reading);
     setAudioSource(saved.audioSource);
-
-    if (!saved.reading.chartData) {
-      setAudioReady(true);
-      return;
-    }
-
-    // Re-generate audio (blob URLs don't survive navigation). Try ElevenLabs first
-    // via the same code path as the initial render; falls back to Tone.js on failure.
-    const renderPromise = import('@/lib/cosmicReadings').then(({ generateChartMusic }) =>
-      generateChartMusic(
-        saved.reading.chartData.sunSign,
-        saved.reading.chartData.moonSign,
-        saved.reading.chartData.ascendant,
-        saved.reading.birthData?.name || 'Unknown',
-        saved.reading.chartData.planets,
-      )
-    );
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Hydration render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000}s`)), PREVIEW_RENDER_TIMEOUT_MS)
-    );
-    Promise.race([renderPromise, timeoutPromise])
-      .then((res) => {
-        setAudioUrl(res.url);
-        setAudioSource(res.source);
-        setAudioReady(true);
-      })
-      .catch(() => {
-        setAudioUrl(null);
-        setAudioReady(true);
-      });
+    setAudioUrl(null);
+    setAudioReady(true);
   }, []);
 
   const setReadingData = useCallback(
