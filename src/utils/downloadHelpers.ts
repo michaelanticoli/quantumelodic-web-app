@@ -65,37 +65,32 @@ function triggerDownload(dataUrl: string, filename: string) {
   document.body.removeChild(link);
 }
 
+export function triggerFileDownload(url: string, filename: string) {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+export async function createDownloadableAudioUrl(audioUrl: string) {
+  if (!audioUrl) throw new Error('No audio URL');
+  if (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:')) return audioUrl;
+
+  const response = await fetch(audioUrl);
+  if (!response.ok) throw new Error('Unable to fetch audio for download');
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
 // ── Download the music audio ──────────────────────────────────────
 export async function downloadAudio(audioUrl: string, filename = 'quantumelodic-composition.mp3') {
-  if (!audioUrl) throw new Error('No audio URL');
-
-  // Blob URLs (local audio like procedural WAV) — create a temporary anchor
-  if (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:')) {
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = audioUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    return;
-  }
-
-  // Remote URLs — fetch and re-blob to force download across origins
-  try {
-    const response = await fetch(audioUrl);
-    if (!response.ok) throw new Error('Fetch failed');
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = blobUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
-  } catch {
-    // Last resort: open in new tab
-    window.open(audioUrl, '_blank');
+  const downloadableUrl = await createDownloadableAudioUrl(audioUrl);
+  triggerFileDownload(downloadableUrl, filename);
+  if (downloadableUrl !== audioUrl && downloadableUrl.startsWith('blob:')) {
+    setTimeout(() => URL.revokeObjectURL(downloadableUrl), 10_000);
   }
 }
 
@@ -597,4 +592,41 @@ export async function downloadNatalHarmonicPdf(filename = 'moontuner-natal-harmo
   }
 
   pdf.save(filename);
+}
+
+export async function createNatalHarmonicPdfUrl() {
+  const root = document.getElementById('natal-harmonic-report-root');
+  if (!root) throw new Error('Natal harmonic report not mounted');
+
+  const pages = Array.from(root.querySelectorAll<HTMLElement>('.mt-page'));
+  if (pages.length === 0) throw new Error('No report pages found');
+
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+
+  for (let i = 0; i < pages.length; i++) {
+    const canvas = await html2canvas(pages[i], {
+      backgroundColor: '#F9F7F4',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const ratio = canvas.height / canvas.width;
+    let imgW = PAGE_W;
+    let imgH = imgW * ratio;
+    if (imgH > PAGE_H) {
+      imgH = PAGE_H;
+      imgW = imgH / ratio;
+    }
+    const x = (PAGE_W - imgW) / 2;
+    const y = (PAGE_H - imgH) / 2;
+    if (i > 0) pdf.addPage();
+    pdf.setFillColor(249, 247, 244);
+    pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
+    pdf.addImage(imgData, 'JPEG', x, y, imgW, imgH);
+  }
+
+  return URL.createObjectURL(pdf.output('blob'));
 }
