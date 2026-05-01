@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -10,10 +10,12 @@ import { BirthDataForm } from "@/components/BirthDataForm";
 import { BottomNav } from "@/components/BottomNav";
 import { GeneratingState } from "@/components/GeneratingState";
 import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
+import { NatalHarmonicReport } from "@/components/reports/NatalHarmonicReport";
 import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
+import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
 import { useToast } from "@/hooks/use-toast";
-import { downloadChartImage, downloadAudio, downloadPdfReport } from "@/utils/downloadHelpers";
+import { downloadChartImage, downloadAudio, downloadNatalHarmonicPdf } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
 type AppState = "input" | "generating" | "result";
