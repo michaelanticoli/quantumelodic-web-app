@@ -703,22 +703,18 @@ const ResultsView = ({
         </button>
         <button
           onClick={handleDownloadPdf}
-          disabled={!!isDownloading && isDownloading !== "share-copied"}
+          disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
           {isDownloading === "pdf" ? "…" : "⬇ Report"}
         </button>
-        {audioUrl ? (
-          <button
-            onClick={handleDownloadMusic}
-            disabled={!!isDownloading && isDownloading !== "share-copied"}
-            className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
-          >
-            {isDownloading === "music" ? "…" : "⬇ Song"}
-          </button>
-        ) : (
-          <div />
-        )}
+        <button
+          onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
+          disabled={localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
+          className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
+        >
+          {localMusicLoading || isDownloading === "music" ? "…" : activeAudioUrl ? "⬇ Song" : "Make Song"}
+        </button>
       </motion.div>
 
       {/* Share */}
