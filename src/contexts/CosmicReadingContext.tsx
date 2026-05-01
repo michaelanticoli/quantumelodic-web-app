@@ -4,7 +4,7 @@ import type { CosmicReading } from '@/types/astrology';
 type AudioSource = 'elevenlabs' | 'procedural' | 'tone' | null;
 
 const SESSION_KEY = 'moontuner_reading';
-const PREVIEW_RENDER_TIMEOUT_MS = 20_000;
+const PREVIEW_RENDER_TIMEOUT_MS = 75_000;
 
 interface CosmicReadingContextValue {
   reading: CosmicReading | null;
@@ -52,34 +52,39 @@ export function CosmicReadingProvider({ children }: { children: ReactNode }) {
   // Hydrate from sessionStorage on mount, then re-render audio from chart data
   useEffect(() => {
     const saved = loadFromSession();
-    if (saved) {
-      setReading(saved.reading);
-      setAudioSource(saved.audioSource);
-      // Re-render preview audio from chart data (blob URLs don't survive navigation).
-      if (saved.reading.chartData && (saved.audioSource === 'procedural' || saved.audioSource === 'tone')) {
-        const renderPromise = Promise.all([
-          import('@/utils/chartToScore'),
-          import('@/utils/tonePlayer'),
-        ]).then(([{ chartToScore }, { renderPreviewScoreToAudioUrl }]) =>
-          renderPreviewScoreToAudioUrl(chartToScore(saved.reading.chartData), 12)
-        );
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Preview hydration render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000} seconds`)), PREVIEW_RENDER_TIMEOUT_MS)
-        );
-        Promise.race([renderPromise, timeoutPromise])
-          .then((url) => {
-            setAudioUrl(url);
-            setAudioSource('tone');
-            setAudioReady(true);
-          })
-          .catch(() => {
-            setAudioUrl(null);
-            setAudioReady(true);
-          });
-      } else {
-        setAudioReady(true);
-      }
+    if (!saved) return;
+    setReading(saved.reading);
+    setAudioSource(saved.audioSource);
+
+    if (!saved.reading.chartData) {
+      setAudioReady(true);
+      return;
     }
+
+    // Re-generate audio (blob URLs don't survive navigation). Try ElevenLabs first
+    // via the same code path as the initial render; falls back to Tone.js on failure.
+    const renderPromise = import('@/lib/cosmicReadings').then(({ generateChartMusic }) =>
+      generateChartMusic(
+        saved.reading.chartData.sunSign,
+        saved.reading.chartData.moonSign,
+        saved.reading.chartData.ascendant,
+        saved.reading.birthData?.name || 'Unknown',
+        saved.reading.chartData.planets,
+      )
+    );
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Hydration render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000}s`)), PREVIEW_RENDER_TIMEOUT_MS)
+    );
+    Promise.race([renderPromise, timeoutPromise])
+      .then((res) => {
+        setAudioUrl(res.url);
+        setAudioSource(res.source);
+        setAudioReady(true);
+      })
+      .catch(() => {
+        setAudioUrl(null);
+        setAudioReady(true);
+      });
   }, []);
 
   const setReadingData = useCallback(
