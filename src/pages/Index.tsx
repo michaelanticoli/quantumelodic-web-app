@@ -276,6 +276,15 @@ const ResultsView = ({
   const [showFullReport, setShowFullReport] = useState(false);
   const [localAudioUrl, setLocalAudioUrl] = useState<string | null>(audioUrl ?? null);
   const [localAudioSource, setLocalAudioSource] = useState<"elevenlabs" | "procedural" | "tone" | null>(audioSource ?? null);
+  const [localMusicLoading, setLocalMusicLoading] = useState(false);
+
+  const activeAudioUrl = localAudioUrl || audioUrl || null;
+  const activeAudioSource = localAudioSource || audioSource || null;
+
+  useEffect(() => {
+    setLocalAudioUrl(audioUrl ?? null);
+    setLocalAudioSource(audioSource ?? null);
+  }, [audioSource, audioUrl]);
 
   // QuantumMelodic canonicals (qm_planets, qm_signs, qm_aspects, qm_houses)
   const { dataReady: qmReady, buildReading } = useQuantumMelodicData();
@@ -285,16 +294,16 @@ const ResultsView = ({
   );
 
   useEffect(() => {
-    if (!audioUrl) return;
+    if (!activeAudioUrl) return;
     setAudioError(false);
 
     const audio = new Audio();
     // Only set crossOrigin for non-blob URLs to avoid CORS issues with blob URLs
-    if (!audioUrl.startsWith("blob:")) {
+    if (!activeAudioUrl.startsWith("blob:")) {
       audio.crossOrigin = "anonymous";
     }
     audio.preload = "metadata";
-    audio.src = audioUrl;
+    audio.src = activeAudioUrl;
 
     audioRef.current = audio;
     setAudioEl(audio);
@@ -306,7 +315,7 @@ const ResultsView = ({
       setCurrentTime(0);
     };
     const onErr = () => {
-      console.warn("Audio load error for URL:", audioUrl);
+      console.warn("Audio load error for URL:", activeAudioUrl);
       setAudioError(true);
       setIsPlaying(false);
     };
@@ -326,7 +335,7 @@ const ResultsView = ({
       setAudioEl(null);
       setIsPlaying(false);
     };
-  }, [audioUrl]);
+  }, [activeAudioUrl]);
 
   const togglePlayPause = async () => {
     if (!audioRef.current || audioError) return;
