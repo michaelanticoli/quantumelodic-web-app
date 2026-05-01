@@ -784,7 +784,7 @@ const ResultsView = ({
       </div>
 
       {/* Full Astro-Harmonic Natal Report (powered by QM canonicals) */}
-      <div className="mt-10">
+      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           onClick={() => setShowFullReport((v) => !v)}
           disabled={!qmReading}
@@ -795,6 +795,13 @@ const ResultsView = ({
             : showFullReport
               ? "▲ Hide Full Astro-Harmonic Report"
               : "▼ View Full Astro-Harmonic Report"}
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
+          className="w-full py-3 rounded-xl border border-accent/25 text-accent/80 text-xs tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
+        >
+          {isDownloading === "pdf" ? "Creating PDF…" : "Download Full Report PDF"}
         </button>
       </div>
 
