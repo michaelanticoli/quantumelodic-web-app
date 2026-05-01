@@ -15,6 +15,7 @@ import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
 import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
 import { useToast } from "@/hooks/use-toast";
+import { generateChartMusic } from "@/lib/cosmicReadings";
 import { downloadChartImage, downloadAudio, downloadNatalHarmonicPdf } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
@@ -207,6 +208,11 @@ const Index = () => {
               audioSource={audioSource}
               reading={reading}
               previewLoading={previewLoading && !audioUrl}
+              onMusicReady={(url, source) => setReadingData({
+                ...reading,
+                audioUrl: url,
+                audioSource: source,
+              }, url, source)}
               onBack={handleBack}
               onExplore={() => navigate("/explore")}
             />
@@ -242,6 +248,7 @@ interface ResultsViewProps {
   audioSource?: "elevenlabs" | "procedural" | "tone" | null;
   reading: import("@/types/astrology").CosmicReading;
   previewLoading: boolean;
+  onMusicReady: (url: string, source: "elevenlabs" | "tone") => void;
   onBack: () => void;
   onExplore: () => void;
 }
@@ -254,9 +261,11 @@ const ResultsView = ({
   audioSource,
   reading,
   previewLoading,
+  onMusicReady,
   onBack,
   onExplore,
 }: ResultsViewProps) => {
+  const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -265,6 +274,17 @@ const ResultsView = ({
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [audioError, setAudioError] = useState(false);
   const [showFullReport, setShowFullReport] = useState(false);
+  const [localAudioUrl, setLocalAudioUrl] = useState<string | null>(audioUrl ?? null);
+  const [localAudioSource, setLocalAudioSource] = useState<"elevenlabs" | "procedural" | "tone" | null>(audioSource ?? null);
+  const [localMusicLoading, setLocalMusicLoading] = useState(false);
+
+  const activeAudioUrl = localAudioUrl || audioUrl || null;
+  const activeAudioSource = localAudioSource || audioSource || null;
+
+  useEffect(() => {
+    setLocalAudioUrl(audioUrl ?? null);
+    setLocalAudioSource(audioSource ?? null);
+  }, [audioSource, audioUrl]);
 
   // QuantumMelodic canonicals (qm_planets, qm_signs, qm_aspects, qm_houses)
   const { dataReady: qmReady, buildReading } = useQuantumMelodicData();
@@ -274,16 +294,16 @@ const ResultsView = ({
   );
 
   useEffect(() => {
-    if (!audioUrl) return;
+    if (!activeAudioUrl) return;
     setAudioError(false);
 
     const audio = new Audio();
     // Only set crossOrigin for non-blob URLs to avoid CORS issues with blob URLs
-    if (!audioUrl.startsWith("blob:")) {
+    if (!activeAudioUrl.startsWith("blob:")) {
       audio.crossOrigin = "anonymous";
     }
     audio.preload = "metadata";
-    audio.src = audioUrl;
+    audio.src = activeAudioUrl;
 
     audioRef.current = audio;
     setAudioEl(audio);
@@ -295,7 +315,7 @@ const ResultsView = ({
       setCurrentTime(0);
     };
     const onErr = () => {
-      console.warn("Audio load error for URL:", audioUrl);
+      console.warn("Audio load error for URL:", activeAudioUrl);
       setAudioError(true);
       setIsPlaying(false);
     };
@@ -315,7 +335,7 @@ const ResultsView = ({
       setAudioEl(null);
       setIsPlaying(false);
     };
-  }, [audioUrl]);
+  }, [activeAudioUrl]);
 
   const togglePlayPause = async () => {
     if (!audioRef.current || audioError) return;
@@ -345,12 +365,17 @@ const ResultsView = ({
       await downloadChartImage("chart-wheel-container", `${name.replace(/\s+/g, "-").toLowerCase()}-chart.png`);
     } catch (e) {
       console.error(e);
+        toast({ title: "Chart download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
   };
 
   const handleDownloadPdf = async () => {
+    if (!qmReading) {
+      toast({ title: "Report is still loading", description: "The harmonic dataset is still preparing. Try again in a moment." });
+      return;
+    }
     setIsDownloading("pdf");
     setShowFullReport(true);
     // Wait one frame so the report mounts before capturing
@@ -360,21 +385,52 @@ const ResultsView = ({
       await downloadNatalHarmonicPdf(filename);
     } catch (e) {
       console.error(e);
+      toast({ title: "Report download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
   };
 
+  const handleGenerateMusic = async () => {
+    setLocalMusicLoading(true);
+    setAudioError(false);
+    try {
+      const result = await generateChartMusic(
+        chartData.sunSign,
+        chartData.moonSign,
+        chartData.ascendant,
+        name || "Unknown",
+        chartData.planets,
+      );
+      setLocalAudioUrl((current) => {
+        if (current && current !== result.url && current.startsWith("blob:")) URL.revokeObjectURL(current);
+        return result.url;
+      });
+      setLocalAudioSource(result.source);
+      onMusicReady(result.url, result.source);
+      toast({ title: "Song ready", description: "Your generated composition can now be played or downloaded." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Music generation failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setLocalMusicLoading(false);
+    }
+  };
+
   const handleDownloadMusic = async () => {
-    if (!audioUrl) return;
+    if (!activeAudioUrl) {
+      await handleGenerateMusic();
+      return;
+    }
     setIsDownloading("music");
     try {
       const filenameBase = name.trim()
         ? name.replace(/\s+/g, "-").toLowerCase()
         : "quantumelodic";
-      await downloadAudio(audioUrl, `${filenameBase}-cosmic-composition.mp3`);
+      await downloadAudio(activeAudioUrl, `${filenameBase}-cosmic-composition.mp3`);
     } catch (e) {
       console.error(e);
+      toast({ title: "Song download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
@@ -476,13 +532,43 @@ const ResultsView = ({
         ✦ Explore Interactive Chart ✦
       </motion.button>
 
+      {/* Primary downloads */}
+      <motion.div
+        className="mb-6 grid grid-cols-3 gap-2"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+      >
+        <button
+          onClick={handleDownloadChart}
+          disabled={!!isDownloading && isDownloading !== "share-copied"}
+          className="py-2.5 rounded-xl border border-primary/25 text-primary/80 text-[10px] tracking-widest uppercase hover:bg-primary/8 hover:border-primary/50 transition-all disabled:opacity-40"
+        >
+          {isDownloading === "chart" ? "Saving…" : "Chart PNG"}
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
+          className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
+        >
+          {isDownloading === "pdf" ? "Saving…" : "Report PDF"}
+        </button>
+        <button
+          onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
+          disabled={previewLoading || localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
+          className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
+        >
+          {previewLoading || localMusicLoading || isDownloading === "music" ? "Working…" : activeAudioUrl ? "Song MP3" : "Make Song"}
+        </button>
+      </motion.div>
+
       {/* Planet Details Table */}
       <div className="mb-6">
         <PlanetDetailsTable planets={chartData.planets} />
       </div>
 
       {/* Song status — composing indicator while ElevenLabs generates */}
-      {previewLoading && !audioUrl && (
+      {(previewLoading || localMusicLoading) && !activeAudioUrl && (
         <motion.div
           className="mb-6 rounded-2xl border border-primary/15 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3"
           initial={{ opacity: 0, y: 8 }}
@@ -510,7 +596,7 @@ const ResultsView = ({
             idleIntensity={isPlaying ? 0.85 : 0.28}
             palette={paletteFromSign(chartData.sunSign)}
           />
-          {audioUrl && !audioError && (
+          {activeAudioUrl && !audioError && (
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
                 className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
@@ -542,9 +628,9 @@ const ResultsView = ({
           )}
         </div>
 
-        {audioUrl ? (
+        {activeAudioUrl ? (
           <>
-            {(audioSource === "procedural" || audioSource === "tone") && (
+            {(activeAudioSource === "procedural" || activeAudioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
                 Deterministic chart composition
               </p>
@@ -573,6 +659,13 @@ const ResultsView = ({
               </div>
             </div>
 
+            <audio
+              className="mt-3 w-full"
+              controls
+              preload="metadata"
+              src={activeAudioUrl}
+            />
+
             <div className="flex items-center justify-center gap-8">
               <button
                 className="text-muted-foreground/50 hover:text-muted-foreground transition-colors"
@@ -598,7 +691,7 @@ const ResultsView = ({
           </>
         ) : (
           <p className="text-[10px] text-muted-foreground/30 italic text-center">
-            {previewLoading ? "Preparing your audio preview…" : "Audio unavailable — explore your chart data above"}
+            {previewLoading || localMusicLoading ? "Preparing your audio preview…" : "Audio unavailable — use Make Song above"}
           </p>
         )}
       </motion.div>
@@ -619,22 +712,18 @@ const ResultsView = ({
         </button>
         <button
           onClick={handleDownloadPdf}
-          disabled={!!isDownloading && isDownloading !== "share-copied"}
+          disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
           {isDownloading === "pdf" ? "…" : "⬇ Report"}
         </button>
-        {audioUrl ? (
-          <button
-            onClick={handleDownloadMusic}
-            disabled={!!isDownloading && isDownloading !== "share-copied"}
-            className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
-          >
-            {isDownloading === "music" ? "…" : "⬇ Song"}
-          </button>
-        ) : (
-          <div />
-        )}
+        <button
+          onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
+          disabled={previewLoading || localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
+          className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
+        >
+          {previewLoading || localMusicLoading || isDownloading === "music" ? "…" : activeAudioUrl ? "⬇ Song" : "Make Song"}
+        </button>
       </motion.div>
 
       {/* Share */}
@@ -695,7 +784,7 @@ const ResultsView = ({
       </div>
 
       {/* Full Astro-Harmonic Natal Report (powered by QM canonicals) */}
-      <div className="mt-10">
+      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-2">
         <button
           onClick={() => setShowFullReport((v) => !v)}
           disabled={!qmReading}
@@ -706,6 +795,13 @@ const ResultsView = ({
             : showFullReport
               ? "▲ Hide Full Astro-Harmonic Report"
               : "▼ View Full Astro-Harmonic Report"}
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
+          className="w-full py-3 rounded-xl border border-accent/25 text-accent/80 text-xs tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
+        >
+          {isDownloading === "pdf" ? "Creating PDF…" : "Download Full Report PDF"}
         </button>
       </div>
 
