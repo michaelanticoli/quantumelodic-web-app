@@ -15,6 +15,7 @@ import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
 import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
 import { useToast } from "@/hooks/use-toast";
+import { generateChartMusic } from "@/lib/cosmicReadings";
 import { downloadChartImage, downloadAudio, downloadNatalHarmonicPdf } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
@@ -207,6 +208,11 @@ const Index = () => {
               audioSource={audioSource}
               reading={reading}
               previewLoading={previewLoading && !audioUrl}
+              onMusicReady={(url, source) => setReadingData({
+                ...reading,
+                audioUrl: url,
+                audioSource: source,
+              }, url, source)}
               onBack={handleBack}
               onExplore={() => navigate("/explore")}
             />
@@ -242,6 +248,7 @@ interface ResultsViewProps {
   audioSource?: "elevenlabs" | "procedural" | "tone" | null;
   reading: import("@/types/astrology").CosmicReading;
   previewLoading: boolean;
+  onMusicReady: (url: string, source: "elevenlabs" | "tone") => void;
   onBack: () => void;
   onExplore: () => void;
 }
@@ -254,9 +261,11 @@ const ResultsView = ({
   audioSource,
   reading,
   previewLoading,
+  onMusicReady,
   onBack,
   onExplore,
 }: ResultsViewProps) => {
+  const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -265,6 +274,8 @@ const ResultsView = ({
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [audioError, setAudioError] = useState(false);
   const [showFullReport, setShowFullReport] = useState(false);
+  const [localAudioUrl, setLocalAudioUrl] = useState<string | null>(audioUrl ?? null);
+  const [localAudioSource, setLocalAudioSource] = useState<"elevenlabs" | "procedural" | "tone" | null>(audioSource ?? null);
 
   // QuantumMelodic canonicals (qm_planets, qm_signs, qm_aspects, qm_houses)
   const { dataReady: qmReady, buildReading } = useQuantumMelodicData();
