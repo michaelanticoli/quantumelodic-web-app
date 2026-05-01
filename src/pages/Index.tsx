@@ -530,13 +530,43 @@ const ResultsView = ({
         ✦ Explore Interactive Chart ✦
       </motion.button>
 
+      {/* Primary downloads */}
+      <motion.div
+        className="mb-6 grid grid-cols-3 gap-2"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+      >
+        <button
+          onClick={handleDownloadChart}
+          disabled={!!isDownloading && isDownloading !== "share-copied"}
+          className="py-2.5 rounded-xl border border-primary/25 text-primary/80 text-[10px] tracking-widest uppercase hover:bg-primary/8 hover:border-primary/50 transition-all disabled:opacity-40"
+        >
+          {isDownloading === "chart" ? "Saving…" : "Chart PNG"}
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
+          className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
+        >
+          {isDownloading === "pdf" ? "Saving…" : "Report PDF"}
+        </button>
+        <button
+          onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
+          disabled={localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
+          className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
+        >
+          {localMusicLoading || isDownloading === "music" ? "Working…" : activeAudioUrl ? "Song MP3" : "Make Song"}
+        </button>
+      </motion.div>
+
       {/* Planet Details Table */}
       <div className="mb-6">
         <PlanetDetailsTable planets={chartData.planets} />
       </div>
 
       {/* Song status — composing indicator while ElevenLabs generates */}
-      {previewLoading && !audioUrl && (
+      {(previewLoading || localMusicLoading) && !activeAudioUrl && (
         <motion.div
           className="mb-6 rounded-2xl border border-primary/15 bg-card/50 backdrop-blur-sm p-4 flex items-center gap-3"
           initial={{ opacity: 0, y: 8 }}
@@ -564,7 +594,7 @@ const ResultsView = ({
             idleIntensity={isPlaying ? 0.85 : 0.28}
             palette={paletteFromSign(chartData.sunSign)}
           />
-          {audioUrl && !audioError && (
+          {activeAudioUrl && !audioError && (
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
                 className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
@@ -596,9 +626,9 @@ const ResultsView = ({
           )}
         </div>
 
-        {audioUrl ? (
+        {activeAudioUrl ? (
           <>
-            {(audioSource === "procedural" || audioSource === "tone") && (
+            {(activeAudioSource === "procedural" || activeAudioSource === "tone") && (
               <p className="text-[10px] text-muted-foreground/40 tracking-widest text-center mb-2 uppercase">
                 Deterministic chart composition
               </p>
@@ -652,7 +682,7 @@ const ResultsView = ({
           </>
         ) : (
           <p className="text-[10px] text-muted-foreground/30 italic text-center">
-            {previewLoading ? "Preparing your audio preview…" : "Audio unavailable — explore your chart data above"}
+            {previewLoading || localMusicLoading ? "Preparing your audio preview…" : "Audio unavailable — use Make Song above"}
           </p>
         )}
       </motion.div>
