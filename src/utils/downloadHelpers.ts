@@ -65,37 +65,32 @@ function triggerDownload(dataUrl: string, filename: string) {
   document.body.removeChild(link);
 }
 
+export function triggerFileDownload(url: string, filename: string) {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+export async function createDownloadableAudioUrl(audioUrl: string) {
+  if (!audioUrl) throw new Error('No audio URL');
+  if (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:')) return audioUrl;
+
+  const response = await fetch(audioUrl);
+  if (!response.ok) throw new Error('Unable to fetch audio for download');
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
 // ── Download the music audio ──────────────────────────────────────
 export async function downloadAudio(audioUrl: string, filename = 'quantumelodic-composition.mp3') {
-  if (!audioUrl) throw new Error('No audio URL');
-
-  // Blob URLs (local audio like procedural WAV) — create a temporary anchor
-  if (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:')) {
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = audioUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    return;
-  }
-
-  // Remote URLs — fetch and re-blob to force download across origins
-  try {
-    const response = await fetch(audioUrl);
-    if (!response.ok) throw new Error('Fetch failed');
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = blobUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
-  } catch {
-    // Last resort: open in new tab
-    window.open(audioUrl, '_blank');
+  const downloadableUrl = await createDownloadableAudioUrl(audioUrl);
+  triggerFileDownload(downloadableUrl, filename);
+  if (downloadableUrl !== audioUrl && downloadableUrl.startsWith('blob:')) {
+    setTimeout(() => URL.revokeObjectURL(downloadableUrl), 10_000);
   }
 }
 
