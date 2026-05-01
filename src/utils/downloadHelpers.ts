@@ -593,3 +593,40 @@ export async function downloadNatalHarmonicPdf(filename = 'moontuner-natal-harmo
 
   pdf.save(filename);
 }
+
+export async function createNatalHarmonicPdfUrl() {
+  const root = document.getElementById('natal-harmonic-report-root');
+  if (!root) throw new Error('Natal harmonic report not mounted');
+
+  const pages = Array.from(root.querySelectorAll<HTMLElement>('.mt-page'));
+  if (pages.length === 0) throw new Error('No report pages found');
+
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+
+  for (let i = 0; i < pages.length; i++) {
+    const canvas = await html2canvas(pages[i], {
+      backgroundColor: '#F9F7F4',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const ratio = canvas.height / canvas.width;
+    let imgW = PAGE_W;
+    let imgH = imgW * ratio;
+    if (imgH > PAGE_H) {
+      imgH = PAGE_H;
+      imgW = imgH / ratio;
+    }
+    const x = (PAGE_W - imgW) / 2;
+    const y = (PAGE_H - imgH) / 2;
+    if (i > 0) pdf.addPage();
+    pdf.setFillColor(249, 247, 244);
+    pdf.rect(0, 0, PAGE_W, PAGE_H, 'F');
+    pdf.addImage(imgData, 'JPEG', x, y, imgW, imgH);
+  }
+
+  return URL.createObjectURL(pdf.output('blob'));
+}
