@@ -778,14 +778,14 @@ const ResultsView = ({
           disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-accent/25 text-accent/80 text-[10px] tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === "pdf" ? "…" : "⬇ Report"}
+          {isDownloading === "pdf" ? "…" : preparedPdf ? "PDF Ready" : "⬇ Report"}
         </button>
         <button
           onClick={activeAudioUrl ? handleDownloadMusic : handleGenerateMusic}
           disabled={previewLoading || localMusicLoading || (!!isDownloading && isDownloading !== "share-copied")}
           className="py-2.5 rounded-xl border border-highlight/25 text-highlight/80 text-[10px] tracking-widest uppercase hover:bg-highlight/8 hover:border-highlight/50 transition-all disabled:opacity-40"
         >
-          {previewLoading || localMusicLoading || isDownloading === "music" ? "…" : activeAudioUrl ? "⬇ Song" : "Make Song"}
+          {previewLoading || localMusicLoading || isDownloading === "music" ? "…" : preparedAudio ? "MP3 Ready" : activeAudioUrl ? "⬇ Song" : "Make Song"}
         </button>
       </motion.div>
 
@@ -864,7 +864,7 @@ const ResultsView = ({
           disabled={(!qmReading && !qmReady) || (!!isDownloading && isDownloading !== "share-copied")}
           className="w-full py-3 rounded-xl border border-accent/25 text-accent/80 text-xs tracking-widest uppercase hover:bg-accent/8 hover:border-accent/50 transition-all disabled:opacity-40"
         >
-          {isDownloading === "pdf" ? "Creating PDF…" : "Download Full Report PDF"}
+          {isDownloading === "pdf" ? "Creating PDF…" : preparedPdf ? "Download Prepared PDF" : "Download Full Report PDF"}
         </button>
       </div>
 
