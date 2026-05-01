@@ -344,8 +344,12 @@ const ResultsView = ({
 
   const handleDownloadPdf = async () => {
     setIsDownloading("pdf");
+    setShowFullReport(true);
+    // Wait one frame so the report mounts before capturing
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
-      await downloadPdfReport(reading, "chart-wheel-container");
+      const filename = `${(name || "moontuner").replace(/\s+/g, "-").toLowerCase()}-natal-harmonic.pdf`;
+      await downloadNatalHarmonicPdf(filename);
     } catch (e) {
       console.error(e);
     } finally {
