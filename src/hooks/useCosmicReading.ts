@@ -179,8 +179,8 @@ export function useCosmicReading() {
 
       const previewRequestId = previewRequestRef.current;
 
-      // Render the deterministic Tone.js composition after the result screen is visible.
-      schedulePreviewAudio(chart, previewRequestId);
+      // Generate the ElevenLabs (or Tone.js fallback) composition after the result screen mounts.
+      schedulePreviewAudio(chart, birthData.name || 'Unknown', previewRequestId);
 
       return cosmicReading;
 
