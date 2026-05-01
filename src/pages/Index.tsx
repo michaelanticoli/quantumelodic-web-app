@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -10,10 +10,12 @@ import { BirthDataForm } from "@/components/BirthDataForm";
 import { BottomNav } from "@/components/BottomNav";
 import { GeneratingState } from "@/components/GeneratingState";
 import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
+import { NatalHarmonicReport } from "@/components/reports/NatalHarmonicReport";
 import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
+import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
 import { useToast } from "@/hooks/use-toast";
-import { downloadChartImage, downloadAudio, downloadPdfReport } from "@/utils/downloadHelpers";
+import { downloadChartImage, downloadAudio, downloadNatalHarmonicPdf } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
 type AppState = "input" | "generating" | "result";
@@ -262,6 +264,14 @@ const ResultsView = ({
   const [duration, setDuration] = useState(0);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [audioError, setAudioError] = useState(false);
+  const [showFullReport, setShowFullReport] = useState(false);
+
+  // QuantumMelodic canonicals (qm_planets, qm_signs, qm_aspects, qm_houses)
+  const { dataReady: qmReady, buildReading } = useQuantumMelodicData();
+  const qmReading = useMemo(
+    () => (qmReady ? buildReading(chartData.planets) : null),
+    [qmReady, buildReading, chartData.planets],
+  );
 
   useEffect(() => {
     if (!audioUrl) return;
@@ -342,8 +352,12 @@ const ResultsView = ({
 
   const handleDownloadPdf = async () => {
     setIsDownloading("pdf");
+    setShowFullReport(true);
+    // Wait one frame so the report mounts before capturing
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
-      await downloadPdfReport(reading, "chart-wheel-container");
+      const filename = `${(name || "moontuner").replace(/\s+/g, "-").toLowerCase()}-natal-harmonic.pdf`;
+      await downloadNatalHarmonicPdf(filename);
     } catch (e) {
       console.error(e);
     } finally {
@@ -679,6 +693,42 @@ const ResultsView = ({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Full Astro-Harmonic Natal Report (powered by QM canonicals) */}
+      <div className="mt-10">
+        <button
+          onClick={() => setShowFullReport((v) => !v)}
+          disabled={!qmReading}
+          className="w-full py-3 rounded-xl border border-primary/25 text-primary/80 text-xs tracking-widest uppercase hover:bg-primary/8 hover:border-primary/50 transition-all disabled:opacity-40"
+        >
+          {!qmReady
+            ? "Loading harmonic dataset…"
+            : showFullReport
+              ? "▲ Hide Full Astro-Harmonic Report"
+              : "▼ View Full Astro-Harmonic Report"}
+        </button>
+      </div>
+
+      {showFullReport && qmReading && (
+        <div className="mt-6 rounded-2xl overflow-hidden">
+          <NatalHarmonicReport
+            birthData={reading.birthData}
+            chartData={reading.chartData}
+            reading={qmReading}
+          />
+        </div>
+      )}
+
+      {/* Off-screen mount for PDF export when the report isn't visible */}
+      {!showFullReport && qmReading && (
+        <div style={{ position: "fixed", left: -10000, top: 0, width: 580, pointerEvents: "none" }} aria-hidden>
+          <NatalHarmonicReport
+            birthData={reading.birthData}
+            chartData={reading.chartData}
+            reading={qmReading}
+          />
+        </div>
+      )}
     </div>
   );
 };
