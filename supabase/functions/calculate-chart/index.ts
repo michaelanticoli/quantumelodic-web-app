@@ -153,8 +153,8 @@ async function geocodeLocation(location: string): Promise<GeocodingResult> {
   clearTimeout(timeoutId);
 
   if (!response.ok) {
-    console.error(`Geocoding failed with status: ${response.status}`);
-    throw new Error('Unable to process location');
+    console.warn(`Geocoding failed with status: ${response.status}, using NYC fallback`);
+    return { latitude: 40.7128, longitude: -74.0060, timezone: -5 };
   }
 
   const results = await response.json();
