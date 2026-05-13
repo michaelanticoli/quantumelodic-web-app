@@ -198,13 +198,13 @@ export const InteractiveZodiacWheel = ({
       <circle cx={cx} cy={cy} r={signInner} fill="hsl(222 47% 7%)"
         stroke="hsl(43 30% 30% / 0.3)" strokeWidth="0.75" />
 
-      {/* ── House cusps + labels ──────────────────────────── */}
+      {/* ── House cusps + labels (equal-house from Ascendant) ── */}
       {Array.from({ length: 12 }).map((_, i) => {
-        const angle = degToAngle(i * 30);
+        const angle = degToAngle(ascDeg + i * 30);
         const p1 = polarToXY(angle, innerR);
         const p2 = polarToXY(angle, signInner);
         // Label at midpoint between this and next cusp
-        const midAngle = degToAngle(i * 30 + 15);
+        const midAngle = degToAngle(ascDeg + i * 30 + 15);
         const labelR = innerR + (signInner - innerR) * 0.45;
         const lp = polarToXY(midAngle, labelR);
         const isHov = hoveredHouse === i;
