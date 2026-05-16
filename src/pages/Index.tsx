@@ -273,6 +273,7 @@ const ResultsView = ({
 }: ResultsViewProps) => {
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const reportRef = useRef<HTMLDivElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
