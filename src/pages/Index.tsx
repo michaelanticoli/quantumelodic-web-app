@@ -11,6 +11,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { GeneratingState } from "@/components/GeneratingState";
 import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
 import { NatalHarmonicReport } from "@/components/reports/NatalHarmonicReport";
+import { ReportNarrationButton } from "@/components/ReportNarrationButton";
 import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
 import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
