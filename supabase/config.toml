@@ -1,28 +1,7 @@
-project_id = "pqxnvninbjjzddppaebf"
-
-[functions.calculate-chart]
-verify_jwt = false
-
-[functions.generate-music]
-verify_jwt = false
-
-[functions.generate-aspect-sound]
-verify_jwt = false
-
-[functions.generate-planet-sound]
-verify_jwt = false
-
-[functions.create-checkout]
-verify_jwt = false
-
-[functions.check-subscription]
-verify_jwt = false
-
-[functions.customer-portal]
-verify_jwt = false
-
-[functions.generate-qm-report]
-verify_jwt = false
+project_id = "lstojllbtwuxhvzaxgzi"
 
 [functions.stripe-webhook]
+verify_jwt = false
+
+[functions.narrate-report]
 verify_jwt = false
