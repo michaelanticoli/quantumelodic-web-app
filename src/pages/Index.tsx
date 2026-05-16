@@ -11,6 +11,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { GeneratingState } from "@/components/GeneratingState";
 import { CosmicWaveform, paletteFromSign } from "@/components/CosmicWaveform";
 import { NatalHarmonicReport } from "@/components/reports/NatalHarmonicReport";
+import { ReportNarrationButton } from "@/components/ReportNarrationButton";
 import { useCosmicReading } from "@/hooks/useCosmicReading";
 import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
 import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
@@ -272,6 +273,7 @@ const ResultsView = ({
 }: ResultsViewProps) => {
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const reportRef = useRef<HTMLDivElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -866,10 +868,24 @@ const ResultsView = ({
         >
           {isDownloading === "pdf" ? "Creating PDF…" : preparedPdf ? "Download Prepared PDF" : "Download Full Report PDF"}
         </button>
+        {qmReading && (
+          <ReportNarrationButton
+            label={`${reading.birthData.name || "Natal"}-narration`}
+            getText={() => {
+              const node = reportRef.current;
+              if (!node) return "";
+              // innerText preserves visible line breaks; strip excessive whitespace.
+              return (node.innerText || node.textContent || "")
+                .replace(/\s+\n/g, "\n")
+                .replace(/\n{3,}/g, "\n\n")
+                .trim();
+            }}
+          />
+        )}
       </div>
 
       {showFullReport && qmReading && (
-        <div className="mt-6 rounded-2xl overflow-hidden">
+        <div ref={reportRef} className="mt-6 rounded-2xl overflow-hidden">
           <NatalHarmonicReport
             birthData={reading.birthData}
             chartData={reading.chartData}
@@ -880,7 +896,7 @@ const ResultsView = ({
 
       {/* Off-screen mount for PDF export when the report isn't visible */}
       {!showFullReport && qmReading && (
-        <div style={{ position: "fixed", left: -10000, top: 0, width: 580, pointerEvents: "none" }} aria-hidden>
+        <div ref={reportRef} style={{ position: "fixed", left: -10000, top: 0, width: 580, pointerEvents: "none" }} aria-hidden>
           <NatalHarmonicReport
             birthData={reading.birthData}
             chartData={reading.chartData}
