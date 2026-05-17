@@ -21,6 +21,7 @@ import {
   createDownloadableAudioUrl,
   createNatalHarmonicPdfUrl,
   downloadChartImage,
+  downloadNatalHarmonicPdf,
   triggerFileDownload,
 } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
