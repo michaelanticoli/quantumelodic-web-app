@@ -315,7 +315,7 @@ const fallbackModes: Record<string, { mode: string; mood: string; tempo: string 
 function buildFallbackPrompt(sunSign: string, moonSign: string): string {
   const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
   const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
-  return `Create a ${sun.tempo} instrumental ambient electronic track that blends ${sun.mood} energy with ${moon.mood} undertones. The composition should feel cosmic and celestial, like floating through space among the stars. Use synthesizers, ethereal pads, and subtle rhythmic elements. The overall mood should be mystical and introspective, evoking a sense of personal destiny and cosmic connection. Style: ambient electronic, new age, space music.`;
+  return `Compose an avant-garde, piano-led instrumental in a ${sun.mode} mode at a ${sun.tempo} pace, blending ${sun.mood} energy with ${moon.mood} undertones. Solo piano at the heart — modern, contemporary, expressive, emotive, bold, occasionally dissonant. Include prepared piano textures (felt hammers, muted strings, inside-piano resonances), organic percussion (brushed drums, hand percussion, mallets), warm strings or cello, and subtle analog synth pads or electronic shimmer for a cinematic, noir-modern atmosphere. Reference points: Chilly Gonzales, Tori Amos, Hauschka, Chopin, Philip Glass. Chamber-cinematic, neo-classical, through-composed, orchestral enough to feel "big" while always anchored by the piano voice.`;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
