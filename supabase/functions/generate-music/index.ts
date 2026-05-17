@@ -286,7 +286,7 @@ function buildQMPrompt(
     ascPalette ? `Ascendant palette: ${ascPalette}.` : '',
     `Harmonic aspects: ${aspectNarrative}.`,
     retroNote,
-    `Style: cosmic, celestial, new age electronic, space music.`,
+    `Style: avant-garde solo piano at the center — modern, contemporary, expressive, emotive, bold, occasionally dissonant when the chart calls for it. Prepared piano textures (felt hammers, muted strings, inside-piano resonances), layered with organic percussion (brushed drums, hand percussion, mallets), warm strings or cello, and subtle analog synth pads or electronic shimmer for a cinematic, noir-modern edge. Channel Chilly Gonzales, Tori Amos, Hauschka, Chopin, and Philip Glass — chamber-cinematic, neo-classical, with restrained electronic atmosphere. Through-composed and orchestral enough to feel "big," but always anchored by the piano voice.`,
   ].filter(Boolean);
 
   const prompt = parts.join(' ');
