@@ -877,13 +877,20 @@ const ResultsView = ({
           <ReportNarrationButton
             label={`${reading.birthData.name || "Natal"}-narration`}
             getText={() => {
-              const node = reportRef.current;
-              if (!node) return "";
-              // innerText preserves visible line breaks; strip excessive whitespace.
-              return (node.innerText || node.textContent || "")
-                .replace(/\s+\n/g, "\n")
-                .replace(/\n{3,}/g, "\n\n")
-                .trim();
+              const who = reading.birthData.name || "this cosmic traveler";
+              const sun = chartData.sunSign;
+              const moon = chartData.moonSign;
+              const asc = chartData.ascendant;
+              const el = qmReading.dominantElement?.toLowerCase() || "elemental";
+              const mod = qmReading.dominantModality?.toLowerCase() || "rhythmic";
+              const key = qmReading.overallKey || "its own key";
+              const tempo = qmReading.overallTempo || 90;
+              return [
+                `A brief harmonic summary for ${who}.`,
+                `Your chart unfolds like a living composition. The Sun in ${sun} establishes the key and character of the entire piece, while the Moon in ${moon} provides the emotional undercurrent that colors every phrase. The Ascendant in ${asc} sets the opening tone — the first impression a listener receives.`,
+                `With a dominant ${el} element and a ${mod} rhythmic signature, your symphony resolves around ${key} at roughly ${tempo} beats per minute.`,
+                `Every aspect woven through this fabric is a moment of dialogue between voices — sometimes consonant, sometimes deliberately tense, always unmistakably yours. This is the music of your cosmos.`,
+              ].join(" ");
             }}
           />
         )}
