@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Loader2, Mic, Pause, Play, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, Mic, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,17 +11,34 @@ interface Props {
   label?: string;
 }
 
+// Cache the generated narration across reloads (per label, per text-hash).
+const CACHE_PREFIX = "moontuner.narration.v1.";
+
+function hashText(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h).toString(36);
+}
+
 export function ReportNarrationButton({ getText, voiceId, label = "Narration" }: Props) {
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => () => {
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    audioRef.current?.pause();
-  }, [audioUrl]);
+  // Restore cached narration on mount (if the text fingerprint matches).
+  useEffect(() => {
+    try {
+      const text = getText().trim();
+      if (!text) return;
+      const key = CACHE_PREFIX + label + ":" + hashText(text);
+      const cached = sessionStorage.getItem(key);
+      if (cached) setAudioUrl(cached);
+    } catch { /* sessionStorage may be unavailable */ }
+    return () => {
+      if (audioUrl?.startsWith("blob:")) URL.revokeObjectURL(audioUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generate = async () => {
     const text = getText().trim();
@@ -37,19 +54,16 @@ export function ReportNarrationButton({ getText, voiceId, label = "Narration" }:
       if (error) throw error;
       if (!data?.audioContent) throw new Error("No audio returned");
       const dataUri = `data:${data.mime ?? "audio/mpeg"};base64,${data.audioContent}`;
-      // Convert to blob URL so download works cleanly
-      const res = await fetch(dataUri);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      // Persist the data URI in sessionStorage so it survives reloads.
+      try {
+        const key = CACHE_PREFIX + label + ":" + hashText(text);
+        sessionStorage.setItem(key, dataUri);
+      } catch { /* quota may be exceeded — non-fatal */ }
       setAudioUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
+        if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return dataUri;
       });
-      const audio = new Audio(url);
-      audio.onended = () => setPlaying(false);
-      audioRef.current = audio;
-      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-      toast({ title: "Narration ready", description: "Playing in Michael's voice." });
+      toast({ title: "Narration ready", description: "Press play to hear Michael's voice." });
     } catch (e) {
       console.error("narration failed", e);
       toast({
@@ -59,16 +73,6 @@ export function ReportNarrationButton({ getText, voiceId, label = "Narration" }:
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const toggle = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
     }
   };
 
@@ -95,33 +99,36 @@ export function ReportNarrationButton({ getText, voiceId, label = "Narration" }:
   }
 
   return (
-    <div className="w-full flex items-center gap-2 py-2 px-3 rounded-xl border border-accent/25">
-      <button
-        onClick={toggle}
-        className="h-8 w-8 rounded-full flex items-center justify-center border border-accent/40 hover:bg-accent/10"
-        aria-label={playing ? "Pause" : "Play"}
-      >
-        {playing ? <Pause className="w-3.5 h-3.5 text-accent" /> : <Play className="w-3.5 h-3.5 text-accent" />}
-      </button>
-      <span className="flex-1 text-[10px] tracking-widest uppercase text-accent/70 truncate">
-        Michael's Voice · {label}
-      </span>
-      <a
-        href={audioUrl}
-        download={`${label.replace(/[^a-z0-9-_]/gi, "_")}.mp3`}
-        className="h-8 w-8 rounded-full flex items-center justify-center border border-accent/40 hover:bg-accent/10"
-        title="Download MP3"
-      >
-        <Download className="w-3.5 h-3.5 text-accent" />
-      </a>
-      <button
-        onClick={generate}
-        disabled={loading}
-        className="text-[9px] tracking-widest uppercase text-accent/60 hover:text-accent disabled:opacity-40 px-2"
-        title="Regenerate"
-      >
-        {loading ? "…" : "Redo"}
-      </button>
+    <div className="w-full rounded-xl border border-accent/25 p-3 flex flex-col gap-2">
+      <div className="flex items-center justify-between text-[10px] tracking-widest uppercase text-accent/70">
+        <span className="truncate">Michael's Voice · {label}</span>
+        <div className="flex items-center gap-3">
+          <a
+            href={audioUrl}
+            download={`${label.replace(/[^a-z0-9-_]/gi, "_")}.mp3`}
+            className="flex items-center gap-1 hover:text-accent"
+            title="Download MP3"
+          >
+            <Download className="w-3 h-3" /> MP3
+          </a>
+          <button
+            onClick={generate}
+            disabled={loading}
+            className="hover:text-accent disabled:opacity-40"
+            title="Regenerate narration"
+          >
+            {loading ? "…" : "Redo"}
+          </button>
+        </div>
+      </div>
+      <audio
+        src={audioUrl}
+        controls
+        autoPlay
+        preload="auto"
+        className="w-full h-9"
+        style={{ colorScheme: "dark" }}
+      />
     </div>
   );
 }
