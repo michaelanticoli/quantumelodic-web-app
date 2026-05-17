@@ -407,7 +407,7 @@ const ResultsView = ({
     }
     setIsDownloading("pdf");
     setShowFullReport(true);
-    // Wait one frame so the report mounts before capturing
+    // Wait two frames so the report mounts before capturing
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
       const url = await createNatalHarmonicPdfUrl();
@@ -415,7 +415,11 @@ const ResultsView = ({
         if (current?.url.startsWith("blob:")) URL.revokeObjectURL(current.url);
         return { url, filename: reportFilename };
       });
-      triggerFileDownload(url, reportFilename);
+      // Fetch the blob and download via object URL — most reliable across browsers.
+      const blob = await (await fetch(url)).blob();
+      const objUrl = URL.createObjectURL(blob);
+      triggerFileDownload(objUrl, reportFilename);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 10_000);
       toast({ title: "Report ready", description: "If it did not download automatically, use the PDF ready link below." });
     } catch (e) {
       console.error(e);
