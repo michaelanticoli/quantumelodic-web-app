@@ -411,17 +411,17 @@ const ResultsView = ({
     // Wait two frames so the report mounts before capturing
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
-      const url = await createNatalHarmonicPdfUrl();
-      setPreparedPdf((current) => {
-        if (current?.url.startsWith("blob:")) URL.revokeObjectURL(current.url);
-        return { url, filename: reportFilename };
-      });
-      // Fetch the blob and download via object URL — most reliable across browsers.
-      const blob = await (await fetch(url)).blob();
-      const objUrl = URL.createObjectURL(blob);
-      triggerFileDownload(objUrl, reportFilename);
-      setTimeout(() => URL.revokeObjectURL(objUrl), 10_000);
-      toast({ title: "Report ready", description: "If it did not download automatically, use the PDF ready link below." });
+      // Primary: jsPDF's built-in save() — most reliable across browsers.
+      await downloadNatalHarmonicPdf(reportFilename);
+      // Also prepare a blob URL so the "PDF Ready" fallback link stays available.
+      try {
+        const url = await createNatalHarmonicPdfUrl();
+        setPreparedPdf((current) => {
+          if (current?.url.startsWith("blob:")) URL.revokeObjectURL(current.url);
+          return { url, filename: reportFilename };
+        });
+      } catch {/* non-fatal: download already triggered */}
+      toast({ title: "Report downloaded", description: "Check your downloads folder." });
     } catch (e) {
       console.error(e);
       toast({ title: "Report download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
