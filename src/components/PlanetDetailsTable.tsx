@@ -29,14 +29,11 @@ const formatDegree = (degree: number): string => {
   return `${deg}°${min.toString().padStart(2, '0')}'`;
 };
 
-// Calculate which house a planet is in (equal house system)
+// Equal-house system: houses progress counter-clockwise from Ascendant
+// through the zodiac (same direction as increasing ecliptic longitude).
+// House N starts at Asc + (N-1)*30°.
 const getHouse = (planetDegree: number, ascendantDegree: number): number => {
-  // Houses go clockwise from ASC
-  let diff = planetDegree - ascendantDegree;
-  if (diff < 0) diff += 360;
-  // Invert because houses go clockwise (opposite to zodiac)
-  diff = 360 - diff;
-  if (diff === 360) diff = 0;
+  const diff = ((planetDegree - ascendantDegree) % 360 + 360) % 360;
   return Math.floor(diff / 30) + 1;
 };
 

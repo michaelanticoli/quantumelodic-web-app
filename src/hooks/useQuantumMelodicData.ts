@@ -59,9 +59,11 @@ export function useQuantumMelodicData() {
     fetchData();
   }, []);
 
-  // Stable – never changes reference because it reads from refs
+  // Equal-house system: houses progress counter-clockwise from Ascendant
+  // through the zodiac (i.e. in the same direction as increasing ecliptic
+  // longitude). House N starts at Asc + (N-1)*30°.
   const getHouseNumber = useCallback((degree: number, ascendantDegree: number): number => {
-    const adjustedDegree = ((ascendantDegree - degree) % 360 + 360) % 360;
+    const adjustedDegree = ((degree - ascendantDegree) % 360 + 360) % 360;
     return Math.floor(adjustedDegree / 30) + 1;
   }, []);
 
