@@ -108,7 +108,7 @@ export default function LunarReports() {
                     {report.natal.element} · {report.natal.modality}
                   </span>
                   <span className="text-border">|</span>
-                  <span>♫ {report.natal.musicalMode}</span>
+                  <span className="font-mono tracking-wide">{report.natal.musicalMode}</span>
                 </div>
 
                 <p className="italic text-sm text-muted-foreground max-w-sm mx-auto">

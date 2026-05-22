@@ -319,7 +319,7 @@ export const PlanetChoirMixer = ({
             transition={{ duration: 1.2, repeat: Infinity }}
             style={{ color: 'hsl(43 74% 52%)' }}
           >
-            ♪ Live synthesis
+            Live synthesis
           </motion.span>
         )}
       </div>

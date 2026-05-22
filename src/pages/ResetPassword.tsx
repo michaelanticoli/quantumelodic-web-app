@@ -12,11 +12,7 @@ const ResetPassword = () => {
   const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
-    // Check for recovery token in URL hash
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
-      setIsRecovery(true);
-    }
+    if (window.location.hash.includes('type=recovery')) setIsRecovery(true);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +21,7 @@ const ResetPassword = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast.success('Password updated successfully!');
+      toast.success('Password updated.');
       navigate('/');
     } catch (err: any) {
       toast.error(err.message);
@@ -36,12 +32,15 @@ const ResetPassword = () => {
 
   if (!isRecovery) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-6">
         <CosmicBackground />
         <div className="relative z-10 text-center">
-          <p className="text-muted-foreground">Invalid or expired reset link.</p>
-          <button onClick={() => navigate('/auth')} className="mt-4 text-primary text-sm underline">
-            Back to sign in
+          <p className="label-micro mb-4">Link invalid or expired</p>
+          <button
+            onClick={() => navigate('/auth')}
+            className="text-sm text-foreground/70 hover:text-accent transition-colors"
+          >
+            ‹ Back to sign in
           </button>
         </div>
       </div>
@@ -52,32 +51,35 @@ const ResetPassword = () => {
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-6">
       <CosmicBackground />
       <motion.div
-        className="relative z-10 glass rounded-2xl p-8 border border-border/20 w-full max-w-sm"
-        initial={{ opacity: 0, y: 20 }}
+        className="relative z-10 w-full max-w-sm"
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        <h1 className="font-display text-2xl text-gold-gradient tracking-wide text-center mb-6">
-          Set New Password
+        <p className="label-micro text-center mb-3">MoonTuner</p>
+        <h1 className="font-display font-light text-4xl tracking-[-0.03em] text-foreground text-center mb-10">
+          Set a new <span className="italic text-accent">password</span>.
         </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs text-muted-foreground tracking-wide uppercase block mb-1.5">New Password</label>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="relative pt-5">
+            <label className="absolute top-0 left-0 label-micro">New password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-3 rounded-xl bg-card/60 border border-border/30 text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
+              autoComplete="new-password"
+              className="w-full bg-transparent border-0 border-b border-foreground/15 px-0 py-2 text-base text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-accent transition-colors min-h-[44px]"
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-primary-foreground text-sm tracking-widest uppercase font-medium disabled:opacity-50"
+            className="w-full min-h-[52px] py-4 rounded-full bg-foreground text-background hover:bg-accent hover:text-accent-foreground text-sm tracking-[0.2em] uppercase transition-colors disabled:opacity-30"
           >
-            {loading ? '...' : 'Update Password'}
+            {loading ? '…' : 'Update password'}
           </button>
         </form>
       </motion.div>

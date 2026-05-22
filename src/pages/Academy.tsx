@@ -169,15 +169,12 @@ const Academy = () => {
               <button
                 onClick={handleSubscribe}
                 disabled={checkoutLoading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-primary-foreground text-sm tracking-widest uppercase font-medium disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2"
+                className="w-full min-h-[52px] py-4 rounded-full bg-foreground text-background hover:bg-accent hover:text-accent-foreground text-sm tracking-[0.2em] uppercase transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
               >
                 {checkoutLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                    <Crown className="w-4 h-4" />
-                    {user ? 'Subscribe Now' : 'Sign In to Subscribe'}
-                  </>
+                  user ? 'Subscribe' : 'Sign in to subscribe'
                 )}
               </button>
 

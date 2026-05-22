@@ -57,7 +57,7 @@ const About = () => {
             </p>
             <blockquote
               className="pl-4 italic text-muted-foreground/70 text-sm leading-relaxed"
-              style={{ borderLeft: '2px solid hsl(43 88% 58% / 0.4)' }}
+              style={{ borderLeft: '2px solid hsl(var(--accent) / 0.4)' }}
             >
               "You are not separate from the stars. You are their music."
             </blockquote>
@@ -130,13 +130,7 @@ const About = () => {
                     </div>
                   )}
                   {step.isSpecial && (
-                    <div className="flex items-center justify-center gap-2 mt-2 text-primary/40">
-                      <span className="text-lg">♪</span>
-                      <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent)' }} />
-                      <span className="text-lg">♫</span>
-                      <div className="h-px flex-1" style={{ background: 'linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent)' }} />
-                      <span className="text-lg">♪</span>
-                    </div>
+                    <div className="divider-gold mt-3" />
                   )}
                 </div>
               ))}
@@ -191,22 +185,20 @@ const About = () => {
                 className="glass-card p-5 hover-lift group cursor-pointer block"
                 style={{ border: '1px solid hsl(var(--border) / 0.5)' }}
               >
-                <h3 className="text-foreground/90 font-medium mb-1 text-sm flex items-center gap-2">
-                  <span>📊</span> Quantumelodic Volumes
-                </h3>
-                <p className="text-muted-foreground text-xs leading-relaxed mb-2">Research archive — stats, harmonic data, and volume explorations.</p>
-                <span className="text-[10px] text-primary/60 tracking-widest uppercase group-hover:text-primary transition-colors">Open Archive →</span>
+                <p className="label-micro mb-2">Archive</p>
+                <h3 className="font-display text-foreground text-lg mb-2">Quantumelodic Volumes</h3>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-3">Research archive — stats, harmonic data, and volume explorations.</p>
+                <span className="text-[10px] text-accent tracking-[0.25em] uppercase group-hover:opacity-70 transition-opacity">Open archive →</span>
               </a>
               <div
                 className="glass-card p-5 hover-lift cursor-pointer"
-                style={{ border: '1px solid hsl(var(--primary) / 0.2)', background: 'hsl(var(--primary) / 0.04)' }}
+                style={{ border: '1px solid hsl(var(--border) / 0.5)' }}
                 onClick={() => navigate('/learn')}
               >
-                <h3 className="text-foreground/90 font-medium mb-1 text-sm flex items-center gap-2">
-                  <span>🎓</span> Quantum Vibrations Course
-                </h3>
-                <p className="text-muted-foreground text-xs leading-relaxed mb-2">Interactive mini-course harmonizing astrology, music, and the resonant mind.</p>
-                <span className="text-[10px] text-primary/60 tracking-widest uppercase">Start Learning →</span>
+                <p className="label-micro mb-2">Course</p>
+                <h3 className="font-display text-foreground text-lg mb-2">Quantum Vibrations</h3>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-3">Interactive mini-course harmonizing astrology, music, and the resonant mind.</p>
+                <span className="text-[10px] text-accent tracking-[0.25em] uppercase">Start learning →</span>
               </div>
             </div>
           </motion.section>
@@ -219,16 +211,10 @@ const About = () => {
           >
             <div className="absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-30" style={{ background: 'hsl(var(--primary) / 0.3)' }} />
             <div className="relative">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-base"
-                  style={{ background: 'hsl(var(--primary) / 0.15)', border: '1px solid hsl(var(--primary) / 0.3)' }}>
-                  👑
-                </div>
-                <div>
-                  <h2 className="font-display text-lg font-semibold text-primary">Academy of Astro-Musicology</h2>
-                  <p className="text-[10px] text-muted-foreground tracking-widest uppercase">Premium · $19.99/mo</p>
-                </div>
-              </div>
+              <p className="label-micro mb-3">Premium · $19.99/mo</p>
+              <h2 className="font-display text-2xl md:text-3xl tracking-[-0.03em] text-foreground mb-4">
+                Academy of <span className="italic text-accent">Astro-Musicology</span>
+              </h2>
               <p className="text-foreground/75 text-sm leading-relaxed mb-4">
                 Immersive courses on planetary harmonics, zodiacal modes, and cosmic composition. 
                 Deepen your practice with the full Astro-Musicology curriculum.
