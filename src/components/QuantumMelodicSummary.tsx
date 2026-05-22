@@ -180,30 +180,28 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
-      {/* Tab Header */}
-      <div className="flex gap-1 p-1 rounded-xl glass">
-        <button
-          onClick={() => handleTabChange('analytics')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-            activeTab === 'analytics'
-              ? 'bg-primary/20 text-primary border border-primary/30'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Analytics
-        </button>
-        <button
-          onClick={() => handleTabChange('report')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-            activeTab === 'report'
-              ? 'bg-primary/20 text-primary border border-primary/30'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          Report
-        </button>
+      {/* Tab Header — underline minimalist */}
+      <div className="flex gap-8 border-b border-foreground/10">
+        {([
+          { id: 'analytics', label: 'Analytics' },
+          { id: 'report', label: 'Report' },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => handleTabChange(t.id)}
+            className={`relative pb-3 text-[11px] uppercase tracking-[0.25em] transition-colors ${
+              activeTab === t.id ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/70'
+            }`}
+          >
+            {t.label}
+            {activeTab === t.id && (
+              <motion.span
+                layoutId="qm-tab-underline"
+                className="absolute left-0 right-0 -bottom-px h-px bg-accent"
+              />
+            )}
+          </button>
+        ))}
       </div>
 
       <AnimatePresence mode="wait">
