@@ -6,11 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { requestGeneratedSound } from '@/lib/supabaseSound';
 
-const ZODIAC_SYMBOLS: Record<string, string> = {
-  Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
-  Leo: '♌', Virgo: '♍', Libra: '♎', Scorpio: '♏',
-  Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
-};
+import { ZodiacSigil, toZodiacSign } from '@/components/sigils';
 
 const ELEMENT_COLORS: Record<string, string> = {
   Fire: 'hsl(15 80% 55%)',
