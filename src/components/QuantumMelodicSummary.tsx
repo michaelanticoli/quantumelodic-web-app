@@ -216,9 +216,7 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
           >
             {/* Harmonic Analysis */}
             <div className="glass rounded-xl p-5">
-              <h3 className="text-xs uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
-                <span className="text-lg">♪</span> Harmonic Analysis
-              </h3>
+              <h3 className="label-micro mb-4">Harmonic Analysis</h3>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                   <p className="text-2xl font-light text-green-400">{harmonicAnalysis.consonance.toFixed(0)}%</p>

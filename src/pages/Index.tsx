@@ -469,7 +469,7 @@ const ResultsView = ({
   const [showShareMenu, setShowShareMenu] = useState(false);
 
   const shareText =
-    "✨ My natal chart has been translated into a living musical composition! Discover your Quantumelodic Harmonic Analysis at MoonTuner.";
+    "My natal chart, composed — note by note. Discover your Quantumelodic Harmonic Analysis at MoonTuner.";
   const shareUrl = "https://quantumelodic.lovable.app";
 
   const handleShare = async () => {
@@ -559,7 +559,7 @@ const ResultsView = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        ✦ Explore Interactive Chart ✦
+        Explore interactive chart
       </motion.button>
 
       {/* Primary downloads */}
@@ -642,7 +642,7 @@ const ResultsView = ({
       >
         <div
           className="relative w-full h-36 rounded-2xl overflow-hidden mb-3"
-          style={{ border: "1px solid hsl(43 88% 58% / 0.14)" }}
+          style={{ border: "1px solid hsl(var(--border))" }}
         >
           <CosmicWaveform
             audioElement={audioEl}
@@ -654,20 +654,20 @@ const ResultsView = ({
               <motion.button
                 className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md"
                 style={{
-                  background: "hsl(228 35% 6% / 0.5)",
-                  border: "1px solid hsl(43 88% 58% / 0.3)",
-                  boxShadow: "0 0 20px hsl(43 88% 58% / 0.15)",
+                  background: "hsl(var(--background) / 0.5)",
+                  border: "1px solid hsl(var(--accent) / 0.4)",
+                  boxShadow: "0 0 20px hsl(var(--accent) / 0.15)",
                 }}
-                whileHover={{ scale: 1.08, boxShadow: "0 0 30px hsl(43 88% 58% / 0.35)" }}
-                whileTap={{ scale: 0.93 }}
+                whileHover={{ scale: 1.06, boxShadow: "0 0 30px hsl(var(--accent) / 0.35)" }}
+                whileTap={{ scale: 0.94 }}
                 onClick={togglePlayPause}
               >
                 {isPlaying ? (
-                  <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 text-primary ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-accent ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -702,7 +702,7 @@ const ResultsView = ({
                   className="h-full rounded-full"
                   style={{
                     width: `${progressPercent}%`,
-                    background: "linear-gradient(90deg, hsl(43 88% 58%), hsl(292 70% 62%))",
+                    background: "hsl(var(--accent))",
                   }}
                 />
               </div>
