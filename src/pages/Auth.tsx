@@ -87,88 +87,92 @@ const Auth = () => {
         </motion.button>
 
         <motion.div
-          className="glass rounded-2xl p-8 border border-border/20 w-full max-w-sm"
-          initial={{ opacity: 0, y: 20 }}
+          className="w-full max-w-sm"
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <h1 className="font-display text-2xl text-gold-gradient tracking-wide text-center mb-6">
-            {showReset ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Join the Symphony'}
+          <p className="label-micro text-center mb-3">MoonTuner</p>
+          <h1 className="font-display font-light text-4xl md:text-5xl tracking-[-0.03em] text-foreground text-center mb-10">
+            {showReset ? 'Reset password' : isLogin ? 'Welcome back.' : <>Join the <span className="italic text-accent">symphony</span>.</>}
           </h1>
 
           {showReset ? (
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div>
-                <label className="text-xs text-muted-foreground tracking-wide uppercase block mb-1.5">Email</label>
+            <form onSubmit={handleResetPassword} className="space-y-8">
+              <div className="relative pt-5">
+                <label className="absolute top-0 left-0 label-micro">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-card/60 border border-border/30 text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  className="w-full bg-transparent border-0 border-b border-foreground/15 px-0 py-2 text-base text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-accent transition-colors min-h-[44px]"
                   placeholder="you@cosmos.io"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-primary-foreground text-sm tracking-widest uppercase font-medium disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-primary/30"
+                className="w-full min-h-[52px] py-4 rounded-full bg-foreground text-background hover:bg-accent hover:text-accent-foreground text-sm tracking-[0.2em] uppercase transition-colors disabled:opacity-30"
               >
-                {loading ? '...' : 'Send Reset Link'}
+                {loading ? '…' : 'Send reset link'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowReset(false)}
-                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
+                className="w-full label-micro text-foreground/50 hover:text-foreground transition-colors"
               >
                 Back to sign in
               </button>
             </form>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs text-muted-foreground tracking-wide uppercase block mb-1.5">Email</label>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="relative pt-5">
+                <label className="absolute top-0 left-0 label-micro">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-card/60 border border-border/30 text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  autoComplete="email"
+                  className="w-full bg-transparent border-0 border-b border-foreground/15 px-0 py-2 text-base text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-accent transition-colors min-h-[44px]"
                   placeholder="you@cosmos.io"
                 />
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground tracking-wide uppercase block mb-1.5">Password</label>
+              <div className="relative pt-5">
+                <label className="absolute top-0 left-0 label-micro">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 rounded-xl bg-card/60 border border-border/30 text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
+                  className="w-full bg-transparent border-0 border-b border-foreground/15 px-0 py-2 text-base text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-accent transition-colors min-h-[44px]"
                   placeholder="••••••••"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-amber-500 text-primary-foreground text-sm tracking-widest uppercase font-medium disabled:opacity-50 transition-all hover:shadow-lg hover:shadow-primary/30"
+                className="w-full min-h-[52px] py-4 rounded-full bg-foreground text-background hover:bg-accent hover:text-accent-foreground text-sm tracking-[0.2em] uppercase transition-colors disabled:opacity-30"
               >
-                {loading ? '...' : isLogin ? 'Sign In' : 'Create Account'}
+                {loading ? '…' : isLogin ? 'Sign in' : 'Create account'}
               </button>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-xs text-primary/80 hover:text-primary transition-colors"
+                  className="text-xs text-foreground/60 hover:text-accent transition-colors"
                 >
-                  {isLogin ? 'Create an account' : 'Already have an account?'}
+                  {isLogin ? 'Create an account' : 'Have an account? Sign in'}
                 </button>
                 {isLogin && (
                   <button
                     type="button"
                     onClick={() => setShowReset(true)}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-xs text-foreground/50 hover:text-foreground transition-colors"
                   >
                     Forgot password?
                   </button>
