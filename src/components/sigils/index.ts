@@ -4,6 +4,7 @@ export { default as PlanetSigil } from "./PlanetSigil";
 export type { PlanetName } from "./PlanetSigil";
 export { default as AspectSigil } from "./AspectSigil";
 export type { AspectName } from "./AspectSigil";
+export { ZodiacSigilFragment, PlanetSigilFragment } from "./SigilFragments";
 
 // Convenience normalizers — accept any casing or common alias.
 import type { ZodiacSign } from "./ZodiacSigil";
