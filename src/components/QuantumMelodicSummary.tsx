@@ -4,10 +4,12 @@ import ReactMarkdown from 'react-markdown';
 import type { PlanetPosition } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { calculateHarmonicAnalysis, getResolutionGuidance, elementInfo } from '@/utils/harmonicWisdom';
-import { Music, Sparkles, BarChart3, Loader2, AlertCircle, Download } from 'lucide-react';
+import { Sparkles, Loader2, AlertCircle, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
+import { AspectSigil, PlanetSigil, toPlanetName } from '@/components/sigils';
+import type { AspectName } from '@/components/sigils';
 
 interface Props {
   reading: QuantumMelodicReading;
