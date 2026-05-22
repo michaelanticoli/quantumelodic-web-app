@@ -294,25 +294,24 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
             </div>
 
             {/* Aspect Summary */}
-            <div className="glass rounded-xl p-4">
-              <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Aspect Patterns</h3>
+            <div className="glass rounded-xl p-5">
+              <h3 className="text-[10px] uppercase tracking-[0.3em] text-foreground/40 mb-4">Aspect Patterns</h3>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(aspectCounts).map(([name, count]) => {
                   const aspectData = aspects.find(a => a.aspectType.name === name)?.aspectType;
+                  const aspectKey = name.toLowerCase() as AspectName;
                   return (
                     <button
                       key={name}
                       onClick={() => onAspectPatternClick?.(name)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all hover:scale-105 hover:shadow-lg cursor-pointer border"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all hover:scale-[1.03] border"
                       style={{
-                        backgroundColor: `${aspectData?.color}20`,
                         color: aspectData?.color,
                         borderColor: `${aspectData?.color}40`,
                       }}
                     >
-                      <span>{aspectData?.symbol}</span>
-                      <span>{count}</span>
-                      <Music className="w-3 h-3 opacity-60" />
+                      <AspectSigil aspect={aspectKey} size={14} strokeWidth={1.5} />
+                      <span className="font-mono tracking-wide">{count}</span>
                     </button>
                   );
                 })}
@@ -321,17 +320,22 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
 
             {/* Retrograde */}
             {retrogradePlanets.length > 0 && (
-              <div className="glass rounded-xl p-4 border-l-2 border-destructive/50">
-                <h3 className="text-xs uppercase tracking-widest text-destructive/80 mb-2">Retrograde Planets</h3>
+              <div className="glass rounded-xl p-5 border-l-2 border-destructive/50">
+                <h3 className="text-[10px] uppercase tracking-[0.3em] text-destructive/80 mb-3">Retrograde</h3>
                 <div className="flex flex-wrap gap-2">
-                  {retrogradePlanets.map(p => (
-                    <span key={p.position.name} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-destructive/10 text-destructive text-sm">
-                      {p.position.symbol} {p.position.name} ℞
-                    </span>
-                  ))}
+                  {retrogradePlanets.map(p => {
+                    const pk = toPlanetName(p.position.name);
+                    return (
+                      <span key={p.position.name} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs">
+                        {pk && <PlanetSigil planet={pk} size={14} strokeWidth={1.5} />}
+                        <span className="tracking-wide">{p.position.name}</span>
+                        <span className="font-mono opacity-70">℞</span>
+                      </span>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 italic">
-                  Retrograde energy inverts the typical harmonic expression, creating introspective and reviewing themes
+                <p className="text-[11px] text-muted-foreground mt-3 italic leading-relaxed">
+                  Retrograde energy inverts the typical harmonic expression — introspective, reviewing themes.
                 </p>
               </div>
             )}
