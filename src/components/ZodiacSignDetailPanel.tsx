@@ -155,7 +155,7 @@ export const ZodiacSignDetailPanel = ({ signName, signData, isDataReady, dataErr
             <div>
               <h2 className="font-display text-xl font-light text-foreground">{signName}</h2>
               <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <span>{ELEMENT_EMOJI[element]}</span>
+                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: ELEMENT_DOT[element] ?? ELEMENT_DOT.Fire }} />
                 <span>{element} · {signData?.modality ?? '—'}</span>
               </p>
             </div>
