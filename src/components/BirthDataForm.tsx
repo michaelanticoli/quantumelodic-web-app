@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 
 interface BirthDataFormProps {
   onSubmit: (data: { name: string; date: string; time: string; location: string }) => void;
@@ -45,148 +44,110 @@ function parseTime(raw: string): string | null {
   return null;
 }
 
+interface FieldProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: string;
+  required?: boolean;
+  type?: string;
+  autoComplete?: string;
+}
+
+const UnderlineField = ({ label, value, onChange, placeholder, error, required, type = 'text', autoComplete }: FieldProps) => (
+  <div className="relative pt-5">
+    <label className="absolute top-0 left-0 label-micro">{label}{required && <span className="text-accent ml-1">*</span>}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      autoComplete={autoComplete}
+      required={required}
+      className={`w-full bg-transparent border-0 border-b border-foreground/15 px-0 py-2 text-base text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-accent transition-colors min-h-[44px] ${error ? 'border-destructive/70' : ''}`}
+    />
+    {error && <p className="text-[11px] text-destructive/80 mt-1 tracking-wide">{error}</p>}
+  </div>
+);
+
 export const BirthDataForm = ({ onSubmit, isLoading }: BirthDataFormProps) => {
   const [formData, setFormData] = useState({ name: '', date: '', time: '', location: '' });
   const [dateError, setDateError] = useState('');
   const [timeError, setTimeError] = useState('');
-  const [focused, setFocused] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedDate = parseDate(formData.date);
-    if (!parsedDate) { setDateError('Enter date as MM/DD/YYYY or April 24 1985'); return; }
+    if (!parsedDate) { setDateError('Use MM/DD/YYYY or April 24 1985'); return; }
     setDateError('');
     const parsedTime = formData.time ? parseTime(formData.time) : '12:00';
-    if (formData.time && !parsedTime) { setTimeError('Enter time as HH:MM or 7:55 PM'); return; }
+    if (formData.time && !parsedTime) { setTimeError('Use HH:MM or 7:55 PM'); return; }
     setTimeError('');
     onSubmit({ name: formData.name, date: parsedDate, time: parsedTime || '12:00', location: formData.location });
   };
 
-  const fields = [
-    { key: 'name', placeholder: 'Your Name', type: 'text', required: true, colSpan: 'full' as const },
-    { key: 'date', placeholder: 'Date of Birth · MM/DD/YYYY', type: 'text', required: true, error: dateError, colSpan: 'full' as const },
-    { key: 'time', placeholder: 'Birth Time · optional · HH:MM', type: 'text', required: false, error: timeError, colSpan: 'half' as const },
-    { key: 'location', placeholder: 'City, Country', type: 'text', required: true, colSpan: 'half' as const },
-  ];
-
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="w-full space-y-2.5"
-      initial={{ opacity: 0, y: 16 }}
+      className="w-full space-y-6"
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.6 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
-      {/* Full-width fields */}
-      {fields.filter(f => f.colSpan === 'full').map((field, i) => (
-        <motion.div
-          key={field.key}
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.35 + i * 0.07 }}
-        >
-          <div className="relative">
-            <input
-              type={field.type}
-              placeholder={field.placeholder}
-              value={(formData as any)[field.key]}
-              onChange={(e) => {
-                setFormData({ ...formData, [field.key]: e.target.value });
-                if (field.key === 'date') setDateError('');
-                if (field.key === 'time') setTimeError('');
-              }}
-              onFocus={() => setFocused(field.key)}
-              onBlur={() => setFocused(null)}
-              className="w-full px-4 py-3.5 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/45 placeholder:text-xs focus:outline-none transition-all duration-300"
-              style={{
-                background: focused === field.key ? 'hsl(228 30% 9% / 0.85)' : 'hsl(228 30% 7% / 0.7)',
-                border: field.error
-                  ? '1px solid hsl(0 84% 62% / 0.4)'
-                  : focused === field.key
-                  ? '1px solid hsl(43 88% 58% / 0.45)'
-                  : '1px solid hsl(255 25% 22% / 0.6)',
-                backdropFilter: 'blur(12px)',
-                boxShadow: focused === field.key ? '0 0 0 3px hsl(43 88% 58% / 0.06), inset 0 1px 0 hsl(255 25% 40% / 0.08)' : 'inset 0 1px 0 hsl(255 25% 30% / 0.05)',
-              }}
-              required={field.required}
-            />
-          </div>
-          {field.error && (
-            <p className="text-[10px] text-destructive/70 mt-1 pl-1 tracking-wide">{field.error}</p>
-          )}
-        </motion.div>
-      ))}
+      <UnderlineField
+        label="Name"
+        value={formData.name}
+        onChange={(v) => setFormData({ ...formData, name: v })}
+        placeholder="Your full name"
+        required
+        autoComplete="name"
+      />
+      <UnderlineField
+        label="Date of Birth"
+        value={formData.date}
+        onChange={(v) => { setFormData({ ...formData, date: v }); setDateError(''); }}
+        placeholder="MM / DD / YYYY"
+        error={dateError}
+        required
+        autoComplete="bday"
+      />
+      <div className="grid grid-cols-2 gap-6">
+        <UnderlineField
+          label="Time"
+          value={formData.time}
+          onChange={(v) => { setFormData({ ...formData, time: v }); setTimeError(''); }}
+          placeholder="HH:MM"
+          error={timeError}
+        />
+        <UnderlineField
+          label="Place"
+          value={formData.location}
+          onChange={(v) => setFormData({ ...formData, location: v })}
+          placeholder="City, Country"
+          required
+        />
+      </div>
 
-      {/* Half-width row: time + location */}
-      <motion.div
-        className="grid grid-cols-2 gap-2.5"
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.49 }}
-      >
-        {fields.filter(f => f.colSpan === 'half').map((field) => (
-          <div key={field.key}>
-            <input
-              type={field.type}
-              placeholder={field.placeholder}
-              value={(formData as any)[field.key]}
-              onChange={(e) => {
-                setFormData({ ...formData, [field.key]: e.target.value });
-                if (field.key === 'time') setTimeError('');
-              }}
-              onFocus={() => setFocused(field.key)}
-              onBlur={() => setFocused(null)}
-              className="w-full px-4 py-3.5 rounded-xl text-sm text-foreground placeholder:text-muted-foreground/45 placeholder:text-[11px] focus:outline-none transition-all duration-300"
-              style={{
-                background: focused === field.key ? 'hsl(228 30% 9% / 0.85)' : 'hsl(228 30% 7% / 0.7)',
-                border: field.error
-                  ? '1px solid hsl(0 84% 62% / 0.4)'
-                  : focused === field.key
-                  ? '1px solid hsl(43 88% 58% / 0.45)'
-                  : '1px solid hsl(255 25% 22% / 0.6)',
-                backdropFilter: 'blur(12px)',
-                boxShadow: focused === field.key ? '0 0 0 3px hsl(43 88% 58% / 0.06)' : 'none',
-              }}
-              required={field.required}
-            />
-            {field.error && <p className="text-[10px] text-destructive/70 mt-1 pl-1">{field.error}</p>}
-          </div>
-        ))}
-      </motion.div>
-
-      {/* Submit */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.56 }}
-        className="pt-1"
-      >
-        <motion.button
+      <div className="pt-4">
+        <button
           type="submit"
           disabled={isLoading || !formData.name || !formData.date || !formData.location}
-          className="w-full py-4 rounded-xl font-display font-semibold text-sm tracking-wider uppercase transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'linear-gradient(135deg, hsl(43 88% 58%), hsl(35 90% 50%))',
-            color: 'hsl(228 35% 5%)',
-            boxShadow: '0 4px 24px hsl(43 88% 58% / 0.28), 0 1px 4px hsl(43 88% 58% / 0.2)',
-          }}
-          whileHover={{ scale: 1.01, boxShadow: '0 6px 30px hsl(43 88% 58% / 0.45)' }}
-          whileTap={{ scale: 0.98 }}
+          className="group w-full min-h-[52px] py-4 rounded-full font-sans text-sm tracking-[0.2em] uppercase transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed bg-foreground text-background hover:bg-accent hover:text-accent-foreground"
         >
           {isLoading ? (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-              className="w-4 h-4 border-2 border-current border-t-transparent rounded-full mx-auto"
-            />
+            <span className="inline-flex items-center justify-center gap-3">
+              <span className="w-1 h-1 rounded-full bg-current animate-pulse" />
+              <span>Generating</span>
+            </span>
           ) : (
-            <span className="flex items-center justify-center gap-2">
+            <span className="inline-flex items-center justify-center gap-3">
               Generate Symphony
-              <span className="opacity-70 text-base">›</span>
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
             </span>
           )}
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
     </motion.form>
   );
 };
