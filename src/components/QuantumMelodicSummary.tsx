@@ -4,10 +4,12 @@ import ReactMarkdown from 'react-markdown';
 import type { PlanetPosition } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { calculateHarmonicAnalysis, getResolutionGuidance, elementInfo } from '@/utils/harmonicWisdom';
-import { Music, Sparkles, BarChart3, Loader2, AlertCircle, Download } from 'lucide-react';
+import { Sparkles, Loader2, AlertCircle, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { fetchWithTimeout, RequestTimeoutError } from '@/lib/fetchWithTimeout';
+import { AspectSigil, PlanetSigil, toPlanetName } from '@/components/sigils';
+import type { AspectName } from '@/components/sigils';
 
 interface Props {
   reading: QuantumMelodicReading;
@@ -178,30 +180,28 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
-      {/* Tab Header */}
-      <div className="flex gap-1 p-1 rounded-xl glass">
-        <button
-          onClick={() => handleTabChange('analytics')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-            activeTab === 'analytics'
-              ? 'bg-primary/20 text-primary border border-primary/30'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          Analytics
-        </button>
-        <button
-          onClick={() => handleTabChange('report')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-            activeTab === 'report'
-              ? 'bg-primary/20 text-primary border border-primary/30'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          Report
-        </button>
+      {/* Tab Header — underline minimalist */}
+      <div className="flex gap-8 border-b border-foreground/10">
+        {([
+          { id: 'analytics', label: 'Analytics' },
+          { id: 'report', label: 'Report' },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => handleTabChange(t.id)}
+            className={`relative pb-3 text-[11px] uppercase tracking-[0.25em] transition-colors ${
+              activeTab === t.id ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/70'
+            }`}
+          >
+            {t.label}
+            {activeTab === t.id && (
+              <motion.span
+                layoutId="qm-tab-underline"
+                className="absolute left-0 right-0 -bottom-px h-px bg-accent"
+              />
+            )}
+          </button>
+        ))}
       </div>
 
       <AnimatePresence mode="wait">
@@ -294,25 +294,24 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
             </div>
 
             {/* Aspect Summary */}
-            <div className="glass rounded-xl p-4">
-              <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Aspect Patterns</h3>
+            <div className="glass rounded-xl p-5">
+              <h3 className="text-[10px] uppercase tracking-[0.3em] text-foreground/40 mb-4">Aspect Patterns</h3>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(aspectCounts).map(([name, count]) => {
                   const aspectData = aspects.find(a => a.aspectType.name === name)?.aspectType;
+                  const aspectKey = name.toLowerCase() as AspectName;
                   return (
                     <button
                       key={name}
                       onClick={() => onAspectPatternClick?.(name)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all hover:scale-105 hover:shadow-lg cursor-pointer border"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all hover:scale-[1.03] border"
                       style={{
-                        backgroundColor: `${aspectData?.color}20`,
                         color: aspectData?.color,
                         borderColor: `${aspectData?.color}40`,
                       }}
                     >
-                      <span>{aspectData?.symbol}</span>
-                      <span>{count}</span>
-                      <Music className="w-3 h-3 opacity-60" />
+                      <AspectSigil aspect={aspectKey} size={14} strokeWidth={1.5} />
+                      <span className="font-mono tracking-wide">{count}</span>
                     </button>
                   );
                 })}
@@ -321,17 +320,22 @@ export const QuantumMelodicSummary = ({ reading, chartData, subjectName, reading
 
             {/* Retrograde */}
             {retrogradePlanets.length > 0 && (
-              <div className="glass rounded-xl p-4 border-l-2 border-destructive/50">
-                <h3 className="text-xs uppercase tracking-widest text-destructive/80 mb-2">Retrograde Planets</h3>
+              <div className="glass rounded-xl p-5 border-l-2 border-destructive/50">
+                <h3 className="text-[10px] uppercase tracking-[0.3em] text-destructive/80 mb-3">Retrograde</h3>
                 <div className="flex flex-wrap gap-2">
-                  {retrogradePlanets.map(p => (
-                    <span key={p.position.name} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-destructive/10 text-destructive text-sm">
-                      {p.position.symbol} {p.position.name} ℞
-                    </span>
-                  ))}
+                  {retrogradePlanets.map(p => {
+                    const pk = toPlanetName(p.position.name);
+                    return (
+                      <span key={p.position.name} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs">
+                        {pk && <PlanetSigil planet={pk} size={14} strokeWidth={1.5} />}
+                        <span className="tracking-wide">{p.position.name}</span>
+                        <span className="font-mono opacity-70">℞</span>
+                      </span>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 italic">
-                  Retrograde energy inverts the typical harmonic expression, creating introspective and reviewing themes
+                <p className="text-[11px] text-muted-foreground mt-3 italic leading-relaxed">
+                  Retrograde energy inverts the typical harmonic expression — introspective, reviewing themes.
                 </p>
               </div>
             )}
