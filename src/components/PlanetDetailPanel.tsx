@@ -7,6 +7,7 @@ import { elementInfo, qualityInfo, getFrequencyCategory, houseWisdom } from '@/u
 import { Button } from '@/components/ui/button';
 import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { requestGeneratedSound } from '@/lib/supabaseSound';
+import { PlanetSigil, ZodiacSigil, toPlanetName, toZodiacSign } from '@/components/sigils';
 
 interface EnrichedPlanet {
   position: PlanetPosition;
@@ -123,13 +124,22 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-border/30 bg-card/80 backdrop-blur-xl">
           <div className="flex items-center gap-4">
-            <span className="text-4xl text-primary">{position.symbol}</span>
+            {(() => {
+              const pk = toPlanetName(position.name);
+              const sk = toZodiacSign(position.sign);
+              return (
+                <div className="flex items-center gap-2 text-accent">
+                  {pk && <PlanetSigil planet={pk} size={32} strokeWidth={1.5} />}
+                  {sk && <ZodiacSigil sign={sk} size={24} strokeWidth={1.25} className="text-foreground/50" />}
+                </div>
+              );
+            })()}
             <div>
-              <h2 className="font-display text-xl font-light text-foreground">
+              <h2 className="font-display text-xl font-light text-foreground tracking-tight">
                 {position.name}
               </h2>
-              <p className="text-sm text-muted-foreground">
-                {formatDegree(position.degree)} {position.sign}
+              <p className="text-xs font-mono text-muted-foreground tracking-wide">
+                {position.sign} {formatDegree(position.degree)}
                 {position.isRetrograde && ' ℞'}
               </p>
             </div>
@@ -137,6 +147,7 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-muted/50 transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
