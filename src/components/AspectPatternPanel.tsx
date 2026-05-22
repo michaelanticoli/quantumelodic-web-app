@@ -4,6 +4,8 @@ import { X, Volume2, VolumeX, Music } from 'lucide-react';
 import type { ComputedAspect, QuantumMelodicReading } from '@/types/quantumMelodic';
 import { Button } from '@/components/ui/button';
 import { aspectMusicalData } from '@/utils/harmonicWisdom';
+import { PlanetSigil, AspectSigil, toPlanetName } from '@/components/sigils';
+import type { AspectName } from '@/components/sigils';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -127,19 +129,19 @@ export const AspectPatternPanel = ({ aspectName, aspects, reading, onClose }: Pr
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-border/30 bg-card/80 backdrop-blur-xl">
           <div className="flex items-center gap-4">
-            <span className="text-3xl" style={{ color: aspectType.color }}>
-              {aspectType.symbol}
-            </span>
+            <div style={{ color: aspectType.color }}>
+              <AspectSigil aspect={aspectName.toLowerCase() as AspectName} size={32} strokeWidth={1.5} />
+            </div>
             <div>
-              <h2 className="font-display text-xl font-light text-foreground">
-                {aspectName} Pattern
+              <h2 className="font-display text-xl font-light text-foreground tracking-tight">
+                {aspectName}
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs font-mono text-muted-foreground tracking-wide uppercase">
                 {filteredAspects.length} {filteredAspects.length === 1 ? 'aspect' : 'aspects'} · {involvedPlanetNames.length} planets
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-muted/50 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-muted/50 transition-colors" aria-label="Close">
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
@@ -169,20 +171,23 @@ export const AspectPatternPanel = ({ aspectName, aspects, reading, onClose }: Pr
             <div className="space-y-2">
               {involvedPlanets.map(p => {
                 if (!p) return null;
+                const pk = toPlanetName(p.position.name);
                 return (
                   <div key={p.position.name} className="glass rounded-xl p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl text-primary">{p.position.symbol}</span>
+                      <span className="text-accent">
+                        {pk && <PlanetSigil planet={pk} size={22} strokeWidth={1.5} />}
+                      </span>
                       <div>
                         <p className="text-foreground font-medium">{p.position.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground font-mono">
                           {p.qmData?.instrument || 'Synth'} · {p.qmData?.frequency_hz || '—'}Hz
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-foreground">{formatDegree(p.position.degree)} {p.position.sign}</p>
-                      <p className="text-xs text-muted-foreground">House {p.houseNumber}</p>
+                      <p className="text-foreground font-mono text-sm">{p.position.sign} {formatDegree(p.position.degree)}</p>
+                      <p className="text-xs text-muted-foreground tracking-wide uppercase">House {p.houseNumber}</p>
                     </div>
                   </div>
                 );

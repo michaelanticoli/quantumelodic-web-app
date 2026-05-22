@@ -163,23 +163,23 @@ const ChartExplorer = () => {
       <CosmicBackground />
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-6 py-4">
+      <header className="fixed top-0 left-0 right-0 z-40 px-6 py-5 backdrop-blur-md bg-background/40 border-b border-foreground/5">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <motion.button
             onClick={() => navigate(-1)}
-            className="text-muted-foreground hover:text-foreground text-sm tracking-wide transition-colors"
+            className="text-muted-foreground hover:text-foreground text-[11px] tracking-[0.2em] uppercase transition-colors"
             whileHover={{ x: -2 }}
           >
-            ‹ Back
+            ← Back
           </motion.button>
 
           <div className="text-center">
-            <h1 className="font-display text-lg font-light tracking-wide text-foreground">
-              {chartName}'s Chart
-            </h1>
-            <p className="text-xs text-muted-foreground tracking-widest uppercase">
+            <p className="text-[10px] text-muted-foreground/60 tracking-[0.3em] uppercase mb-1">
               Interactive Explorer
             </p>
+            <h1 className="font-display text-base font-medium tracking-tight text-foreground">
+              {chartName}
+            </h1>
           </div>
 
           <div className="w-12" />
