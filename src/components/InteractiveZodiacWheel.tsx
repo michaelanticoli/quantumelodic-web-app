@@ -2,25 +2,30 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { PlanetPosition } from '@/types/astrology';
 import type { ComputedAspect } from '@/types/quantumMelodic';
+import { ZodiacSigilFragment, PlanetSigilFragment } from '@/components/sigils/SigilFragments';
+import { toZodiacSign, toPlanetName } from '@/components/sigils';
 
 const ZODIAC = [
-  { symbol: '♈', name: 'Aries',       color: 'hsl(0 70% 58%)',   element: 'Fire'  },
-  { symbol: '♉', name: 'Taurus',      color: 'hsl(120 38% 46%)', element: 'Earth' },
-  { symbol: '♊', name: 'Gemini',      color: 'hsl(48 68% 54%)',  element: 'Air'   },
-  { symbol: '♋', name: 'Cancer',      color: 'hsl(210 48% 60%)', element: 'Water' },
-  { symbol: '♌', name: 'Leo',         color: 'hsl(38 80% 56%)',  element: 'Fire'  },
-  { symbol: '♍', name: 'Virgo',       color: 'hsl(90 34% 46%)',  element: 'Earth' },
-  { symbol: '♎', name: 'Libra',       color: 'hsl(330 48% 60%)', element: 'Air'   },
-  { symbol: '♏', name: 'Scorpio',     color: 'hsl(0 48% 40%)',   element: 'Water' },
-  { symbol: '♐', name: 'Sagittarius', color: 'hsl(270 48% 56%)', element: 'Fire'  },
-  { symbol: '♑', name: 'Capricorn',   color: 'hsl(30 24% 40%)',  element: 'Earth' },
-  { symbol: '♒', name: 'Aquarius',    color: 'hsl(195 68% 50%)', element: 'Air'   },
-  { symbol: '♓', name: 'Pisces',      color: 'hsl(240 48% 60%)', element: 'Water' },
+  { name: 'Aries',       element: 'Fire'  },
+  { name: 'Taurus',      element: 'Earth' },
+  { name: 'Gemini',      element: 'Air'   },
+  { name: 'Cancer',      element: 'Water' },
+  { name: 'Leo',         element: 'Fire'  },
+  { name: 'Virgo',       element: 'Earth' },
+  { name: 'Libra',       element: 'Air'   },
+  { name: 'Scorpio',     element: 'Water' },
+  { name: 'Sagittarius', element: 'Fire'  },
+  { name: 'Capricorn',   element: 'Earth' },
+  { name: 'Aquarius',    element: 'Air'   },
+  { name: 'Pisces',      element: 'Water' },
 ];
 
-// Element hue for sign segment background
-const ELEMENT_HUE: Record<string, number> = {
-  Fire: 15, Earth: 100, Air: 195, Water: 215,
+// Jewel tones per element — used as subtle punctuation only
+const ELEMENT_COLOR: Record<string, string> = {
+  Fire:  'hsl(14 95% 58%)',
+  Earth: 'hsl(140 70% 55%)',
+  Air:   'hsl(168 95% 55%)',
+  Water: 'hsl(220 80% 62%)',
 };
 
 const HOUSE_NAMES = [
@@ -63,7 +68,6 @@ export const InteractiveZodiacWheel = ({
   const signInner = outerR - 44;
   const planetR   = signInner - 48;
   const innerR    = planetR - 36;
-  const houseR    = innerR - 4;
 
   const ascendant = planets.find(p => p.name === 'Ascendant');
   const ascDeg = ascendant?.degree ?? 0;
@@ -76,13 +80,11 @@ export const InteractiveZodiacWheel = ({
     y: cy + Math.sin(angle) * r,
   });
 
-  // Describe an arc segment (for zodiac sign backgrounds)
   const arcPath = (startDeg: number, endDeg: number, r1: number, r2: number) => {
     const a1 = degToAngle(startDeg);
     const a2 = degToAngle(endDeg);
     const x1o = cx + Math.cos(a1) * r2, y1o = cy + Math.sin(a1) * r2;
     const x2o = cx + Math.cos(a2) * r2, y2o = cy + Math.sin(a2) * r2;
-    // CCW arc (signs go counter-clockwise)
     const sweep = 0;
     return [
       `M ${cx + Math.cos(a1) * r1} ${cy + Math.sin(a1) * r1}`,
@@ -107,42 +109,20 @@ export const InteractiveZodiacWheel = ({
   return (
     <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full" style={{ maxWidth: '100%', maxHeight: '100%' }}>
       <defs>
-        {/* Glow filters */}
         <filter id="glow-sm" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feGaussianBlur stdDeviation="2.4" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <filter id="glow-lg" x="-100%" y="-100%" width="300%" height="300%">
-          <feGaussianBlur stdDeviation="7" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-        <filter id="glow-pulse" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur result="blur">
-            <animate attributeName="stdDeviation" values="3;6;3" dur="2.5s" repeatCount="indefinite" />
-          </feGaussianBlur>
+          <feGaussianBlur stdDeviation="6" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
-
-        {/* Gold gradient for planet circles */}
-        <radialGradient id="rg-planet-sel">
-          <stop offset="0%"   stopColor="hsl(43 74% 65%)" />
-          <stop offset="100%" stopColor="hsl(43 74% 42%)" />
-        </radialGradient>
-        <radialGradient id="rg-planet-norm">
-          <stop offset="0%"   stopColor="hsl(222 47% 18%)" />
-          <stop offset="100%" stopColor="hsl(222 47% 8%)"  />
-        </radialGradient>
-        {/* Inner circle bg */}
-        <radialGradient id="rg-inner" cx="50%" cy="50%">
-          <stop offset="0%"   stopColor="hsl(222 47% 10%)" />
-          <stop offset="100%" stopColor="hsl(222 47% 5%)"  />
-        </radialGradient>
       </defs>
 
-      {/* ── Outer dark ring ────────────────────────────────── */}
-      <circle cx={cx} cy={cy} r={outerR + 2} fill="hsl(222 47% 5%)" />
+      {/* Outer plate */}
+      <circle cx={cx} cy={cy} r={outerR + 2} fill="hsl(var(--background))" />
 
-      {/* ── Zodiac sign segments ──────────────────────────── */}
+      {/* Zodiac segments */}
       {ZODIAC.map((sign, i) => {
         const startDeg = i * 30;
         const endDeg   = startDeg + 30;
@@ -150,7 +130,8 @@ export const InteractiveZodiacWheel = ({
         const midX = cx + Math.cos(midAngle) * (signInner + 22);
         const midY = cy + Math.sin(midAngle) * (signInner + 22);
         const isHovered = hoveredSign === i;
-        const hue = ELEMENT_HUE[sign.element] ?? 43;
+        const color = ELEMENT_COLOR[sign.element];
+        const sigilKey = toZodiacSign(sign.name);
 
         return (
           <g
@@ -160,54 +141,49 @@ export const InteractiveZodiacWheel = ({
             onMouseLeave={() => { setHoveredSign(null); onPlanetHover(null); }}
             onClick={() => onSignClick?.(sign.name)}
           >
-            {/* Segment fill */}
             <path
               d={arcPath(startDeg, endDeg, signInner, signOuter)}
-              fill={isHovered ? `hsl(${hue} 55% 20% / 0.6)` : `hsl(${hue} 40% 12% / 0.35)`}
-              stroke={isHovered ? `hsl(${hue} 65% 45% / 0.6)` : 'hsl(43 30% 30% / 0.2)'}
-              strokeWidth="0.5"
+              fill={isHovered ? `${color.replace(')', ' / 0.12)')}` : 'hsl(var(--foreground) / 0.015)'}
+              stroke={isHovered ? color.replace(')', ' / 0.6)') : 'hsl(var(--border))'}
+              strokeWidth="0.75"
               style={{ transition: 'fill 0.2s, stroke 0.2s' }}
             />
-            {/* Divider line at start */}
             {(() => {
               const a = degToAngle(startDeg);
               const p1 = polarToXY(a, signInner);
               const p2 = polarToXY(a, signOuter);
               return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
-                stroke="hsl(43 30% 35% / 0.3)" strokeWidth="0.5" />;
+                stroke="hsl(var(--border))" strokeWidth="0.5" />;
             })()}
-            {/* Glyph */}
-            <text
-              x={midX}
-              y={midY}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={isHovered ? sign.color : sign.color.replace(')', ' / 0.75)')}
-              fontSize={isHovered ? '19' : '17'}
-              fontFamily="serif"
-              style={{ transition: 'font-size 0.15s' }}
-              filter={isHovered ? 'url(#glow-sm)' : undefined}
-            >
-              {sign.symbol}
-            </text>
+            {sigilKey && (
+              <ZodiacSigilFragment
+                sign={sigilKey}
+                cx={midX}
+                cy={midY}
+                size={isHovered ? 26 : 22}
+                stroke={isHovered ? color : color.replace(')', ' / 0.7)')}
+                strokeWidth={1.5}
+                filter={isHovered ? 'url(#glow-sm)' : undefined}
+              />
+            )}
           </g>
         );
       })}
 
-      {/* ── Inner circle ─────────────────────────────────── */}
-      <circle cx={cx} cy={cy} r={signInner} fill="hsl(222 47% 7%)"
-        stroke="hsl(43 30% 30% / 0.3)" strokeWidth="0.75" />
+      {/* Inner plate */}
+      <circle cx={cx} cy={cy} r={signInner} fill="hsl(var(--card))"
+        stroke="hsl(var(--border))" strokeWidth="0.75" />
 
-      {/* ── House cusps + labels (equal-house from Ascendant) ── */}
+      {/* House cusps + numbers (equal-house from Ascendant) */}
       {Array.from({ length: 12 }).map((_, i) => {
         const angle = degToAngle(ascDeg + i * 30);
         const p1 = polarToXY(angle, innerR);
         const p2 = polarToXY(angle, signInner);
-        // Label at midpoint between this and next cusp
         const midAngle = degToAngle(ascDeg + i * 30 + 15);
         const labelR = innerR + (signInner - innerR) * 0.45;
         const lp = polarToXY(midAngle, labelR);
         const isHov = hoveredHouse === i;
+        const isAngular = i === 0 || i === 3 || i === 6 || i === 9;
 
         return (
           <g key={`house-${i}`}
@@ -215,16 +191,17 @@ export const InteractiveZodiacWheel = ({
             onMouseLeave={() => { setHoveredHouse(null); onPlanetHover(null); }}
           >
             <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
-              stroke="hsl(43 30% 40% / 0.2)" strokeWidth="0.5" strokeDasharray="3,4" />
-            {/* House number */}
+              stroke={isAngular ? 'hsl(var(--accent) / 0.4)' : 'hsl(var(--border))'}
+              strokeWidth={isAngular ? 1 : 0.5}
+              strokeDasharray={isAngular ? undefined : '2,4'} />
             <text
               x={lp.x} y={lp.y}
               textAnchor="middle" dominantBaseline="middle"
-              fontSize={isHov ? '10' : '8'}
-              fill={isHov ? 'hsl(43 74% 62%)' : 'hsl(43 40% 45% / 0.5)'}
-              fontFamily="serif"
+              fontSize={isHov ? '11' : '9'}
+              fill={isHov ? 'hsl(var(--accent))' : 'hsl(var(--muted-foreground))'}
+              fontFamily="JetBrains Mono, monospace"
+              letterSpacing="0.1em"
               style={{ transition: 'all 0.15s', cursor: 'default' }}
-              filter={isHov ? 'url(#glow-sm)' : undefined}
             >
               {i + 1}
             </text>
@@ -232,11 +209,10 @@ export const InteractiveZodiacWheel = ({
         );
       })}
 
-      {/* ── Inner circle boundary ─────────────────────────── */}
-      <circle cx={cx} cy={cy} r={innerR} fill="url(#rg-inner)"
-        stroke="hsl(43 30% 35% / 0.4)" strokeWidth="0.75" />
+      <circle cx={cx} cy={cy} r={innerR} fill="hsl(var(--background))"
+        stroke="hsl(var(--border))" strokeWidth="0.75" />
 
-      {/* ── Aspect lines ─────────────────────────────────── */}
+      {/* Aspect lines */}
       {aspects.map((aspect, i) => {
         const pos1 = getPlanetPos(aspect.planet1);
         const pos2 = getPlanetPos(aspect.planet2);
@@ -252,12 +228,12 @@ export const InteractiveZodiacWheel = ({
             x1={pos1.x} y1={pos1.y}
             x2={pos2.x} y2={pos2.y}
             stroke={aspect.aspectType.color}
-            strokeWidth={active ? 2.5 : 1}
-            strokeOpacity={active ? 1 : 0.45}
+            strokeWidth={active ? 2 : 0.75}
+            strokeOpacity={active ? 1 : 0.4}
             strokeDasharray={
               aspect.aspectType.name === 'Opposition' ? '8,4' :
               aspect.aspectType.name === 'Square'     ? '4,4' :
-              aspect.aspectType.name === 'Quincunx'  ? '2,5' : 'none'
+              aspect.aspectType.name === 'Quincunx'   ? '2,5' : 'none'
             }
             className="cursor-pointer"
             onClick={() => onAspectClick(aspect)}
@@ -272,89 +248,68 @@ export const InteractiveZodiacWheel = ({
         );
       })}
 
-      {/* ── Planet symbols ───────────────────────────────── */}
+      {/* Planet sigils */}
       {planetPositions.map(({ planet, x, y }) => {
         const isSel = selectedPlanet?.name === planet.name;
         const isAsc = planet.name === 'Ascendant';
         const isEnabled = !enabledPlanets || isAsc || enabledPlanets.has(planet.name);
-        const radius = isAsc ? 14 : 19;
+        const radius = isAsc ? 14 : 20;
+        const planetKey = toPlanetName(planet.name);
 
         return (
-          <g key={planet.name} opacity={isEnabled ? 1 : 0.15}>
-            {/* Ripple ring (active planets only) */}
-            {!isAsc && isEnabled && (
-              <>
-                {[0, 1].map(ri => (
-                  <circle key={ri} cx={x} cy={y} r={radius} fill="none"
-                    stroke="hsl(43 74% 52%)" strokeWidth="1" opacity="0">
-                    <animate attributeName="r" from={radius} to={radius + 22}
-                      dur="3.2s" begin={`${ri * 1.6}s`} repeatCount="indefinite" />
-                    <animate attributeName="opacity" from="0.45" to="0"
-                      dur="3.2s" begin={`${ri * 1.6}s`} repeatCount="indefinite" />
-                  </circle>
-                ))}
-              </>
-            )}
-
-            {/* Glow aura */}
+          <g key={planet.name} opacity={isEnabled ? 1 : 0.18}>
             {isSel && (
-              <circle cx={x} cy={y} r={radius + 12}
-                fill="hsl(43 74% 52% / 0.15)"
+              <circle cx={x} cy={y} r={radius + 8}
+                fill="hsl(var(--accent) / 0.18)"
                 filter="url(#glow-lg)" />
             )}
 
-            {/* Planet circle */}
             <motion.circle
               cx={x} cy={y} r={radius}
-              fill={isSel ? 'url(#rg-planet-sel)' : 'url(#rg-planet-norm)'}
-              stroke={isSel ? 'hsl(43 74% 62%)' : 'hsl(43 74% 45% / 0.7)'}
-              strokeWidth={isSel ? 1.75 : 0.75}
+              fill={isSel ? 'hsl(var(--accent))' : 'hsl(var(--background))'}
+              stroke={isSel ? 'hsl(var(--accent))' : 'hsl(var(--foreground) / 0.35)'}
+              strokeWidth={isSel ? 1.5 : 0.75}
               className="cursor-pointer"
               onClick={() => onPlanetClick(planet)}
               onMouseEnter={() => onPlanetHover(`${planet.name} in ${planet.sign}${planet.isRetrograde ? ' ℞' : ''}`)}
               onMouseLeave={() => onPlanetHover(null)}
-              whileHover={{ scale: 1.18 }}
-              whileTap={{ scale: 0.93 }}
-              filter={isSel ? 'url(#glow-pulse)' : undefined}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.95 }}
             />
 
-            {/* Symbol */}
-            <text x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-              fill={isSel ? 'hsl(222 47% 6%)' : 'hsl(43 74% 62%)'}
-              fontSize={isAsc ? '9' : '13'}
-              fontFamily="serif"
-              className="pointer-events-none select-none"
-              style={{ fontWeight: isSel ? '600' : '400' }}
-            >
-              {planet.symbol}
-            </text>
+            {planetKey && (
+              <PlanetSigilFragment
+                planet={planetKey}
+                cx={x}
+                cy={y}
+                size={isAsc ? 18 : 24}
+                stroke={isSel ? 'hsl(var(--accent-foreground))' : 'hsl(var(--foreground))'}
+                strokeWidth={1.5}
+              />
+            )}
 
-            {/* Retrograde marker */}
             {planet.isRetrograde && (
               <text x={x + radius - 2} y={y - radius + 4}
-                fill="hsl(0 70% 65%)" fontSize="8"
+                fill="hsl(var(--jewel-ember))" fontSize="9"
                 className="pointer-events-none select-none">℞</text>
             )}
 
-            {/* Sign below planet */}
             {!isAsc && (
-              <text x={x} y={y + radius + 9}
+              <text x={x} y={y + radius + 11}
                 textAnchor="middle" dominantBaseline="middle"
-                fill="hsl(0 0% 60% / 0.5)" fontSize="7"
-                className="pointer-events-none select-none">
-                {planet.sign.substring(0, 3).toUpperCase()}
+                fill="hsl(var(--muted-foreground))" fontSize="8"
+                letterSpacing="0.15em"
+                fontFamily="Inter Tight, sans-serif"
+                className="pointer-events-none select-none uppercase">
+                {planet.sign.substring(0, 3)}
               </text>
             )}
           </g>
         );
       })}
 
-      {/* ── Centre pulse ─────────────────────────────────── */}
-      <circle cx={cx} cy={cy} r={5} fill="hsl(43 74% 55%)" opacity="0.9"
-        filter="url(#glow-sm)">
-        <animate attributeName="r" values="3;5.5;3" dur="2.5s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="0.55;1;0.55" dur="2.5s" repeatCount="indefinite" />
-      </circle>
+      {/* Centre dot */}
+      <circle cx={cx} cy={cy} r={3} fill="hsl(var(--accent))" opacity="0.9" filter="url(#glow-sm)" />
     </svg>
   );
 };
