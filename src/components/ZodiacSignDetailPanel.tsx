@@ -6,11 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { requestGeneratedSound } from '@/lib/supabaseSound';
 
-const ZODIAC_SYMBOLS: Record<string, string> = {
-  Aries: '♈', Taurus: '♉', Gemini: '♊', Cancer: '♋',
-  Leo: '♌', Virgo: '♍', Libra: '♎', Scorpio: '♏',
-  Sagittarius: '♐', Capricorn: '♑', Aquarius: '♒', Pisces: '♓',
-};
+import { ZodiacSigil, toZodiacSign } from '@/components/sigils';
 
 const ELEMENT_COLORS: Record<string, string> = {
   Fire: 'hsl(15 80% 55%)',
@@ -33,8 +29,8 @@ const ELEMENT_BORDER: Record<string, string> = {
   Water: 'hsl(215 60% 50% / 0.35)',
 };
 
-const ELEMENT_EMOJI: Record<string, string> = {
-  Fire: '🔥', Earth: '🌿', Air: '🌬️', Water: '💧',
+const ELEMENT_DOT: Record<string, string> = {
+  Fire: 'hsl(14 95% 58%)', Earth: 'hsl(140 70% 55%)', Air: 'hsl(168 95% 55%)', Water: 'hsl(220 80% 62%)',
 };
 
 interface Props {
@@ -53,7 +49,7 @@ export const ZodiacSignDetailPanel = ({ signName, signData, isDataReady, dataErr
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
 
-  const symbol = ZODIAC_SYMBOLS[signName] ?? '✦';
+  const sigilKey = toZodiacSign(signName);
   const element = signData?.element ?? 'Fire';
   const elemColor = ELEMENT_COLORS[element] ?? ELEMENT_COLORS.Fire;
   const elemBg = ELEMENT_BG[element] ?? ELEMENT_BG.Fire;
@@ -153,11 +149,13 @@ export const ZodiacSignDetailPanel = ({ signName, signData, isDataReady, dataErr
           style={{ borderColor: elemBorder, background: `hsl(222 47% 7% / 0.92)` }}
         >
           <div className="flex items-center gap-4">
-            <span className="text-5xl" style={{ color: elemColor }}>{symbol}</span>
+            <span style={{ color: elemColor }}>
+              {sigilKey ? <ZodiacSigil sign={sigilKey} size={56} strokeWidth={1.25} glow /> : <span className="text-5xl">✦</span>}
+            </span>
             <div>
               <h2 className="font-display text-xl font-light text-foreground">{signName}</h2>
               <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <span>{ELEMENT_EMOJI[element]}</span>
+                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: ELEMENT_DOT[element] ?? ELEMENT_DOT.Fire }} />
                 <span>{element} · {signData?.modality ?? '—'}</span>
               </p>
             </div>
