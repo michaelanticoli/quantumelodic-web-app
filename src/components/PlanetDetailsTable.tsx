@@ -1,27 +1,11 @@
 import { motion } from 'framer-motion';
 import type { PlanetPosition } from '@/types/astrology';
+import { ZodiacSigil, PlanetSigil, toZodiacSign, toPlanetName } from '@/components/sigils';
 
 interface PlanetDetailsTableProps {
   planets: PlanetPosition[];
 }
 
-// Get sign symbol from sign name
-const signSymbols: Record<string, string> = {
-  'Aries': '♈',
-  'Taurus': '♉',
-  'Gemini': '♊',
-  'Cancer': '♋',
-  'Leo': '♌',
-  'Virgo': '♍',
-  'Libra': '♎',
-  'Scorpio': '♏',
-  'Sagittarius': '♐',
-  'Capricorn': '♑',
-  'Aquarius': '♒',
-  'Pisces': '♓',
-};
-
-// Format degree as degrees within sign (0-29°)
 const formatDegree = (degree: number): string => {
   const degreeInSign = degree % 30;
   const deg = Math.floor(degreeInSign);
@@ -29,9 +13,6 @@ const formatDegree = (degree: number): string => {
   return `${deg}°${min.toString().padStart(2, '0')}'`;
 };
 
-// Equal-house system: houses progress counter-clockwise from Ascendant
-// through the zodiac (same direction as increasing ecliptic longitude).
-// House N starts at Asc + (N-1)*30°.
 const getHouse = (planetDegree: number, ascendantDegree: number): number => {
   const diff = ((planetDegree - ascendantDegree) % 360 + 360) % 360;
   return Math.floor(diff / 30) + 1;
@@ -40,79 +21,65 @@ const getHouse = (planetDegree: number, ascendantDegree: number): number => {
 export const PlanetDetailsTable = ({ planets }: PlanetDetailsTableProps) => {
   const ascendant = planets.find(p => p.name === 'Ascendant');
   const ascDegree = ascendant?.degree || 0;
-
-  // Filter out Ascendant from the list (it's displayed separately)
   const displayPlanets = planets.filter(p => p.name !== 'Ascendant');
 
   return (
     <motion.div
-      className="w-full max-w-sm mx-auto"
-      initial={{ opacity: 0, y: 20 }}
+      className="w-full max-w-md mx-auto"
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4 }}
+      transition={{ duration: 0.4 }}
     >
-      <h3 className="text-sm font-medium text-muted-foreground mb-3 text-center">
-        Planetary Positions
-      </h3>
-      
-      <div className="bg-background/30 backdrop-blur-sm rounded-lg border border-border/30 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/30">
-              <th className="px-3 py-2 text-left text-muted-foreground font-medium">Planet</th>
-              <th className="px-3 py-2 text-center text-muted-foreground font-medium">Sign</th>
-              <th className="px-3 py-2 text-right text-muted-foreground font-medium">Degree</th>
-              <th className="px-3 py-2 text-right text-muted-foreground font-medium">House</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayPlanets.map((planet, idx) => (
-              <motion.tr
-                key={planet.name}
-                className="border-b border-border/20 last:border-0"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + idx * 0.05 }}
-              >
-                <td className="px-3 py-2 flex items-center gap-2">
-                  <span 
-                    className="text-lg"
-                    style={{ color: planet.isRetrograde ? 'hsl(0, 70%, 60%)' : 'hsl(43, 74%, 70%)' }}
-                  >
-                    {planet.symbol}
-                  </span>
-                  <span className="text-foreground">
-                    {planet.name}
-                    {planet.isRetrograde && (
-                      <span className="text-destructive text-xs ml-1">℞</span>
-                    )}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-center">
-                  <span className="text-lg mr-1">{signSymbols[planet.sign]}</span>
-                  <span className="text-muted-foreground text-xs">{planet.sign}</span>
-                </td>
-                <td className="px-3 py-2 text-right font-mono text-foreground">
-                  {formatDegree(planet.degree)}
-                </td>
-                <td className="px-3 py-2 text-right text-muted-foreground">
-                  {getHouse(planet.degree, ascDegree)}
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex items-baseline justify-between mb-4 px-1">
+        <h3 className="font-display text-lg text-foreground">Planetary Positions</h3>
+        <span className="label-micro">{displayPlanets.length} bodies</span>
       </div>
 
-      {/* Ascendant display */}
-      {ascendant && (
-        <div className="mt-3 text-center text-sm">
-          <span className="text-muted-foreground">Ascendant: </span>
-          <span className="text-lg mr-1">{signSymbols[ascendant.sign]}</span>
-          <span className="text-primary font-medium">{ascendant.sign}</span>
-          <span className="text-muted-foreground ml-2">{formatDegree(ascendant.degree)}</span>
-        </div>
-      )}
+      <div className="divide-y divide-border/40">
+        {displayPlanets.map((planet, idx) => {
+          const planetKey = toPlanetName(planet.name);
+          const signKey = toZodiacSign(planet.sign);
+          return (
+            <motion.div
+              key={planet.name}
+              className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 py-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.05 * idx, duration: 0.25 }}
+            >
+              <span className={planet.isRetrograde ? 'text-jewel-ember' : 'text-accent'}>
+                {planetKey ? <PlanetSigil planet={planetKey} size={22} /> : <span className="text-lg">{planet.symbol}</span>}
+              </span>
+              <div className="min-w-0">
+                <div className="text-sm text-foreground truncate">
+                  {planet.name}
+                  {planet.isRetrograde && <span className="text-jewel-ember text-[10px] ml-1.5 align-top">℞</span>}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5 text-foreground/55">
+                  {signKey && <ZodiacSigil sign={signKey} size={12} strokeWidth={1.5} />}
+                  <span className="text-[11px] tracking-wide">{planet.sign}</span>
+                </div>
+              </div>
+              <span className="font-mono text-xs text-foreground/75 tabular-nums">{formatDegree(planet.degree)}</span>
+              <span className="font-mono text-[10px] label-micro w-8 text-right">H{getHouse(planet.degree, ascDegree)}</span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {ascendant && (() => {
+        const ascSign = toZodiacSign(ascendant.sign);
+        return (
+          <div className="mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
+            <span className="label-micro">Ascendant</span>
+            <div className="flex items-center gap-2">
+              {ascSign && <ZodiacSigil sign={ascSign} size={18} className="text-accent" />}
+              <span className="text-sm text-foreground">{ascendant.sign}</span>
+              <span className="font-mono text-xs text-foreground/55">{formatDegree(ascendant.degree)}</span>
+            </div>
+          </div>
+        );
+      })()}
     </motion.div>
   );
 };
