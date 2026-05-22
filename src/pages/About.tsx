@@ -57,7 +57,7 @@ const About = () => {
             </p>
             <blockquote
               className="pl-4 italic text-muted-foreground/70 text-sm leading-relaxed"
-              style={{ borderLeft: '2px solid hsl(43 88% 58% / 0.4)' }}
+              style={{ borderLeft: '2px solid hsl(var(--accent) / 0.4)' }}
             >
               "You are not separate from the stars. You are their music."
             </blockquote>
