@@ -125,67 +125,50 @@ const Index = () => {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
           >
-            {/* Hero Header */}
+            {/* Hero */}
             <motion.div
-              className="text-center mb-6"
-              initial={{ opacity: 0, y: -24 }}
+              className="text-center mb-10 max-w-2xl"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-              {/* Sigil above title */}
-              <motion.div
-                className="flex items-center justify-center gap-3 mb-4"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.05 }}
-              >
-                <div className="h-px w-10 bg-gradient-to-r from-transparent to-primary/40" />
-                <span
-                  className="text-primary/70 text-sm"
-                  style={{ fontFamily: "'Noto Sans Symbols 2','Segoe UI Symbol','Apple Symbols',sans-serif" }}
-                >
-                  ✦
-                </span>
-                <div className="h-px w-10 bg-gradient-to-l from-transparent to-primary/40" />
-              </motion.div>
-
-              <h1 className="font-display font-semibold tracking-tight leading-none mb-2">
-                <span className="block text-4xl md:text-6xl text-gold-gradient">Astro-Harmonic</span>
-                <span className="block text-4xl md:text-6xl text-foreground/85">Natal Analysis</span>
+              <p className="label-micro mb-6">Astro · Harmonic · Natal</p>
+              <h1 className="font-display font-light leading-[0.92] tracking-[-0.04em] text-foreground">
+                <span className="block text-[56px] md:text-[88px]">Your chart,</span>
+                <span className="block text-[56px] md:text-[88px] italic text-accent">composed.</span>
               </h1>
-              <p className="font-serif italic text-muted-foreground/70 text-sm md:text-base tracking-wide mt-3">
-                Find yourself in the frequency
+              <p className="font-sans text-foreground/60 text-base md:text-lg mt-6 max-w-md mx-auto leading-relaxed">
+                A natal reading translated, note by note, into your own cosmic symphony.
               </p>
             </motion.div>
 
-            {/* Zodiac Wheel */}
+            {/* Wheel */}
             <motion.div
-              className="mb-8"
-              initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 80, damping: 16 }}
+              className="mb-10"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15, duration: 0.6 }}
             >
               <ZodiacWheel />
             </motion.div>
 
             {/* Form */}
             <motion.div
-              className="w-full max-w-sm"
-              initial={{ opacity: 0, y: 20 }}
+              className="w-full max-w-md"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
             >
               <BirthDataForm onSubmit={handleFormSubmit} isLoading={loading} />
             </motion.div>
 
-            {/* Subtle scroll hint */}
             <motion.p
-              className="mt-8 text-[10px] text-muted-foreground/30 tracking-[0.3em] uppercase"
+              className="mt-12 label-micro text-foreground/30"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.2 }}
+              transition={{ delay: 0.8 }}
             >
-              Natal chart · Musical composition · Soul resonance
+              Natal chart · Composition · Resonance
             </motion.p>
           </motion.main>
         )}
