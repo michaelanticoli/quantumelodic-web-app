@@ -1,54 +1,39 @@
 import { motion } from 'framer-motion';
 import type { PlanetPosition } from '@/types/astrology';
+import { ZodiacSigilFragment, PlanetSigilFragment } from '@/components/sigils/SigilFragments';
+import { toZodiacSign, toPlanetName, type ZodiacSign, type PlanetName } from '@/components/sigils';
 
-// Unicode astrological symbols with elegant gold/amber color palette
-const zodiacSigns = [
-  { symbol: '♈', name: 'Aries', color: 'hsl(35, 80%, 65%)' },
-  { symbol: '♉', name: 'Taurus', color: 'hsl(40, 75%, 60%)' },
-  { symbol: '♊', name: 'Gemini', color: 'hsl(45, 85%, 70%)' },
-  { symbol: '♋', name: 'Cancer', color: 'hsl(38, 70%, 75%)' },
-  { symbol: '♌', name: 'Leo', color: 'hsl(42, 90%, 65%)' },
-  { symbol: '♍', name: 'Virgo', color: 'hsl(48, 65%, 60%)' },
-  { symbol: '♎', name: 'Libra', color: 'hsl(36, 75%, 68%)' },
-  { symbol: '♏', name: 'Scorpio', color: 'hsl(30, 80%, 55%)' },
-  { symbol: '♐', name: 'Sagittarius', color: 'hsl(44, 85%, 62%)' },
-  { symbol: '♑', name: 'Capricorn', color: 'hsl(32, 70%, 58%)' },
-  { symbol: '♒', name: 'Aquarius', color: 'hsl(50, 75%, 70%)' },
-  { symbol: '♓', name: 'Pisces', color: 'hsl(38, 80%, 65%)' },
+const ZODIAC_NAMES: ZodiacSign[] = [
+  'aries','taurus','gemini','cancer','leo','virgo',
+  'libra','scorpio','sagittarius','capricorn','aquarius','pisces',
 ];
 
-// Default decorative planets when no real data
-const defaultPlanets = [
-  { symbol: '☉', name: 'Sun', angle: 15, radius: 0.35 },
-  { symbol: '☽', name: 'Moon', angle: 95, radius: 0.28 },
-  { symbol: '☿', name: 'Mercury', angle: 45, radius: 0.42 },
-  { symbol: '♀', name: 'Venus', angle: 145, radius: 0.32 },
-  { symbol: '♂', name: 'Mars', angle: 205, radius: 0.38 },
-  { symbol: '♃', name: 'Jupiter', angle: 275, radius: 0.25 },
-  { symbol: '♄', name: 'Saturn', angle: 320, radius: 0.45 },
+const DEFAULT_PLANETS: { name: PlanetName; angle: number; radius: number }[] = [
+  { name: 'sun',     angle: 15,  radius: 0.35 },
+  { name: 'moon',    angle: 95,  radius: 0.28 },
+  { name: 'mercury', angle: 45,  radius: 0.42 },
+  { name: 'venus',   angle: 145, radius: 0.32 },
+  { name: 'mars',    angle: 205, radius: 0.38 },
+  { name: 'jupiter', angle: 275, radius: 0.25 },
+  { name: 'saturn',  angle: 320, radius: 0.45 },
 ];
 
-// Aspect definitions with orbs and colors
+// Aspect set used by the chart logic
 export const aspects = [
-  { name: 'Conjunction', symbol: '☌', angle: 0, orb: 8, color: 'hsla(43, 74%, 52%, 0.8)', dash: '' },
-  { name: 'Sextile', symbol: '⚹', angle: 60, orb: 6, color: 'hsla(186, 95%, 48%, 0.6)', dash: '4 2' },
-  { name: 'Square', symbol: '□', angle: 90, orb: 8, color: 'hsla(0, 70%, 55%, 0.7)', dash: '' },
-  { name: 'Trine', symbol: '△', angle: 120, orb: 8, color: 'hsla(120, 60%, 50%, 0.7)', dash: '' },
-  { name: 'Opposition', symbol: '☍', angle: 180, orb: 8, color: 'hsla(0, 70%, 55%, 0.6)', dash: '6 3' },
+  { name: 'Conjunction', symbol: '☌', angle: 0,   orb: 8, color: 'hsl(168 95% 55% / 0.85)', dash: '' },
+  { name: 'Sextile',     symbol: '⚹', angle: 60,  orb: 6, color: 'hsl(168 95% 55% / 0.55)', dash: '4 2' },
+  { name: 'Square',      symbol: '□', angle: 90,  orb: 8, color: 'hsl(14 95% 58% / 0.7)',   dash: '' },
+  { name: 'Trine',       symbol: '△', angle: 120, orb: 8, color: 'hsl(140 70% 55% / 0.7)',  dash: '' },
+  { name: 'Opposition',  symbol: '☍', angle: 180, orb: 8, color: 'hsl(14 95% 58% / 0.55)',  dash: '6 3' },
 ];
 
-// Calculate aspects between planets
 function calculateAspects(planets: { name: string; angle: number }[]) {
   const result: { p1: number; p2: number; aspect: typeof aspects[0] }[] = [];
-  
   for (let i = 0; i < planets.length; i++) {
     for (let j = i + 1; j < planets.length; j++) {
-      // Skip Ascendant for aspect calculations
       if (planets[i].name === 'Ascendant' || planets[j].name === 'Ascendant') continue;
-      
       let diff = Math.abs(planets[i].angle - planets[j].angle);
       if (diff > 180) diff = 360 - diff;
-      
       for (const aspect of aspects) {
         if (Math.abs(diff - aspect.angle) <= aspect.orb) {
           result.push({ p1: i, p2: j, aspect });
@@ -57,18 +42,10 @@ function calculateAspects(planets: { name: string; angle: number }[]) {
       }
     }
   }
-  
   return result;
 }
 
-// Convert zodiacal degree to screen position
-// In Western astrology: Ascendant at 9 o'clock (left), zodiac goes counter-clockwise
-// House 1 starts at ASC and goes clockwise (so H1 is below ASC at 8 o'clock position)
 function degreeToScreenAngle(zodiacDegree: number, ascendantDegree: number): number {
-  // The ascendant should appear at 180° (9 o'clock / left side)
-  // Zodiac degrees increase counter-clockwise
-  // So screen_angle = 180 - (zodiacDegree - ascendantDegree)
-  // This puts ASC at 180°, and zodiac increases counter-clockwise
   return 180 - (zodiacDegree - ascendantDegree);
 }
 
@@ -80,379 +57,167 @@ interface ZodiacWheelProps {
 export const ZodiacWheel = ({ planets, animate = true }: ZodiacWheelProps) => {
   const size = 300;
   const center = size / 2;
-  
-  // Get ascendant degree for wheel rotation
   const ascendantDegree = planets?.find(p => p.name === 'Ascendant')?.degree || 0;
 
-  // Convert real planet data to display format, or use defaults
-  // Place all real planets on the 0.6 ring (matches the inner circle drawn at center * 0.6)
-  const displayPlanets = planets 
+  const displayPlanets = planets
     ? planets.map((p) => ({
-        symbol: p.symbol,
         name: p.name,
         zodiacDegree: p.degree,
         screenAngle: degreeToScreenAngle(p.degree, ascendantDegree),
         radius: 0.6,
         isRetrograde: p.isRetrograde,
+        planetKey: toPlanetName(p.name),
       }))
-    : defaultPlanets.map(p => ({ 
-        ...p, 
+    : DEFAULT_PLANETS.map(p => ({
+        name: p.name,
         zodiacDegree: p.angle,
-        screenAngle: p.angle, 
-        isRetrograde: false 
+        screenAngle: p.angle,
+        radius: p.radius,
+        isRetrograde: false,
+        planetKey: p.name,
       }));
-  
-  // Calculate aspects between planets (using zodiacal degrees)
-  const planetAspects = planets 
+
+  const planetAspects = planets
     ? calculateAspects(displayPlanets.map(p => ({ name: p.name, angle: p.zodiacDegree })))
     : [];
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Outer glow */}
-      <div 
+      {/* Subtle ambient glow */}
+      <div
         className="absolute inset-0 rounded-full"
         style={{
-          background: 'radial-gradient(circle, hsla(291, 64%, 55%, 0.3) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, hsl(var(--accent) / 0.12) 0%, transparent 65%)',
           filter: 'blur(20px)',
         }}
       />
 
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="relative z-10"
-      >
-        {/* Definitions for gradients and filters */}
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="relative z-10">
         <defs>
-          <radialGradient id="wheelGradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="hsla(255, 50%, 30%, 0.8)" />
-            <stop offset="70%" stopColor="hsla(222, 47%, 15%, 0.9)" />
-            <stop offset="100%" stopColor="hsla(222, 47%, 10%, 1)" />
-          </radialGradient>
-
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+          <filter id="zw-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.6" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-
-          <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsla(43, 74%, 52%, 0.6)" />
-            <stop offset="50%" stopColor="hsla(291, 64%, 55%, 0.4)" />
-            <stop offset="100%" stopColor="hsla(186, 95%, 48%, 0.6)" />
-          </linearGradient>
         </defs>
 
-        {/* Background circle */}
-        <circle
-          cx={center}
-          cy={center}
-          r={center - 5}
-          fill="url(#wheelGradient)"
-          stroke="url(#ringGradient)"
-          strokeWidth="2"
-        />
+        {/* Plate */}
+        <circle cx={center} cy={center} r={center - 5}
+          fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" />
 
-        {/* Outer zodiac ring */}
-        <circle
-          cx={center}
-          cy={center}
-          r={center - 20}
-          fill="none"
-          stroke="hsla(43, 74%, 52%, 0.3)"
-          strokeWidth="1"
-          strokeDasharray="4 4"
-        />
+        {/* Outer dashed ring */}
+        <circle cx={center} cy={center} r={center - 20}
+          fill="none" stroke="hsl(var(--foreground) / 0.08)" strokeWidth="0.75" strokeDasharray="2 4" />
 
-        {/* Zodiac signs - positioned based on ascendant */}
-        {zodiacSigns.map((sign, index) => {
-          // Each sign occupies 30°, sign 0 (Aries) starts at 0°
-          const signStartDegree = index * 30;
-          const signMidDegree = signStartDegree + 15;
-          
-          // Convert to screen angle
+        {/* Zodiac sigils on the rim */}
+        {ZODIAC_NAMES.map((sign, index) => {
+          const signMidDegree = index * 30 + 15;
           const screenAngle = degreeToScreenAngle(signMidDegree, planets ? ascendantDegree : 0);
           const angleRad = screenAngle * (Math.PI / 180);
-          
-          const radius = center - 35;
-          const x = center + Math.cos(angleRad) * radius;
-          const y = center + Math.sin(angleRad) * radius;
-
+          const r = center - 35;
+          const x = center + Math.cos(angleRad) * r;
+          const y = center + Math.sin(angleRad) * r;
           return (
-            <motion.g 
-              key={sign.name}
-              initial={{ opacity: animate && !planets ? 0 : 0.9 }}
+            <motion.g
+              key={sign}
+              initial={{ opacity: animate ? 0 : 0.9 }}
               animate={{ opacity: 0.9 }}
+              transition={{ delay: 0.02 * index, duration: 0.3 }}
             >
-              <text
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={sign.color}
-                fontSize="18"
-                filter="url(#glow)"
-                style={{ 
-                  fontFamily: '"Noto Sans Symbols 2", "Segoe UI Symbol", "Apple Symbols", sans-serif',
-                  fontWeight: 400,
-                }}
-              >
-                {sign.symbol}
-              </text>
+              <ZodiacSigilFragment
+                sign={sign} cx={x} cy={y} size={16}
+                stroke="hsl(var(--foreground) / 0.7)"
+                strokeWidth={1.4}
+              />
             </motion.g>
           );
         })}
 
         {/* Inner rings */}
-        <circle
-          cx={center}
-          cy={center}
-          r={center * 0.6}
-          fill="none"
-          stroke="hsla(255, 30%, 40%, 0.4)"
-          strokeWidth="1"
-        />
-        <circle
-          cx={center}
-          cy={center}
-          r={center * 0.4}
-          fill="none"
-          stroke="hsla(255, 30%, 40%, 0.3)"
-          strokeWidth="1"
-        />
+        <circle cx={center} cy={center} r={center * 0.6}
+          fill="none" stroke="hsl(var(--border))" strokeWidth="0.75" />
+        <circle cx={center} cy={center} r={center * 0.4}
+          fill="none" stroke="hsl(var(--border))" strokeWidth="0.5" />
 
-        {/* House cusp lines - 12 houses, starting from Ascendant */}
-        {/* In equal house system, each house is 30° starting from ASC */}
+        {/* House cusps */}
         {[...Array(12)].map((_, i) => {
-          // House cusp i starts at ASC + (i * 30) in the clockwise direction
-          // But houses go clockwise from ASC (which is at 180° screen angle)
-          // House 1 cusp is at ASC (180°), House 2 at 180° + 30° = 210°, etc.
           const houseStartAngle = 180 + (i * 30);
           const angleRad = houseStartAngle * (Math.PI / 180);
-          
           const x1 = center + Math.cos(angleRad) * (center * 0.3);
           const y1 = center + Math.sin(angleRad) * (center * 0.3);
           const x2 = center + Math.cos(angleRad) * (center - 50);
           const y2 = center + Math.sin(angleRad) * (center - 50);
-
-          // House number position (middle of the house)
-          const houseMidAngle = 180 + (i * 30) + 15;
-          const houseMidRad = houseMidAngle * (Math.PI / 180);
-          const houseNumX = center + Math.cos(houseMidRad) * (center * 0.2);
-          const houseNumY = center + Math.sin(houseMidRad) * (center * 0.2);
-
           const isAngular = i === 0 || i === 3 || i === 6 || i === 9;
-
           return (
-            <g key={`house-${i}`}>
-              <line
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke={isAngular ? 'hsla(186, 95%, 60%, 0.6)' : 'hsla(255, 30%, 40%, 0.3)'}
-                strokeWidth={isAngular ? 1.5 : 1}
-              />
-              {/* House number */}
-              {planets && (
-                <text
-                  x={houseNumX}
-                  y={houseNumY}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fill="hsla(255, 30%, 60%, 0.5)"
-                  fontSize="9"
-                >
-                  {i + 1}
-                </text>
-              )}
-            </g>
+            <line key={`house-${i}`}
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={isAngular ? 'hsl(var(--accent) / 0.5)' : 'hsl(var(--border))'}
+              strokeWidth={isAngular ? 1 : 0.5} />
           );
         })}
 
-        {/* Planet positions */}
-        {displayPlanets.map((planet, idx) => {
-          // Skip drawing Ascendant as a planet (it's shown as the left axis)
-          if (planet.name === 'Ascendant') return null;
-          
-          const angleRad = planet.screenAngle * (Math.PI / 180);
-          const radius = center * planet.radius;
-          const x = center + Math.cos(angleRad) * radius;
-          const y = center + Math.sin(angleRad) * radius;
-
+        {/* Aspect lines */}
+        {planets && planetAspects.map(({ p1, p2, aspect }, idx) => {
+          const planet1 = displayPlanets[p1];
+          const planet2 = displayPlanets[p2];
+          const a1 = planet1.screenAngle * (Math.PI / 180);
+          const a2 = planet2.screenAngle * (Math.PI / 180);
+          const r1 = center * planet1.radius;
+          const r2 = center * planet2.radius;
           return (
-            <g key={planet.name}>
-              <motion.text
-                x={x}
-                y={y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={planet.isRetrograde ? 'hsla(0, 70%, 60%, 1)' : 'hsla(43, 74%, 70%, 1)'}
-                fontSize="14"
-                filter="url(#glow)"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 * idx }}
-              >
-                {planet.symbol}
-              </motion.text>
-              {/* Retrograde indicator */}
-              {planet.isRetrograde && (
-                <text
-                  x={x + 8}
-                  y={y - 5}
-                  fontSize="8"
-                  fill="hsla(0, 70%, 60%, 0.8)"
-                >
-                  ℞
-                </text>
-              )}
-            </g>
-          );
-        })}
-
-        {/* Aspect lines between planets */}
-        {planets && (
-          <g>
-            {planetAspects.map(({ p1, p2, aspect }, idx) => {
-              const planet1 = displayPlanets[p1];
-              const planet2 = displayPlanets[p2];
-              
-              const angle1Rad = planet1.screenAngle * (Math.PI / 180);
-              const angle2Rad = planet2.screenAngle * (Math.PI / 180);
-              
-              const r1 = center * planet1.radius;
-              const r2 = center * planet2.radius;
-              
-              const x1 = center + Math.cos(angle1Rad) * r1;
-              const y1 = center + Math.sin(angle1Rad) * r1;
-              const x2 = center + Math.cos(angle2Rad) * r2;
-              const y2 = center + Math.sin(angle2Rad) * r2;
-
-              return (
-                <motion.line
-                  key={`aspect-${idx}`}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={aspect.color}
-                  strokeWidth={aspect.name === 'Conjunction' || aspect.name === 'Opposition' ? 1.5 : 1}
-                  strokeDasharray={aspect.dash}
-                  initial={{ opacity: 0, pathLength: 0 }}
-                  animate={{ opacity: 1, pathLength: 1 }}
-                  transition={{ delay: 0.5 + idx * 0.1, duration: 0.3 }}
-                />
-              );
-            })}
-          </g>
-        )}
-
-        {/* Center music note */}
-        <motion.g
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <circle
-            cx={center}
-            cy={center}
-            r="25"
-            fill="hsla(222, 47%, 15%, 0.9)"
-            stroke="hsla(43, 74%, 52%, 0.6)"
-            strokeWidth="2"
-          />
-          <text
-            x={center}
-            y={center}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="hsla(43, 74%, 70%, 1)"
-            fontSize="20"
-            filter="url(#glow)"
-          >
-            ♪
-          </text>
-        </motion.g>
-
-        {/* Ascendant marker (left side of chart - 9 o'clock) */}
-        {planets && (
-          <g>
-            <text
-              x={15}
-              y={center}
-              textAnchor="start"
-              dominantBaseline="middle"
-              fill="hsla(186, 95%, 60%, 1)"
-              fontSize="12"
-              fontWeight="bold"
-            >
-              ASC
-            </text>
-            <line
-              x1={5}
-              y1={center}
-              x2={40}
-              y2={center}
-              stroke="hsla(186, 95%, 60%, 0.8)"
-              strokeWidth="2"
+            <motion.line key={`aspect-${idx}`}
+              x1={center + Math.cos(a1) * r1} y1={center + Math.sin(a1) * r1}
+              x2={center + Math.cos(a2) * r2} y2={center + Math.sin(a2) * r2}
+              stroke={aspect.color}
+              strokeWidth={aspect.name === 'Conjunction' || aspect.name === 'Opposition' ? 1 : 0.75}
+              strokeDasharray={aspect.dash}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 + idx * 0.05, duration: 0.3 }}
             />
-            {/* Descendant marker (right side - 3 o'clock) */}
-            <text
-              x={size - 15}
-              y={center}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fill="hsla(186, 95%, 60%, 0.6)"
-              fontSize="10"
+          );
+        })}
+
+        {/* Planet sigils */}
+        {displayPlanets.map((planet, idx) => {
+          if (planet.name === 'Ascendant') return null;
+          const angleRad = planet.screenAngle * (Math.PI / 180);
+          const r = center * planet.radius;
+          const x = center + Math.cos(angleRad) * r;
+          const y = center + Math.sin(angleRad) * r;
+          if (!planet.planetKey) return null;
+          return (
+            <motion.g
+              key={planet.name}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: 0.05 * idx }}
             >
-              DSC
-            </text>
-            {/* MC marker (top - 12 o'clock) */}
-            <text
-              x={center}
-              y={15}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="hsla(186, 95%, 60%, 0.6)"
-              fontSize="10"
-            >
-              MC
-            </text>
-            {/* IC marker (bottom - 6 o'clock) */}
-            <text
-              x={center}
-              y={size - 10}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill="hsla(186, 95%, 60%, 0.6)"
-              fontSize="10"
-            >
-              IC
-            </text>
+              <PlanetSigilFragment
+                planet={planet.planetKey}
+                cx={x} cy={y} size={16}
+                stroke={planet.isRetrograde ? 'hsl(var(--jewel-ember))' : 'hsl(var(--accent))'}
+                strokeWidth={1.5}
+                filter="url(#zw-glow)"
+              />
+            </motion.g>
+          );
+        })}
+
+        {/* Centre marker */}
+        <circle cx={center} cy={center} r="22"
+          fill="hsl(var(--background))" stroke="hsl(var(--accent) / 0.5)" strokeWidth="1" />
+        <circle cx={center} cy={center} r="3" fill="hsl(var(--accent))" filter="url(#zw-glow)" />
+
+        {/* Cardinal points */}
+        {planets && (
+          <g fontFamily="JetBrains Mono, monospace" letterSpacing="0.15em">
+            <line x1={5} y1={center} x2={28} y2={center}
+              stroke="hsl(var(--accent))" strokeWidth="1.5" />
+            <text x={12} y={center - 6} fill="hsl(var(--accent))" fontSize="9">ASC</text>
+            <text x={size - 12} y={center - 6} textAnchor="end" fill="hsl(var(--muted-foreground))" fontSize="8">DSC</text>
+            <text x={center} y={14} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="8">MC</text>
+            <text x={center} y={size - 6} textAnchor="middle" fill="hsl(var(--muted-foreground))" fontSize="8">IC</text>
           </g>
         )}
       </svg>
-
-      {/* Sound wave effect */}
-      <motion.div
-        className="absolute inset-0 rounded-full pointer-events-none"
-        style={{
-          border: '1px solid hsla(43, 74%, 52%, 0.3)',
-        }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0, 0.3],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeOut",
-        }}
-      />
     </div>
   );
 };
