@@ -24,7 +24,7 @@ export const toPlanetName = (p: string): PlanetName | null => {
     sun: "sun", moon: "moon", mercury: "mercury", venus: "venus", mars: "mars",
     jupiter: "jupiter", saturn: "saturn", uranus: "uranus", neptune: "neptune",
     pluto: "pluto", chiron: "chiron",
-    northnode: "northnode", "northnode": "northnode", "north node": "northnode",
+    northnode: "northnode", "north node": "northnode",
     truenode: "northnode", node: "northnode",
     southnode: "southnode", "south node": "southnode",
     asc: "ascendant", ascendant: "ascendant", rising: "ascendant",
