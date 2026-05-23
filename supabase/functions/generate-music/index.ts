@@ -264,10 +264,10 @@ function buildQMPrompt(
 
   // ── Element sonic descriptions ──
   const elementSound: Record<string, string> = {
-    Fire: 'fast, initiating, passionate percussion',
-    Earth: 'slow, grounded, sustaining bass tones',
-    Air: 'light, airy, melodic and connecting',
-    Water: 'flowing, emotional, reverb-drenched pads',
+    Fire: 'restless, driving piano attack — sharp left-hand stabs, percussive right-hand runs, quick rhythmic phrasing',
+    Earth: 'deliberate, weighted piano chords — low register gravitas, slow harmonic movement, long sustain pedal holds',
+    Air: 'light mercurial piano lines — quick intervallic leaps, open-voiced chords, staccato brightness, quick articulation',
+    Water: 'introspective piano with inner-voice movement — harmonic ambiguity, suspended chords refusing to resolve, melody submerged beneath accompaniment',
   };
 
   // ── Retrograde colouring ──
@@ -277,22 +277,26 @@ function buildQMPrompt(
     : '';
 
   // ── Assemble prompt ──
+  // Style header comes FIRST so it survives any truncation — chart data follows
+  const styleHeader = `NO flutes. NO harps. NO orchestral swells. NO spa music. Modern avant-garde piano-led composition — noir-jazz intelligence, composer's edge. Artist refs: Chilly Gonzales, Radiohead In Rainbows, Philip Glass études, Grimes analog warmth, Nils Frahm. Solo piano at center; sparse brushed percussion as color only; minimal cello or bass counterpoint; subtle analog electronics (Moog/Rhodes touch). Bedroom-recording intimacy.`;
   const parts = [
-    `Compose a ${avgTempo}BPM ${mode} cosmic ambient instrumental in ${key}.`,
-    primaryVoices.length ? `Instrumentation: ${primaryVoices.join(', ')}.` : '',
-    outerColors.length ? `Outer planet colours: ${outerColors.slice(0, 3).join(', ')}.` : '',
-    `Dominant ${dominantElement} element energy: ${elementSound[dominantElement] || 'expressive tones'}.`,
+    styleHeader,
+    `${avgTempo}BPM. Mode: ${mode}. Key: ${key}.`,
+    primaryVoices.length ? `Voices: ${primaryVoices.join(', ')}.` : '',
+    `Dominant element (${dominantElement}): ${elementSound[dominantElement] || 'expressive tones'}.`,
     `Texture: ${texture}. Emotional quality: ${emotionalQuality}${moonEmotion && moonEmotion !== emotionalQuality ? ', ' + moonEmotion : ''}.`,
     ascPalette ? `Ascendant palette: ${ascPalette}.` : '',
-    `Harmonic aspects: ${aspectNarrative}.`,
+    `Aspects: ${aspectNarrative}.`,
     retroNote,
-    `Style: intimate, chamber-scale avant-garde piano music. Solo piano at the center — nuanced, conversational, narrative. Prize inventive melodic lines and unexpected chord progressions (modal interchange, quartal voicings, chromatic mediants, suspended resolutions). Prepared piano textures (felt hammers, muted strings, inside-piano resonances), spare organic percussion (brushed drums, mallets, hand percussion used sparingly as color, NOT as drive), warm cello or string lines, and subtle analog pad shimmer. Reference Chilly Gonzales, Tori Amos, Hauschka, Nils Frahm, Chopin nocturnes, Philip Glass études, Erik Satie. STRICT AVOIDS: no cinematic trailer drops, no cymbal crashes or swells, no heroic film-score climaxes, no four-on-the-floor builds, no orchestral tutti, no epic video-game scoring, no synth supersaws. Dynamics should breathe — many passages stay soft, some meander without resolution, only occasionally swelling and just as often dissolving quietly. Through-composed and exploratory; let melodic ideas develop and digress rather than march toward a payoff.`,
+    outerColors.length ? `Outer planet colors: ${outerColors.slice(0, 2).join(', ')}.` : '',
+    `Through-composed, inventive, exploratory — modal interchange, quartal voicings, unresolved suspensions. Keep it interesting and alive.`,
   ].filter(Boolean);
 
   const prompt = parts.join(' ');
 
-  // ElevenLabs music API — keep under 1000 chars for safety
-  return prompt.length > 950 ? prompt.substring(0, 947) + '...' : prompt;
+  // ElevenLabs music API — 1500 char ceiling; style header is front-loaded so prohibitions survive any trim
+  const MAX_PROMPT_LENGTH = 1500;
+  return prompt.length > MAX_PROMPT_LENGTH ? prompt.substring(0, MAX_PROMPT_LENGTH - 3) + '...' : prompt;
 }
 
 // ── Fallback prompt (when QM data unavailable) ────────────────────────────────
@@ -315,7 +319,7 @@ const fallbackModes: Record<string, { mode: string; mood: string; tempo: string 
 function buildFallbackPrompt(sunSign: string, moonSign: string): string {
   const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
   const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
-  return `Compose an intimate, chamber-scale piano-led instrumental in a ${sun.mode} mode at a ${sun.tempo} pace, blending ${sun.mood} energy with ${moon.mood} undertones. Solo piano at the heart — nuanced, conversational, narrative, with inventive melodies and unexpected chord progressions (modal interchange, quartal voicings, chromatic mediants, suspended resolutions). Prepared piano textures (felt hammers, muted strings, inside-piano resonances), spare organic percussion (brushed drums, mallets, hand percussion as color only — not drive), warm cello or string lines, subtle analog pad shimmer. Reference Chilly Gonzales, Tori Amos, Hauschka, Nils Frahm, Chopin nocturnes, Philip Glass études, Erik Satie. AVOID: cinematic trailer drops, cymbal crashes/swells, heroic film-score climaxes, four-on-the-floor builds, orchestral tutti, epic video-game scoring, supersaw synths. Let dynamics breathe — passages may stay soft or meander without a payoff, occasionally swelling and just as often dissolving quietly. Through-composed and exploratory.`;
+  return `Compose a modern avant-garde piano-led instrumental in a ${sun.mode} mode at a ${sun.tempo} pace, blending ${sun.mood} energy with ${moon.mood} undertones. Solo piano absolutely at the center — compositionally rigorous, noir-jazz intelligent, with inventive melodic lines that take unexpected turns and chord progressions that feel discovered (modal interchange, quartal voicings, chromatic mediants, suspended resolutions left unresolved). Prepared piano textures welcome. Sparse organic percussion as color only — brushed snare or mallets, never as drive. Warm cello counterpoint or bass line. Minimal tasteful analog electronics — a Moog or Rhodes in a dark room, never a synth wall. Bedroom-recording warmth. ARTIST REFERENCES: Chilly Gonzales solo piano, Radiohead In Rainbows harmonic language, Tori Amos covering Björk instrumentally, Philip Glass études, Grimes analog warmth, Hauschka, Nils Frahm. ABSOLUTE PROHIBITIONS: NO flutes. NO harps. NO cinematic orchestral swells. NO cymbal crashes. NO epic film-score moments. NO four-on-the-floor builds. NO orchestral tutti. NO video-game scoring. NO supersaw synths. NO spa music. NO ambient drift without harmonic movement. Keep it interesting, terse, through-composed — let melodic ideas digress rather than march toward a payoff.`;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
