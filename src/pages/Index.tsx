@@ -20,7 +20,7 @@ import { generateChartMusic } from "@/lib/cosmicReadings";
 import {
   createDownloadableAudioUrl,
   createNatalHarmonicPdfUrl,
-  downloadChartImage,
+  downloadNatalChartSvg,
   downloadNatalHarmonicPdf,
   triggerFileDownload,
 } from "@/utils/downloadHelpers";
@@ -368,13 +368,23 @@ const ResultsView = ({
       .padStart(2, "0")}`;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  const handleDownloadChart = async () => {
+  const handleDownloadChart = () => {
     setIsDownloading("chart");
     try {
-      await downloadChartImage("chart-wheel-container", `${name.replace(/\s+/g, "-").toLowerCase()}-chart.png`);
+      // Strip characters that are unsafe in filenames (slashes, colons, etc.)
+      const safeName = (reading?.birthData.name ?? 'chart')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .replace(/^-+|-+$/g, '') || 'natal-chart';
+      downloadNatalChartSvg(
+        reading!.chartData,
+        reading!.birthData,
+        `${safeName}-natal-chart.svg`,
+      );
     } catch (e) {
       console.error(e);
-        toast({ title: "Chart download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
+      toast({ title: "Chart download failed", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally {
       setIsDownloading(null);
     }
