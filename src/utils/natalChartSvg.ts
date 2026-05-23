@@ -259,6 +259,9 @@ export function generateNatalChartSVG(
   }
 
   // ── Format birth date ─────────────────────────────────────────────
+  // We append T12:00:00Z only to parse the calendar date (YYYY-MM-DD) in UTC
+  // so the displayed date is never shifted by timezone offset. The actual
+  // birth time is shown separately from birthData.time below.
   const dateStr = (() => {
     try {
       const d = new Date(birthData.date + 'T12:00:00Z');

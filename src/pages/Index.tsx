@@ -371,9 +371,12 @@ const ResultsView = ({
   const handleDownloadChart = () => {
     setIsDownloading("chart");
     try {
+      // Strip characters that are unsafe in filenames (slashes, colons, etc.)
       const safeName = (reading?.birthData.name ?? 'chart')
+        .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
-        .toLowerCase();
+        .toLowerCase()
+        .replace(/^-+|-+$/g, '') || 'natal-chart';
       downloadNatalChartSvg(
         reading!.chartData,
         reading!.birthData,
