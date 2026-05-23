@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import type { CosmicReading } from '@/types/astrology';
+import type { CosmicReading, ChartData, BirthData } from '@/types/astrology';
+import { generateNatalChartSVG } from '@/utils/natalChartSvg';
 
 // ── Download chart wheel as PNG ───────────────────────────────────
 export async function downloadChartImage(elementId: string, filename = 'quantumelodic-chart.png') {
@@ -73,6 +74,19 @@ export function triggerFileDownload(url: string, filename: string) {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// ── Download natal chart as a branded SVG ─────────────────────────
+export function downloadNatalChartSvg(
+  chartData: ChartData,
+  birthData: BirthData,
+  filename = 'natal-chart.svg',
+) {
+  const svgStr = generateNatalChartSVG(chartData, birthData);
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  triggerFileDownload(url, filename);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 export async function createDownloadableAudioUrl(audioUrl: string) {
