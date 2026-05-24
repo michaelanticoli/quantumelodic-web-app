@@ -19,6 +19,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Academy = lazy(() => import("./pages/Academy"));
 const LunarReports = lazy(() => import("./pages/LunarReports"));
 const Glossary = lazy(() => import("./pages/Glossary"));
+const QuantumMelodic = lazy(() => import("./pages/QuantumMelodic"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => {
                   <Route path="/academy" element={<Academy />} />
                   <Route path="/lunar-reports" element={<LunarReports />} />
                   <Route path="/glossary" element={<Glossary />} />
+                  <Route path="/quantumelodic" element={<QuantumMelodic />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
