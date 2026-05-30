@@ -306,3 +306,12 @@
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+/* ── Print / PDF export (Lunar Reports) ── */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  nav { display: none !important; }
+  .glass-card,
+  [class*="rounded-xl"] { border-color: #ddd !important; background: white !important; }
+}
