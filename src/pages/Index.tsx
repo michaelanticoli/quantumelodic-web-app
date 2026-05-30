@@ -33,6 +33,8 @@ const FOUNDING_TOTAL = 50;
 // Replace with your live Stripe payment link. Add ?paid=true as the success redirect param.
 const CHECKOUT_URL = 'https://buy.stripe.com/YOUR_LINK_HERE';
 const PAID_SESSION_KEY = 'quantumelodic_paid';
+// Replace with the path to your demo track in /public
+const DEMO_AUDIO_SRC = '/sample-composition.mp3';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -117,7 +119,7 @@ const DemoAudioPlayer = () => {
       {/* Replace /sample-composition.mp3 with your actual audio file in /public */}
       <audio
         ref={audioRef}
-        src="/sample-composition.mp3"
+        src={DEMO_AUDIO_SRC}
         onEnded={() => setIsPlaying(false)}
         onError={() => { setAudioError(true); setIsPlaying(false); }}
         preload="none"
