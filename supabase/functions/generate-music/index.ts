@@ -229,7 +229,7 @@ function buildQMPrompt(
   // ── Key and mode from Sun sign (with Ascendant colour if available) ──
   const mode = sunSignData?.musical_mode || 'Dorian';
   const key = sunSignData?.key_signature || 'D minor';
-  const texture = sunSignData?.texture || 'ethereal';
+  const texture = sunSignData?.texture || 'intimate, dry, close-mic recorded';
   const emotionalQuality = sunSignData?.emotional_quality || 'mysterious';
   const moonEmotion = moonSignData?.emotional_quality || '';
   const ascPalette = ascSignData?.sonic_palette || '';
@@ -278,7 +278,7 @@ function buildQMPrompt(
 
   // ── Assemble prompt ──
   // Style header comes FIRST so it survives any truncation — chart data follows
-  const styleHeader = `NO flutes. NO harps. NO orchestral swells. NO spa music. Modern avant-garde piano-led composition — noir-jazz intelligence, composer's edge. Artist refs: Chilly Gonzales, Radiohead In Rainbows, Philip Glass études, Grimes analog warmth, Nils Frahm. Solo piano at center; sparse brushed percussion as color only; minimal cello or bass counterpoint; subtle analog electronics (Moog/Rhodes touch). Bedroom-recording intimacy.`;
+  const styleHeader = `Generate a finished studio MP3 track, NOT meditation music. HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Style: minimalist keyboard-centered new-jazz noir with a composer's edge. Solo/felt/prepared piano must lead. Add sparse brushed snare, upright bass or cello counterpoint, tasteful Rhodes/Moog/analog texture only as shadow. Harmonic language: Chilly Gonzales piano, Radiohead In Rainbows, Kaki King guitar architecture, Tori Amos covering Björk without vocals, Philip Glass études, Grimes bedroom analog warmth. Through-composed, dry, intimate, innovative, rhythmically alive.`;
   const parts = [
     styleHeader,
     `${avgTempo}BPM. Mode: ${mode}. Key: ${key}.`,
@@ -289,7 +289,7 @@ function buildQMPrompt(
     `Aspects: ${aspectNarrative}.`,
     retroNote,
     outerColors.length ? `Outer planet colors: ${outerColors.slice(0, 2).join(', ')}.` : '',
-    `Through-composed, inventive, exploratory — modal interchange, quartal voicings, unresolved suspensions. Keep it interesting and alive.`,
+    `Avoid static drones. Use motifs, counter-melodies, syncopation, modal interchange, quartal voicings, chromatic mediants, unresolved suspensions. Keep it tasteful, fresh, strange, and emotionally specific.`,
   ].filter(Boolean);
 
   const prompt = parts.join(' ');
