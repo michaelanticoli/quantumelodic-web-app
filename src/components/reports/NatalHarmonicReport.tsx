@@ -257,11 +257,18 @@ export function NatalHarmonicReport({ birthData, chartData, reading }: Props) {
         <div className="composition-statement">
           <div className="comp-label">The Central Voice</div>
           <div className="comp-text">
-            Your central melody — the <strong>Sun in {sunSign}</strong> — establishes the key and character of the entire composition.
-            The <strong>Moon in {moonSign}</strong> provides the emotional undercurrent that colours every phrase.
-            The <strong>Ascendant in {ascSign}</strong> sets the opening tone — the first impression a listener receives.
-            <br /><br />
-            With a dominant <strong>{reading.dominantElement.toLowerCase()}</strong> element and a <strong>{reading.dominantModality.toLowerCase()}</strong> rhythmic signature, your symphony resolves around <strong>{overallKey}</strong> at roughly {overallTempo} beats per minute. Every aspect woven through this fabric is a moment of dialogue between voices — sometimes consonant, sometimes deliberately tense, always unmistakably yours.
+            {compositionStatement({
+              sunSign,
+              moonSign,
+              ascSign,
+              element: reading.dominantElement,
+              modality: reading.dominantModality,
+              key: overallKey,
+              tempo: overallTempo,
+              mode: overallMode,
+              topAspectName: topAspects[0]?.aspectType.name,
+              topAspectPair: topAspects[0] ? [topAspects[0].planet1, topAspects[0].planet2] : undefined,
+            })}
           </div>
         </div>
 
