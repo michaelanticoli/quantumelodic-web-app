@@ -5,7 +5,7 @@ import { RequestTimeoutError } from '@/lib/fetchWithTimeout';
 import { calculateChartData } from '@/lib/chartService';
 import { generateChartMusic } from '@/lib/cosmicReadings';
 
-const PREVIEW_RENDER_TIMEOUT_MS = 75_000; // ElevenLabs music can take up to ~60s
+const PREVIEW_RENDER_TIMEOUT_MS = 180_000; // ElevenLabs music renders finished MP3 tracks and can take a couple minutes
 const CHART_REQUEST_TIMEOUT_MS = 25_000;
 const GENERATION_HARD_TIMEOUT_MS = 60_000;
 
@@ -34,7 +34,7 @@ export function useCosmicReading() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState<'idle' | 'geocoding' | 'calculating' | 'generating' | 'complete'>('idle');
-  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | 'tone' | null>(null);
+  const [audioSource, setAudioSource] = useState<'elevenlabs' | 'procedural' | null>(null);
   const previewRequestRef = useRef(0);
   const previewScheduleRef = useRef<number | null>(null);
 
@@ -81,8 +81,8 @@ export function useCosmicReading() {
         return url;
       });
       setReading((current) => current ? { ...current, audioUrl: url, audioSource: source } : current);
-      toast('Your cosmic composition is ready', {
-        description: 'Composed locally from your chart — piano-noir voicing.',
+      toast('Your ElevenLabs composition is ready', {
+        description: 'A finished MP3 track generated from your chart.',
       });
     } catch (audioErr) {
       if (previewRequestRef.current !== requestId) return;
@@ -180,7 +180,7 @@ export function useCosmicReading() {
 
       const previewRequestId = previewRequestRef.current;
 
-      // Generate the ElevenLabs (or Tone.js fallback) composition after the result screen mounts.
+      // Generate the ElevenLabs MP3 composition after the result screen mounts.
       schedulePreviewAudio(chart, birthData.name || 'Unknown', previewRequestId);
 
       return cosmicReading;
