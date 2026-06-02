@@ -11,6 +11,7 @@
 import { useMemo } from 'react';
 import type { ChartData, BirthData } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
+import { placementSentence, compositionStatement } from '@/utils/placementSentences';
 import elevenLabsBadgeUrl from '@/assets/elevenlabs-grants-badge.svg';
 
 interface Props {
@@ -120,18 +121,23 @@ export function NatalHarmonicReport({ birthData, chartData, reading }: Props) {
               const interpretation = p.qmData?.archetypal_energy
                 ? `${p.qmData.archetypal_energy}. ${p.signData?.emotional_quality || ''}.`
                 : `Your ${p.position.name} in ${sign} brings ${ELEMENTS[sign]?.toLowerCase() || ''} energy to your chart.`;
+              const distill = placementSentence(p.position.name, sign, p.houseNumber);
               return (
                 <div key={p.position.name} className="planet-row">
                   <div className="planet-glyph">{p.position.symbol}</div>
                   <div>
                     <div className="planet-name">{p.position.name}</div>
                     <div className="planet-position">{fmtDeg(p.position.degree)} · {p.position.isRetrograde ? 'Retrograde ℞' : 'Direct'}</div>
+                    <div className="planet-position" style={{ marginTop: 4 }}>House {p.houseNumber}</div>
                   </div>
                   <div>
                     <div className="planet-sign">{sign}</div>
                     <div className="planet-element">{ELEMENTS[sign]} · {MODALITIES[sign]}</div>
                   </div>
-                  <div className="planet-interpretation">{interpretation}</div>
+                  <div className="planet-interpretation">
+                    {interpretation}
+                    <div style={{ marginTop: 8, fontStyle: 'italic', color: 'var(--gold)' }}>{distill}</div>
+                  </div>
                 </div>
               );
             })}
@@ -251,11 +257,18 @@ export function NatalHarmonicReport({ birthData, chartData, reading }: Props) {
         <div className="composition-statement">
           <div className="comp-label">The Central Voice</div>
           <div className="comp-text">
-            Your central melody — the <strong>Sun in {sunSign}</strong> — establishes the key and character of the entire composition.
-            The <strong>Moon in {moonSign}</strong> provides the emotional undercurrent that colours every phrase.
-            The <strong>Ascendant in {ascSign}</strong> sets the opening tone — the first impression a listener receives.
-            <br /><br />
-            With a dominant <strong>{reading.dominantElement.toLowerCase()}</strong> element and a <strong>{reading.dominantModality.toLowerCase()}</strong> rhythmic signature, your symphony resolves around <strong>{overallKey}</strong> at roughly {overallTempo} beats per minute. Every aspect woven through this fabric is a moment of dialogue between voices — sometimes consonant, sometimes deliberately tense, always unmistakably yours.
+            {compositionStatement({
+              sunSign,
+              moonSign,
+              ascSign,
+              element: reading.dominantElement,
+              modality: reading.dominantModality,
+              key: overallKey,
+              tempo: overallTempo,
+              mode: overallMode,
+              topAspectName: topAspects[0]?.aspectType.name,
+              topAspectPair: topAspects[0] ? [topAspects[0].planet1, topAspects[0].planet2] : undefined,
+            })}
           </div>
         </div>
 

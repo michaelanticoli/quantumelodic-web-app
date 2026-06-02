@@ -4,6 +4,7 @@ import { Volume2, VolumeX, Flame, Droplets, Wind, Mountain, Music2 } from 'lucid
 import * as Tone from 'tone';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
 import { PLANET_SYNTH, SIGN_MUSIC, MODES, NOTE_NAMES, type NoteName } from '@/utils/chartToScore';
+import { buildVoice } from '@/utils/tonePlayer';
 
 // Element colours aligned to design tokens (HSL only)
 const ELEMENT_CONFIG: Record<string, { icon: typeof Flame; hue: number; label: string }> = {
@@ -27,9 +28,7 @@ interface Props {
 // ── Tone.js helpers ───────────────────────────────────────────────────────
 
 interface ActiveSynths {
-  synths: Tone.PolySynth[];
-  reverbs: Tone.Reverb[];
-  choruses: Tone.Chorus[];
+  synths: Array<Tone.PolySynth | Tone.MonoSynth | Tone.FMSynth>;
   transport: typeof Tone.getTransport extends () => infer T ? T : never;
   parts: Tone.Part[];
 }
@@ -42,9 +41,10 @@ async function stopAllSynths() {
     Tone.getTransport().stop();
     Tone.getTransport().cancel();
     for (const part of activeSynthsRef.parts) { part.stop(); part.dispose(); }
-    for (const synth of activeSynthsRef.synths) { synth.releaseAll(); synth.dispose(); }
-    for (const chorus of activeSynthsRef.choruses) { chorus.dispose(); }
-    for (const reverb of activeSynthsRef.reverbs) { reverb.dispose(); }
+    for (const synth of activeSynthsRef.synths) {
+      try { (synth as Tone.PolySynth).releaseAll(); } catch { /* noop */ }
+      synth.dispose();
+    }
   } catch {
     return;
   } finally {
@@ -73,11 +73,12 @@ async function playPlanetChoir(
   transport.stop();
   transport.cancel();
 
-  const synths: Tone.PolySynth[] = [];
-  const reverbs: Tone.Reverb[] = [];
-  const choruses: Tone.Chorus[] = [];
+  const synths: Array<Tone.PolySynth | Tone.MonoSynth | Tone.FMSynth> = [];
   const parts: Tone.Part[] = [];
-  const reverbGenerationTasks: Promise<void>[] = [];
+
+  // Shared master reverb for noir ambience
+  const masterReverb = new Tone.Reverb({ decay: 2.4, wet: 0.18, preDelay: 0.04 }).toDestination();
+  await masterReverb.generate();
 
   for (const planetName of activePlanetNames) {
     const planetData = reading.planets.find(p => p.position.name === planetName);
@@ -86,53 +87,35 @@ async function playPlanetChoir(
     const synthParams = PLANET_SYNTH[planetName];
     if (!synthParams) continue;
 
-    const qmFreq = planetData.qmData?.frequency_hz ?? 440;
-    const signOfPlanet = planetData.position.sign;
     const elementOfSign = planetData.signData?.element ?? 'Fire';
     const elementOctaveOffset: Record<string, number> = { Fire: 1, Air: 1, Earth: 0, Water: -1 };
-    const octave = Math.max(2, Math.min(5, synthParams.octave + (elementOctaveOffset[elementOfSign] ?? 0)));
+    const octave = Math.max(1, Math.min(6, synthParams.octave + (elementOctaveOffset[elementOfSign] ?? 0)));
 
-    // Build note sequence from scale + planet's degree
     const startDegree = Math.floor((planetData.position.degree % 30) / 30 * modeIntervals.length);
     const rootMidi = noteNameToMidi(root, octave);
     const scaleNotes = modeIntervals.map(iv => rootMidi + iv);
 
-    // Reverb
-    const reverb = new Tone.Reverb({ decay: 3 + synthParams.reverbWet * 5, wet: synthParams.reverbWet }).toDestination();
-    reverbGenerationTasks.push(reverb.generate() as unknown as Promise<void>);
+    const { synth } = buildVoice(synthParams.voice, synthParams.weight, masterReverb);
 
-    // Chorus
-    const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.5, wet: synthParams.chorusWet }).connect(reverb);
-    chorus.start();
-
-    // Synth
-    const synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: synthParams.oscillatorType as OscillatorType },
-      envelope: {
-        attack: synthParams.attackTime,
-        decay: synthParams.decayTime,
-        sustain: synthParams.sustainLevel,
-        release: synthParams.releaseTime,
-      },
-      volume: Tone.gainToDb(synthParams.weight * 0.5),
-    }).connect(chorus);
-
-    // Build a simple 8-beat looping phrase for this planet
     const secondsPerBeat = 60 / bpm;
     const isRetro = planetData.position.isRetrograde;
     const noteEvents: Array<[number, { pitch: number; duration: number; velocity: number }]> = [];
 
     const beatsToPlay = 8;
     const roleDurations: Record<string, number> = {
-      bass: secondsPerBeat * 2, drone: secondsPerBeat * 4,
-      pad: secondsPerBeat * 1.5, lead: secondsPerBeat * 0.75, arp: secondsPerBeat * 0.4,
+      bass: secondsPerBeat * 2,
+      pad: secondsPerBeat * 4,
+      comp: secondsPerBeat * 1.2,
+      lead: secondsPerBeat * 0.75,
+      arp: secondsPerBeat * 0.4,
+      color: secondsPerBeat * 0.6,
     };
     const noteDur = roleDurations[synthParams.role] ?? secondsPerBeat;
 
     for (let beat = 0; beat < beatsToPlay; beat++) {
-      // Skip some beats based on role and retrograde
       if (synthParams.role === 'bass' && beat % 2 !== 0) continue;
-      if (synthParams.role === 'drone' && beat % 4 !== 0) continue;
+      if (synthParams.role === 'pad' && beat % 4 !== 0) continue;
+      if (synthParams.role === 'color' && beat % 3 !== 0) continue;
       if (isRetro && beat % 3 === 2) continue;
 
       const direction = isRetro ? -1 : 1;
@@ -146,7 +129,7 @@ async function playPlanetChoir(
 
     const part = new Tone.Part((time, ev: { pitch: number; duration: number; velocity: number }) => {
       const freq = Tone.Frequency(ev.pitch, 'midi').toFrequency();
-      synth.triggerAttackRelease(freq, ev.duration, time, ev.velocity / 127);
+      try { (synth as Tone.PolySynth).triggerAttackRelease(freq, ev.duration, time, ev.velocity / 127); } catch { /* noop */ }
     }, noteEvents);
 
     part.loop = true;
@@ -154,13 +137,10 @@ async function playPlanetChoir(
     part.start(0);
 
     synths.push(synth);
-    reverbs.push(reverb);
-    choruses.push(chorus);
     parts.push(part);
   }
 
-  await Promise.all(reverbGenerationTasks);
-  activeSynthsRef = { synths, reverbs, choruses, transport, parts };
+  activeSynthsRef = { synths, transport, parts };
   transport.start();
 }
 
