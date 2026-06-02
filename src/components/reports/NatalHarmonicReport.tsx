@@ -11,6 +11,7 @@
 import { useMemo } from 'react';
 import type { ChartData, BirthData } from '@/types/astrology';
 import type { QuantumMelodicReading } from '@/types/quantumMelodic';
+import { placementSentence, compositionStatement } from '@/utils/placementSentences';
 import elevenLabsBadgeUrl from '@/assets/elevenlabs-grants-badge.svg';
 
 interface Props {
@@ -120,18 +121,23 @@ export function NatalHarmonicReport({ birthData, chartData, reading }: Props) {
               const interpretation = p.qmData?.archetypal_energy
                 ? `${p.qmData.archetypal_energy}. ${p.signData?.emotional_quality || ''}.`
                 : `Your ${p.position.name} in ${sign} brings ${ELEMENTS[sign]?.toLowerCase() || ''} energy to your chart.`;
+              const distill = placementSentence(p.position.name, sign, p.houseNumber);
               return (
                 <div key={p.position.name} className="planet-row">
                   <div className="planet-glyph">{p.position.symbol}</div>
                   <div>
                     <div className="planet-name">{p.position.name}</div>
                     <div className="planet-position">{fmtDeg(p.position.degree)} · {p.position.isRetrograde ? 'Retrograde ℞' : 'Direct'}</div>
+                    <div className="planet-position" style={{ marginTop: 4 }}>House {p.houseNumber}</div>
                   </div>
                   <div>
                     <div className="planet-sign">{sign}</div>
                     <div className="planet-element">{ELEMENTS[sign]} · {MODALITIES[sign]}</div>
                   </div>
-                  <div className="planet-interpretation">{interpretation}</div>
+                  <div className="planet-interpretation">
+                    {interpretation}
+                    <div style={{ marginTop: 8, fontStyle: 'italic', color: 'var(--gold)' }}>{distill}</div>
+                  </div>
                 </div>
               );
             })}
