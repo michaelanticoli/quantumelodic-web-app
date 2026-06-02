@@ -31,7 +31,7 @@ import type { BirthData } from "@/types/astrology";
 const FOUNDING_CLAIMED = 3;
 const FOUNDING_TOTAL = 50;
 // Replace with your live Stripe payment link. Add ?paid=true as the success redirect param.
-const CHECKOUT_URL = 'https://buy.stripe.com/YOUR_LINK_HERE';
+const CHECKOUT_URL = 'https://buy.stripe.com/9B614mbaWfPu5ebcCZe7m0b';
 const PAID_SESSION_KEY = 'quantumelodic_paid';
 // Replace with the path to your demo track in /public
 const DEMO_AUDIO_SRC = '/sample-composition.mp3';
