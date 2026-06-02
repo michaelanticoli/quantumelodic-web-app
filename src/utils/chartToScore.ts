@@ -1,17 +1,16 @@
 /**
  * QuantumMelodic Chart → Score Mapping Engine
- * Deterministic: same chart input always produces the same score seed.
+ * Deterministic: same chart always produces the same score.
+ * Aesthetic: modern piano-noir / new-jazz. Avoids spa / orchestral patterns.
  */
-import type { ChartData, PlanetPosition } from '@/types/astrology';
+import type { ChartData } from '@/types/astrology';
 import { getTonicNote } from '@/data/baseTonicsLookup';
 
 // ─── Musical constants ─────────────────────────────────────────────────────
 
 export type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
-
 export const NOTE_NAMES: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-/** Normalize canonical note names (Db→C#, Eb→D#, Gb→F#, Ab→G#, Bb→A#) to our NoteName type */
 function normalizeNote(note: string): NoteName {
   const FLATS: Record<string, NoteName> = {
     'Db': 'C#', 'Eb': 'D#', 'Fb': 'E', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#', 'Cb': 'B',
@@ -19,18 +18,20 @@ function normalizeNote(note: string): NoteName {
   return (FLATS[note] ?? note) as NoteName;
 }
 
-// Modal interval patterns (semitones from root)
 export const MODES: Record<string, number[]> = {
-  Ionian:     [0, 2, 4, 5, 7, 9, 11],  // major
-  Dorian:     [0, 2, 3, 5, 7, 9, 10],
-  Phrygian:   [0, 1, 3, 5, 7, 8, 10],
-  Lydian:     [0, 2, 4, 6, 7, 9, 11],
-  Mixolydian: [0, 2, 4, 5, 7, 9, 10],
-  Aeolian:    [0, 2, 3, 5, 7, 8, 10],  // natural minor
-  Locrian:    [0, 1, 3, 5, 6, 8, 10],
+  Ionian:        [0, 2, 4, 5, 7, 9, 11],
+  Dorian:        [0, 2, 3, 5, 7, 9, 10],
+  Phrygian:      [0, 1, 3, 5, 7, 8, 10],
+  Lydian:        [0, 2, 4, 6, 7, 9, 11],
+  Mixolydian:    [0, 2, 4, 5, 7, 9, 10],
+  Aeolian:       [0, 2, 3, 5, 7, 8, 10],
+  Locrian:       [0, 1, 3, 5, 6, 8, 10],
+  // jazz/new-music extensions for variety
+  MelodicMinor:  [0, 2, 3, 5, 7, 9, 11],
+  HarmonicMinor: [0, 2, 3, 5, 7, 8, 11],
+  PhrygianDom:   [0, 1, 4, 5, 7, 8, 10],
+  Altered:       [0, 1, 3, 4, 6, 8, 10],
 };
-
-// ─── Sign → Musical parameters ────────────────────────────────────────────
 
 interface SignMusic {
   root: NoteName;
@@ -38,60 +39,68 @@ interface SignMusic {
   tempo: number;
   element: string;
   texture: 'sparse' | 'moderate' | 'dense';
-  rhythmicDensity: number; // 0-1
+  rhythmicDensity: number;
+  swing: number; // 0-0.3
 }
 
+// Tempo + mode spread so no two sun-sign blends sound the same.
 export const SIGN_MUSIC: Record<string, SignMusic> = {
-  Aries:       { root: 'A',  mode: 'Phrygian',   tempo: 140, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.85 },
-  Taurus:      { root: 'F',  mode: 'Ionian',      tempo: 72,  element: 'Earth', texture: 'sparse',   rhythmicDensity: 0.35 },
-  Gemini:      { root: 'G',  mode: 'Mixolydian',  tempo: 120, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.65 },
-  Cancer:      { root: 'A',  mode: 'Aeolian',     tempo: 66,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.30 },
-  Leo:         { root: 'D',  mode: 'Lydian',      tempo: 108, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.72 },
-  Virgo:       { root: 'D',  mode: 'Dorian',      tempo: 96,  element: 'Earth', texture: 'moderate', rhythmicDensity: 0.55 },
-  Libra:       { root: 'A#', mode: 'Ionian',      tempo: 88,  element: 'Air',   texture: 'moderate', rhythmicDensity: 0.50 },
-  Scorpio:     { root: 'B',  mode: 'Locrian',     tempo: 76,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.40 },
-  Sagittarius: { root: 'E',  mode: 'Mixolydian',  tempo: 132, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.78 },
-  Capricorn:   { root: 'C',  mode: 'Dorian',      tempo: 84,  element: 'Earth', texture: 'sparse',   rhythmicDensity: 0.42 },
-  Aquarius:    { root: 'F#', mode: 'Lydian',      tempo: 116, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.60 },
-  Pisces:      { root: 'E',  mode: 'Phrygian',    tempo: 60,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.28 },
+  Aries:       { root: 'A',  mode: 'PhrygianDom',   tempo: 138, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.80, swing: 0.05 },
+  Taurus:      { root: 'F',  mode: 'Ionian',        tempo: 68,  element: 'Earth', texture: 'sparse',   rhythmicDensity: 0.32, swing: 0.20 },
+  Gemini:      { root: 'G',  mode: 'Mixolydian',    tempo: 124, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.68, swing: 0.15 },
+  Cancer:      { root: 'A',  mode: 'Aeolian',       tempo: 62,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.28, swing: 0.18 },
+  Leo:         { root: 'D',  mode: 'Lydian',        tempo: 104, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.70, swing: 0.10 },
+  Virgo:       { root: 'D',  mode: 'Dorian',        tempo: 92,  element: 'Earth', texture: 'moderate', rhythmicDensity: 0.55, swing: 0.22 },
+  Libra:       { root: 'A#', mode: 'MelodicMinor',  tempo: 86,  element: 'Air',   texture: 'moderate', rhythmicDensity: 0.48, swing: 0.18 },
+  Scorpio:     { root: 'B',  mode: 'HarmonicMinor', tempo: 74,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.42, swing: 0.12 },
+  Sagittarius: { root: 'E',  mode: 'Mixolydian',    tempo: 132, element: 'Fire',  texture: 'dense',    rhythmicDensity: 0.76, swing: 0.08 },
+  Capricorn:   { root: 'C',  mode: 'Dorian',        tempo: 80,  element: 'Earth', texture: 'sparse',   rhythmicDensity: 0.40, swing: 0.20 },
+  Aquarius:    { root: 'F#', mode: 'Lydian',        tempo: 118, element: 'Air',   texture: 'moderate', rhythmicDensity: 0.62, swing: 0.10 },
+  Pisces:      { root: 'E',  mode: 'Altered',       tempo: 58,  element: 'Water', texture: 'sparse',   rhythmicDensity: 0.26, swing: 0.25 },
 };
 
-// ─── Planet → Synth parameters ────────────────────────────────────────────
+// ─── Planet voices (piano-noir centric) ───────────────────────────────────
+// `voice` controls which Tone synth tonePlayer instantiates.
+
+export type PlanetVoice =
+  | 'pianoMid'   // central acoustic-piano voice
+  | 'pianoLow'   // left-hand piano
+  | 'pianoHigh'  // right-hand sparkle piano
+  | 'rhodes'    // electric piano texture
+  | 'celloBow'  // bowed cello/bass counterpoint
+  | 'subBass'   // analog sub
+  | 'moog'      // mono analog lead
+  | 'felt'      // muted/felt piano pad
+  | 'perc';     // brushed percussion / mallet color
 
 export interface PlanetSynth {
-  oscillatorType: OscillatorType | 'fmsine' | 'amsine' | 'fmsawtooth';
-  octave: number;        // base octave (3-6)
-  role: 'bass' | 'pad' | 'lead' | 'arp' | 'drone';
-  velocityRange: [number, number]; // [min, max] 0-127
-  attackTime: number;    // seconds
-  decayTime: number;
-  sustainLevel: number;  // 0-1
-  releaseTime: number;
-  reverbWet: number;     // 0-1
-  chorusWet: number;     // 0-1
-  weight: number;        // mix prominence 0-1
+  voice: PlanetVoice;
+  octave: number;
+  role: 'bass' | 'comp' | 'lead' | 'arp' | 'color' | 'pad';
+  velocityRange: [number, number];
+  weight: number;     // mix prominence 0-1
 }
 
 export const PLANET_SYNTH: Record<string, PlanetSynth> = {
-  Sun:     { oscillatorType: 'sawtooth', octave: 4, role: 'lead',  velocityRange: [80, 110], attackTime: 0.1,  decayTime: 0.3, sustainLevel: 0.7, releaseTime: 1.2, reverbWet: 0.3, chorusWet: 0.1, weight: 1.0 },
-  Moon:    { oscillatorType: 'sine',     octave: 4, role: 'pad',   velocityRange: [50, 80],  attackTime: 1.5,  decayTime: 0.5, sustainLevel: 0.6, releaseTime: 2.5, reverbWet: 0.7, chorusWet: 0.3, weight: 0.85 },
-  Mercury: { oscillatorType: 'square',   octave: 5, role: 'arp',   velocityRange: [60, 90],  attackTime: 0.02, decayTime: 0.1, sustainLevel: 0.4, releaseTime: 0.3, reverbWet: 0.2, chorusWet: 0.4, weight: 0.65 },
-  Venus:   { oscillatorType: 'sine',     octave: 4, role: 'pad',   velocityRange: [55, 85],  attackTime: 0.8,  decayTime: 0.4, sustainLevel: 0.65, releaseTime: 2.0, reverbWet: 0.6, chorusWet: 0.5, weight: 0.75 },
-  Mars:    { oscillatorType: 'sawtooth', octave: 3, role: 'lead',  velocityRange: [70, 100], attackTime: 0.05, decayTime: 0.2, sustainLevel: 0.5, releaseTime: 0.5, reverbWet: 0.15, chorusWet: 0.0, weight: 0.70 },
-  Jupiter: { oscillatorType: 'triangle', octave: 3, role: 'drone', velocityRange: [40, 70],  attackTime: 2.0,  decayTime: 1.0, sustainLevel: 0.8, releaseTime: 3.0, reverbWet: 0.8, chorusWet: 0.2, weight: 0.55 },
-  Saturn:  { oscillatorType: 'sawtooth', octave: 2, role: 'bass',  velocityRange: [55, 80],  attackTime: 0.3,  decayTime: 0.8, sustainLevel: 0.6, releaseTime: 1.5, reverbWet: 0.4, chorusWet: 0.0, weight: 0.60 },
-  Uranus:  { oscillatorType: 'square',   octave: 5, role: 'arp',   velocityRange: [40, 65],  attackTime: 0.1,  decayTime: 0.3, sustainLevel: 0.3, releaseTime: 0.8, reverbWet: 0.5, chorusWet: 0.6, weight: 0.45 },
-  Neptune: { oscillatorType: 'sine',     octave: 3, role: 'drone', velocityRange: [30, 55],  attackTime: 3.0,  decayTime: 2.0, sustainLevel: 0.7, releaseTime: 4.0, reverbWet: 0.9, chorusWet: 0.4, weight: 0.40 },
-  Pluto:   { oscillatorType: 'sawtooth', octave: 2, role: 'bass',  velocityRange: [30, 60],  attackTime: 2.5,  decayTime: 1.5, sustainLevel: 0.8, releaseTime: 5.0, reverbWet: 0.7, chorusWet: 0.0, weight: 0.35 },
+  Sun:     { voice: 'pianoMid',  octave: 4, role: 'lead',  velocityRange: [78, 108], weight: 1.00 },
+  Moon:    { voice: 'felt',      octave: 4, role: 'comp',  velocityRange: [52, 82],  weight: 0.80 },
+  Mercury: { voice: 'pianoHigh', octave: 5, role: 'arp',   velocityRange: [58, 90],  weight: 0.62 },
+  Venus:   { voice: 'rhodes',    octave: 4, role: 'comp',  velocityRange: [55, 84],  weight: 0.70 },
+  Mars:    { voice: 'moog',      octave: 3, role: 'lead',  velocityRange: [70, 100], weight: 0.65 },
+  Jupiter: { voice: 'pianoLow',  octave: 3, role: 'comp',  velocityRange: [55, 80],  weight: 0.58 },
+  Saturn:  { voice: 'celloBow',  octave: 2, role: 'bass',  velocityRange: [55, 82],  weight: 0.62 },
+  Uranus:  { voice: 'moog',      octave: 5, role: 'color', velocityRange: [42, 70],  weight: 0.42 },
+  Neptune: { voice: 'felt',      octave: 3, role: 'pad',   velocityRange: [32, 58],  weight: 0.38 },
+  Pluto:   { voice: 'subBass',   octave: 1, role: 'bass',  velocityRange: [40, 70],  weight: 0.55 },
 };
 
 // ─── Score types ──────────────────────────────────────────────────────────
 
 export interface NoteEvent {
-  time: number;     // seconds from start
-  pitch: number;    // MIDI note number 0-127
-  duration: number; // seconds
-  velocity: number; // 0-127
+  time: number;
+  pitch: number;
+  duration: number;
+  velocity: number;
   planet: string;
 }
 
@@ -111,11 +120,12 @@ export interface Score {
   bpm: number;
   mode: string;
   rootNote: NoteName;
-  scaleNotes: number[];   // MIDI note numbers for one octave
+  scaleNotes: number[];
   sections: ScoreSection[];
   tracks: ScoreTrack[];
-  totalDuration: number;  // seconds
+  totalDuration: number;
   chartSignature: string;
+  swing: number;
 }
 
 // ─── Utility ──────────────────────────────────────────────────────────────
@@ -126,16 +136,15 @@ function noteNameToMidi(name: NoteName, octave: number): number {
 
 function buildScaleNotes(root: NoteName, modeIntervals: number[], octave: number): number[] {
   const rootMidi = noteNameToMidi(root, octave);
-  return modeIntervals.map(interval => rootMidi + interval);
+  return modeIntervals.map(i => rootMidi + i);
 }
 
 function degreeToScaleIndex(degree: number, scaleLength: number): number {
-  // Map 0-29 degree within sign to a scale degree
   return Math.floor((degree / 30) * scaleLength) % scaleLength;
 }
 
 function seededRand(seed: number): () => number {
-  let s = seed;
+  let s = seed || 1;
   return () => {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
     return s / 0x7fffffff;
@@ -145,167 +154,209 @@ function seededRand(seed: number): () => number {
 // ─── Main mapping function ────────────────────────────────────────────────
 
 export function chartToScore(chart: ChartData): Score {
-  const sunSignMusic = SIGN_MUSIC[chart.sunSign] || SIGN_MUSIC['Leo'];
-  const moonSignMusic = SIGN_MUSIC[chart.moonSign] || SIGN_MUSIC['Cancer'];
+  const sunSM = SIGN_MUSIC[chart.sunSign] || SIGN_MUSIC['Leo'];
+  const moonSM = SIGN_MUSIC[chart.moonSign] || SIGN_MUSIC['Cancer'];
 
-  // Blend sun/moon tempo
-  const bpm = Math.round((sunSignMusic.tempo * 0.65 + moonSignMusic.tempo * 0.35));
+  // Chart signature & deterministic RNG up front so we can vary tempo/mode per chart.
+  const chartSignature = `${chart.sunSign}-${chart.moonSign}-${chart.ascendant}-${chart.planets.map(p => `${p.name}${Math.floor(p.degree)}${p.isRetrograde ? 'R' : ''}`).join('')}`;
+  const sigHash = chartSignature.split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
+  const rand = seededRand(Math.abs(sigHash));
 
-  // Use canonical Base Tonic Intervals matrix when available, fall back to SIGN_MUSIC
+  // Blend sun/moon tempo + nudge by chart hash so two same-sun charts diverge.
+  const tempoJitter = Math.round((rand() - 0.5) * 16); // ±8 BPM
+  const bpm = Math.max(54, Math.min(150, Math.round(sunSM.tempo * 0.6 + moonSM.tempo * 0.4 + tempoJitter)));
+
+  // Root from canonical tonic table, fall back to sign root.
   const canonicalTonic = getTonicNote(chart.sunSign);
-  const root: NoteName = canonicalTonic ? normalizeNote(canonicalTonic) : sunSignMusic.root;
-  const mode = sunSignMusic.mode;
+  let root: NoteName = canonicalTonic ? normalizeNote(canonicalTonic) : sunSM.root;
+
+  // Pick mode: 70% sun's mode, otherwise moon's mode (chart-specific variety).
+  const mode = rand() < 0.7 ? sunSM.mode : moonSM.mode;
   const modeIntervals = MODES[mode] || MODES['Dorian'];
 
-  // Build scale across multiple octaves for use
-  const scaleNotes3 = buildScaleNotes(root, modeIntervals, 3);
-  const scaleNotes4 = buildScaleNotes(root, modeIntervals, 4);
-  const scaleNotes5 = buildScaleNotes(root, modeIntervals, 5);
-  const allScaleNotes = [...scaleNotes3, ...scaleNotes4, ...scaleNotes5];
+  // Optional transpose by ±2 semitones based on Mars degree -> harmonic shift.
+  const mars = chart.planets.find(p => p.name === 'Mars');
+  if (mars) {
+    const shift = (Math.floor(mars.degree) % 5) - 2; // -2..+2
+    const rootIdx = (NOTE_NAMES.indexOf(root) + shift + 12) % 12;
+    root = NOTE_NAMES[rootIdx];
+  }
+
+  const allScaleNotes = [
+    ...buildScaleNotes(root, modeIntervals, 3),
+    ...buildScaleNotes(root, modeIntervals, 4),
+    ...buildScaleNotes(root, modeIntervals, 5),
+  ];
+
+  const swing = (sunSM.swing + moonSM.swing) / 2;
 
   const beatsPerBar = 4;
   const secondsPerBeat = 60 / bpm;
   const secondsPerBar = secondsPerBeat * beatsPerBar;
 
-  // Section layout (in bars)
-  const introBars = 4;
-  const aBars = 8;
-  const bBars = 8;
-  const bridgeBars = 4;
-  const codaBars = 4;
+  const introBars = 4, aBars = 8, bBars = 8, bridgeBars = 4, codaBars = 4;
   const totalBars = introBars + aBars + bBars + bridgeBars + codaBars;
   const totalDuration = totalBars * secondsPerBar;
 
   const sections: ScoreSection[] = [
-    { name: 'intro',  startTime: 0,                                 duration: introBars * secondsPerBar },
-    { name: 'A',      startTime: introBars * secondsPerBar,          duration: aBars * secondsPerBar },
-    { name: 'B',      startTime: (introBars + aBars) * secondsPerBar, duration: bBars * secondsPerBar },
-    { name: 'bridge', startTime: (introBars + aBars + bBars) * secondsPerBar, duration: bridgeBars * secondsPerBar },
-    { name: 'coda',   startTime: (introBars + aBars + bBars + bridgeBars) * secondsPerBar, duration: codaBars * secondsPerBar },
+    { name: 'intro',  startTime: 0,                                                          duration: introBars * secondsPerBar },
+    { name: 'A',      startTime: introBars * secondsPerBar,                                  duration: aBars * secondsPerBar },
+    { name: 'B',      startTime: (introBars + aBars) * secondsPerBar,                        duration: bBars * secondsPerBar },
+    { name: 'bridge', startTime: (introBars + aBars + bBars) * secondsPerBar,                duration: bridgeBars * secondsPerBar },
+    { name: 'coda',   startTime: (introBars + aBars + bBars + bridgeBars) * secondsPerBar,   duration: codaBars * secondsPerBar },
   ];
 
-  // Chart signature for deterministic seed
-  const chartSignature = `${chart.sunSign}-${chart.moonSign}-${chart.ascendant}-${chart.planets.map(p => `${p.name}${Math.floor(p.degree)}`).join('')}`;
-  const sigHash = chartSignature.split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
-  const rand = seededRand(Math.abs(sigHash));
+  // Helper: swing a beat offset
+  const swung = (t: number): number => {
+    const beatPos = (t / secondsPerBeat) % 1;
+    if (beatPos > 0.45 && beatPos < 0.55) return t + secondsPerBeat * swing;
+    return t;
+  };
 
   const tracks: ScoreTrack[] = [];
 
-  // Generate a track for each planet present in the chart
   for (const planet of chart.planets) {
     const synthParams = PLANET_SYNTH[planet.name];
     if (!synthParams) continue;
 
     const notes: NoteEvent[] = [];
-    const signMusic = SIGN_MUSIC[planet.sign] || sunSignMusic;
+    const planetSM = SIGN_MUSIC[planet.sign] || sunSM;
 
-    // Choose octave from planet's base octave, adjusted by sign element
     const elementOctaveOffset: Record<string, number> = { Fire: 1, Air: 1, Earth: 0, Water: -1 };
-    const octaveOffset = elementOctaveOffset[signMusic.element] || 0;
-    const targetOctave = Math.max(2, Math.min(5, synthParams.octave + octaveOffset));
-
-    // Get scale notes at the right octave
+    const targetOctave = Math.max(1, Math.min(6, synthParams.octave + (elementOctaveOffset[planetSM.element] || 0)));
     const octaveScale = buildScaleNotes(root, modeIntervals, targetOctave);
+    const octaveScaleUp = buildScaleNotes(root, modeIntervals, targetOctave + 1);
+    const fullVoice = [...octaveScale, ...octaveScaleUp];
 
-    // Determine starting scale degree from planet's degree within sign
     const startDegree = degreeToScaleIndex(planet.degree % 30, modeIntervals.length);
-
-    // Retrograde planets play in reverse / more sparse patterns
     const isRetro = planet.isRetrograde;
-    const densityMultiplier = isRetro ? 0.5 : 1.0;
-    const rhythmicDensity = signMusic.rhythmicDensity * densityMultiplier * synthParams.weight;
+    const densityMult = isRetro ? 0.55 : 1.0;
+    const density = planetSM.rhythmicDensity * densityMult * (0.5 + synthParams.weight * 0.6);
 
-    // Note duration based on role
-    const roleDurations: Record<string, number> = {
-      bass:  secondsPerBar * 2,
-      drone: secondsPerBar * 4,
-      pad:   secondsPerBar * 1,
-      lead:  secondsPerBeat,
-      arp:   secondsPerBeat * 0.5,
-    };
-    const noteDuration = roleDurations[synthParams.role] || secondsPerBeat;
+    const velRand = () => Math.round(synthParams.velocityRange[0] + rand() * (synthParams.velocityRange[1] - synthParams.velocityRange[0]));
 
-    // Generate notes for each section
     for (const section of sections) {
       const sectionBars = Math.round(section.duration / secondsPerBar);
+      const intensity =
+        section.name === 'intro'  ? 0.55 :
+        section.name === 'A'       ? 0.85 :
+        section.name === 'B'       ? 1.00 :
+        section.name === 'bridge'  ? 0.70 : 0.45;
 
-      if (section.name === 'intro' && synthParams.role === 'arp') continue; // arps enter in A
-      if (section.name === 'coda' && synthParams.role === 'arp') continue;  // arps drop in coda
+      // Some voices drop in/out by section for breathing room
+      if (synthParams.role === 'arp' && (section.name === 'intro' || section.name === 'coda')) continue;
+      if (synthParams.role === 'color' && section.name === 'intro') continue;
+      if (synthParams.role === 'lead' && section.name === 'intro' && rand() < 0.5) continue;
 
       for (let bar = 0; bar < sectionBars; bar++) {
         const barStart = section.startTime + bar * secondsPerBar;
+        const sectionDensity = density * intensity;
 
-        // Bass/drone: one note per bar or per 2 bars
-        if (synthParams.role === 'bass' || synthParams.role === 'drone') {
-          const scaleIdx = (startDegree + bar) % octaveScale.length;
-          const pitch = octaveScale[scaleIdx];
+        if (synthParams.role === 'bass') {
+          // Walking bass: root on 1, fifth/third around 3, occasional approach tone.
+          const pattern = [0, 4, 2, 6];
+          const subdivisions = synthParams.voice === 'subBass' ? 1 : 2;
+          for (let b = 0; b < subdivisions * 2; b++) {
+            if (subdivisions === 1 && b % 2 !== 0) continue;
+            if (rand() > sectionDensity + 0.15) continue;
+            const beatOffset = b * secondsPerBeat;
+            const scaleIdx = (startDegree + pattern[b % pattern.length] + (bar % 3 === 2 ? 1 : 0)) % octaveScale.length;
+            notes.push({
+              time: swung(barStart + beatOffset),
+              pitch: octaveScale[scaleIdx],
+              duration: secondsPerBeat * (subdivisions === 1 ? 3.5 : 0.9),
+              velocity: velRand(),
+              planet: planet.name,
+            });
+          }
+        }
+
+        else if (synthParams.role === 'comp') {
+          // Jazz piano comping: 2-3 chord stabs per bar on offbeats with rootless voicings.
+          const stabs = sectionDensity > 0.5 ? 3 : 2;
+          const beatChoices = [0.5, 1.75, 2.5, 3.25];
+          for (let s = 0; s < stabs; s++) {
+            if (rand() > sectionDensity) continue;
+            const beat = beatChoices[(s + bar) % beatChoices.length];
+            // Stack 3-4 chord tones (3rd, 5th, 7th, 9th) -> rootless voicing
+            const tones = [2, 4, 6, 8];
+            for (const t of tones) {
+              if (rand() > 0.75) continue;
+              const idx = (startDegree + t + bar) % fullVoice.length;
+              notes.push({
+                time: swung(barStart + beat * secondsPerBeat),
+                pitch: fullVoice[idx],
+                duration: secondsPerBeat * (0.6 + rand() * 0.8),
+                velocity: Math.max(35, velRand() - 15),
+                planet: planet.name,
+              });
+            }
+          }
+        }
+
+        else if (synthParams.role === 'pad') {
+          // Long sustained felt tones — one per 2 bars.
+          if (bar % 2 !== 0) continue;
+          const idx = (startDegree + bar) % fullVoice.length;
           notes.push({
             time: barStart,
-            pitch,
-            duration: noteDuration * (isRetro ? 1.5 : 1),
-            velocity: Math.round(synthParams.velocityRange[0] + rand() * (synthParams.velocityRange[1] - synthParams.velocityRange[0])),
+            pitch: fullVoice[idx],
+            duration: secondsPerBar * 2 * 0.95,
+            velocity: Math.max(28, velRand() - 20),
             planet: planet.name,
           });
         }
 
-        // Pad: one or two notes per bar
-        else if (synthParams.role === 'pad') {
-          const notesPerBar = rhythmicDensity > 0.5 ? 2 : 1;
-          for (let n = 0; n < notesPerBar; n++) {
-            const beatOffset = n * (secondsPerBar / notesPerBar);
-            const scaleIdx = (startDegree + bar + n) % octaveScale.length;
-            const pitch = octaveScale[scaleIdx];
-            notes.push({
-              time: barStart + beatOffset,
-              pitch,
-              duration: noteDuration,
-              velocity: Math.round(synthParams.velocityRange[0] + rand() * (synthParams.velocityRange[1] - synthParams.velocityRange[0])),
-              planet: planet.name,
-            });
-          }
-        }
-
-        // Lead: melodic phrase over the bar
         else if (synthParams.role === 'lead') {
-          const beatsInBar = 4;
-          const phraseNotes = Math.round(beatsInBar * rhythmicDensity);
-          for (let beat = 0; beat < phraseNotes; beat++) {
-            if (rand() > rhythmicDensity) continue;
-            const beatOffset = beat * secondsPerBeat;
-            // Walk scale with some leaps
-            const leap = rand() > 0.7 ? 2 : 1;
+          // Through-composed melodic line: irregular phrase lengths, occasional silence.
+          const beats = 4;
+          const phraseShape = [0, 2, -1, 1, 3, -2, 4, 1]; // contour
+          for (let b = 0; b < beats * 2; b++) { // 8th notes
+            if (rand() > sectionDensity * 0.85) continue;
+            const beatOffset = b * (secondsPerBeat / 2);
+            const contour = phraseShape[(b + bar * 3) % phraseShape.length];
             const direction = isRetro ? -1 : 1;
-            const scaleIdx = Math.abs((startDegree + bar * 2 + beat * direction * leap)) % octaveScale.length;
-            const pitch = octaveScale[scaleIdx];
+            const scaleIdx = Math.abs((startDegree + bar + b + contour * direction)) % fullVoice.length;
             notes.push({
-              time: barStart + beatOffset,
-              pitch,
-              duration: noteDuration * (0.5 + rand() * 0.5),
-              velocity: Math.round(synthParams.velocityRange[0] + rand() * (synthParams.velocityRange[1] - synthParams.velocityRange[0])),
+              time: swung(barStart + beatOffset),
+              pitch: fullVoice[scaleIdx],
+              duration: (secondsPerBeat / 2) * (0.6 + rand() * 1.2),
+              velocity: velRand(),
               planet: planet.name,
             });
           }
         }
 
-        // Arp: rapid pattern
         else if (synthParams.role === 'arp') {
-          const stepsPerBar = Math.round(8 * rhythmicDensity);
-          for (let step = 0; step < stepsPerBar; step++) {
-            if (rand() > rhythmicDensity * 0.8) continue;
-            const stepOffset = step * (secondsPerBar / 8);
-            // Arp through scale chord tones (root, third, fifth)
-            const chordTones = [0, 2, 4, 6];
-            const toneIdx = chordTones[step % chordTones.length];
-            const scaleIdx = (startDegree + toneIdx) % octaveScale.length;
-            const pitch = octaveScale[scaleIdx];
+          // 16ths with gaps — broken arpeggio in jazz voicing intervals.
+          const steps = 16;
+          const intervals = [0, 2, 4, 6, 4, 2, 7, 4];
+          for (let st = 0; st < steps; st++) {
+            if (rand() > sectionDensity * 0.6) continue;
+            const stepOffset = st * (secondsPerBar / steps);
+            const idx = (startDegree + intervals[st % intervals.length]) % fullVoice.length;
             notes.push({
-              time: barStart + stepOffset,
-              pitch,
-              duration: noteDuration,
-              velocity: Math.round(synthParams.velocityRange[0] + rand() * (synthParams.velocityRange[1] - synthParams.velocityRange[0])),
+              time: swung(barStart + stepOffset),
+              pitch: fullVoice[idx],
+              duration: (secondsPerBeat / 4) * 0.9,
+              velocity: Math.max(40, velRand() - 8),
               planet: planet.name,
             });
           }
+        }
+
+        else if (synthParams.role === 'color') {
+          // Sparse mallet/electronic color — 1-2 hits per 4 bars.
+          if (bar % 4 !== (Math.floor(rand() * 4))) continue;
+          const beatOffset = Math.floor(rand() * 4) * secondsPerBeat;
+          const idx = (startDegree + Math.floor(rand() * 6) * 2) % fullVoice.length;
+          notes.push({
+            time: barStart + beatOffset,
+            pitch: fullVoice[idx],
+            duration: secondsPerBeat * 0.7,
+            velocity: velRand(),
+            planet: planet.name,
+          });
         }
       }
     }
@@ -324,5 +375,6 @@ export function chartToScore(chart: ChartData): Score {
     tracks,
     totalDuration,
     chartSignature,
+    swing,
   };
 }
