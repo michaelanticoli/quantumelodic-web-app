@@ -18,6 +18,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Academy = lazy(() => import("./pages/Academy"));
 const Glossary = lazy(() => import("./pages/Glossary"));
+const SynastricSymphony = lazy(() => import("./pages/SynastricSymphony"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => {
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/academy" element={<Academy />} />
                   <Route path="/glossary" element={<Glossary />} />
+                  <Route path="/synastry" element={<SynastricSymphony />} />
                   <Route path="/quantumelodic" element={<Index />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
