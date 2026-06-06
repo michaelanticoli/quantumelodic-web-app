@@ -195,9 +195,9 @@ def compute_synastry_score_params(
     # Tempo blending: weighted average influenced by compatibility
     tempo_a = SIGN_TEMPO.get(sign_a, 90)
     tempo_b = SIGN_TEMPO.get(sign_b, 90)
-    # Higher compatibility → tempos converge; lower → stay distinct
+    # Higher compatibility → tempos converge toward average; lower → stay distinct
     compat_factor = harmony_result.harmonic_compatibility / 100.0
-    blended_tempo = int(tempo_a * (0.5 + compat_factor * 0.1) + tempo_b * (0.5 - compat_factor * 0.1))
+    blended_tempo = int((tempo_a + tempo_b) / 2 + (tempo_a - tempo_b) * compat_factor * 0.1)
     blended_tempo = max(54, min(150, blended_tempo))
 
     # Counterpoint

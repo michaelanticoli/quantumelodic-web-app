@@ -416,10 +416,11 @@ export function synastryToScore(
   // Inject "meeting points" where both voices align on shared tones
   const sharedNotes: NoteEvent[] = [];
   const bSection = sections.find(s => s.name === 'B')!;
-  for (let i = 0; i < Math.min(synastryAspects.length, 8); i++) {
+  const aspectCount = Math.min(synastryAspects.length, 8);
+  for (let i = 0; i < aspectCount; i++) {
     const asp = synastryAspects[i];
     const interval = ASPECT_INTERVAL_MAP[asp.quality] || 3;
-    const time = bSection.startTime + (i / Math.max(1, synastryAspects.length)) * bSection.duration;
+    const time = bSection.startTime + (i / aspectCount) * bSection.duration;
     const baseIdx = (i * 3) % scaleComposite.length;
     sharedNotes.push({
       time,

@@ -409,8 +409,8 @@ def create_app() -> Flask:
         try:
             person_a = _coerce_frontend_birth_payload(person_a_raw)
             person_b = _coerce_frontend_birth_payload(person_b_raw)
-        except ValueError as exc:
-            return jsonify({"error": f"Invalid birth data: {exc}"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid birth data provided"}), 400
 
         try:
             chart_a = build_chart(
@@ -429,8 +429,8 @@ def create_app() -> Flask:
                 longitude=float(person_b["longitude"]),
                 utc_offset=float(person_b.get("utc_offset", 0)),
             )
-        except (ValueError, TypeError) as exc:
-            return jsonify({"error": f"Chart calculation failed: {exc}"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"error": "Chart calculation failed"}), 400
         except Exception:
             logger.exception("synastry chart build error")
             return jsonify({"error": "Internal server error"}), 500
@@ -496,8 +496,8 @@ def create_app() -> Flask:
 
         try:
             birth_data = _coerce_frontend_birth_payload(birth_data_raw)
-        except ValueError as exc:
-            return jsonify({"error": f"Invalid birth data: {exc}"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid birth data provided"}), 400
 
         # Determine transit date (default to today)
         from datetime import date as dt_date, datetime
@@ -526,8 +526,8 @@ def create_app() -> Flask:
                 longitude=float(birth_data["longitude"]),
                 utc_offset=float(birth_data.get("utc_offset", 0)),
             )
-        except (ValueError, TypeError) as exc:
-            return jsonify({"error": f"Chart calculation failed: {exc}"}), 400
+        except (ValueError, TypeError):
+            return jsonify({"error": "Chart calculation failed"}), 400
         except Exception:
             logger.exception("transits-to-natal chart build error")
             return jsonify({"error": "Internal server error"}), 500
