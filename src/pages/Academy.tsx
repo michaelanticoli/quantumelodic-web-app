@@ -34,8 +34,8 @@ const Academy = () => {
       if (data?.url) {
         window.open(data.url, '_blank');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to start checkout');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start checkout');
     } finally {
       setCheckoutLoading(false);
     }
@@ -50,8 +50,8 @@ const Academy = () => {
       });
       if (error) throw error;
       if (data?.url) window.open(data.url, '_blank');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to open portal');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to open portal');
     } finally {
       setPortalLoading(false);
     }

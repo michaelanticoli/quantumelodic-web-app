@@ -164,7 +164,7 @@ export default function LunarReports() {
   const [hasPaidAccess] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     if (returnedFromCheckout) {
-      try { sessionStorage.setItem(PAID_SESSION_KEY, 'true'); } catch {}
+      try { sessionStorage.setItem(PAID_SESSION_KEY, 'true'); } catch { return true; }
       return true;
     }
     try { return sessionStorage.getItem(PAID_SESSION_KEY) === 'true'; } catch { return false; }
@@ -191,7 +191,7 @@ export default function LunarReports() {
 
   const saveReport = useCallback((r: LunarReport) => {
     setReport(r);
-    try { sessionStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(r)); } catch {}
+    try { sessionStorage.setItem(REPORT_CACHE_KEY, JSON.stringify(r)); } catch { return; }
   }, []);
 
   const handleSubmit = async (data: { name: string; date: string; time: string; location: string }) => {
@@ -227,7 +227,7 @@ export default function LunarReports() {
     setReport(null);
     setGeneratingProgress(0);
     setStep('input');
-    try { sessionStorage.removeItem(REPORT_CACHE_KEY); } catch {}
+    try { sessionStorage.removeItem(REPORT_CACHE_KEY); } catch { return; }
   }, []);
 
   const handlePrint = useCallback(() => {
