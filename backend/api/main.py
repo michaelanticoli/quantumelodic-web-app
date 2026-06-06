@@ -36,6 +36,12 @@ from engines.ephemeris.chart_builder import build_chart  # noqa: E402
 from engines.ai_music.music_generator import generate_music_params  # noqa: E402
 from engines.harmonic.harmonic_series import compute_harmonics, frequency_for_planet  # noqa: E402
 from engines.midi.midi_builder import build_midi_sequence  # noqa: E402
+from engines.synastry import (  # noqa: E402
+    find_synastry_aspects,
+    build_composite_chart,
+    compute_synastry_harmony,
+    compute_synastry_score_params,
+)
 
 # ---------------------------------------------------------------------------
 # Stripe (optional – only imported when keys are present)
@@ -374,6 +380,184 @@ def create_app() -> Flask:
         if success:
             return jsonify({"sent": True})
         return jsonify({"error": "Failed to send email"}), 500
+
+    # ------------------------------------------------------------------ #
+    #  Synastry – two-chart comparison                                     #
+    # ------------------------------------------------------------------ #
+
+    @app.route("/api/synastry", methods=["POST"])
+    def synastry():
+        """
+        Compare two birth charts and return synastric analysis with musical params.
+
+        Expects JSON body:
+        {
+          "person_a": { date, time, location, ... },
+          "person_b": { date, time, location, ... },
+          "relationship_type": "romantic" | "friendship" | "professional" | "parent_child"
+        }
+        """
+        data = request.get_json(force=True, silent=True) or {}
+
+        person_a_raw = data.get("person_a")
+        person_b_raw = data.get("person_b")
+        relationship_type = data.get("relationship_type", "romantic")
+
+        if not person_a_raw or not person_b_raw:
+            return jsonify({"error": "Both person_a and person_b birth data are required"}), 400
+
+        try:
+            person_a = _coerce_frontend_birth_payload(person_a_raw)
+            person_b = _coerce_frontend_birth_payload(person_b_raw)
+        except ValueError as exc:
+            return jsonify({"error": f"Invalid birth data: {exc}"}), 400
+
+        try:
+            chart_a = build_chart(
+                year=int(person_a["year"]), month=int(person_a["month"]),
+                day=int(person_a["day"]), hour=int(person_a["hour"]),
+                minute=int(person_a["minute"]),
+                latitude=float(person_a["latitude"]),
+                longitude=float(person_a["longitude"]),
+                utc_offset=float(person_a.get("utc_offset", 0)),
+            )
+            chart_b = build_chart(
+                year=int(person_b["year"]), month=int(person_b["month"]),
+                day=int(person_b["day"]), hour=int(person_b["hour"]),
+                minute=int(person_b["minute"]),
+                latitude=float(person_b["latitude"]),
+                longitude=float(person_b["longitude"]),
+                utc_offset=float(person_b.get("utc_offset", 0)),
+            )
+        except (ValueError, TypeError) as exc:
+            return jsonify({"error": f"Chart calculation failed: {exc}"}), 400
+        except Exception:
+            logger.exception("synastry chart build error")
+            return jsonify({"error": "Internal server error"}), 500
+
+        try:
+            planets_a = chart_a["planets"]
+            planets_b = chart_b["planets"]
+
+            # Cross-chart aspects
+            synastry_aspects = find_synastry_aspects(planets_a, planets_b)
+
+            # Composite chart
+            composite = build_composite_chart(
+                planets_a, planets_b,
+                ascendant_a=chart_a.get("ascendant"),
+                ascendant_b=chart_b.get("ascendant"),
+            )
+
+            # Harmonic compatibility analysis
+            harmony = compute_synastry_harmony(synastry_aspects, planets_a, planets_b)
+
+            # Musical score parameters
+            from dataclasses import asdict
+            score_params = compute_synastry_score_params(
+                harmony, planets_a, planets_b, relationship_type
+            )
+
+            return jsonify({
+                "chart_a": chart_a,
+                "chart_b": chart_b,
+                "synastry_aspects": synastry_aspects,
+                "composite_chart": composite,
+                "harmony": asdict(harmony),
+                "score_params": asdict(score_params),
+                "relationship_type": relationship_type,
+            })
+        except Exception:
+            logger.exception("synastry analysis error")
+            return jsonify({"error": "Internal server error"}), 500
+
+    # ------------------------------------------------------------------ #
+    #  Transits to Natal – current sky vs birth chart                       #
+    # ------------------------------------------------------------------ #
+
+    @app.route("/api/transits-to-natal", methods=["POST"])
+    def transits_to_natal():
+        """
+        Compare current transits (or a target date) against a natal chart.
+
+        Expects JSON body:
+        {
+          "birth_data": { date, time, location, ... },
+          "target_date": "YYYY-MM-DD" (optional, defaults to today)
+        }
+        """
+        data = request.get_json(force=True, silent=True) or {}
+
+        birth_data_raw = data.get("birth_data")
+        if not birth_data_raw:
+            return jsonify({"error": "birth_data is required"}), 400
+
+        target_date = data.get("target_date", "")
+
+        try:
+            birth_data = _coerce_frontend_birth_payload(birth_data_raw)
+        except ValueError as exc:
+            return jsonify({"error": f"Invalid birth data: {exc}"}), 400
+
+        # Determine transit date (default to today)
+        from datetime import date as dt_date, datetime
+        if target_date and _DATE_RE.match(target_date):
+            t_year, t_month, t_day = [int(x) for x in target_date.split("-")]
+        else:
+            today = dt_date.today()
+            t_year, t_month, t_day = today.year, today.month, today.day
+
+        try:
+            # Build natal chart
+            natal_chart = build_chart(
+                year=int(birth_data["year"]), month=int(birth_data["month"]),
+                day=int(birth_data["day"]), hour=int(birth_data["hour"]),
+                minute=int(birth_data["minute"]),
+                latitude=float(birth_data["latitude"]),
+                longitude=float(birth_data["longitude"]),
+                utc_offset=float(birth_data.get("utc_offset", 0)),
+            )
+
+            # Build transit chart (noon at birth location for the target date)
+            transit_chart = build_chart(
+                year=t_year, month=t_month, day=t_day,
+                hour=12, minute=0,
+                latitude=float(birth_data["latitude"]),
+                longitude=float(birth_data["longitude"]),
+                utc_offset=float(birth_data.get("utc_offset", 0)),
+            )
+        except (ValueError, TypeError) as exc:
+            return jsonify({"error": f"Chart calculation failed: {exc}"}), 400
+        except Exception:
+            logger.exception("transits-to-natal chart build error")
+            return jsonify({"error": "Internal server error"}), 500
+
+        try:
+            natal_planets = natal_chart["planets"]
+            transit_planets = transit_chart["planets"]
+
+            # Transit aspects to natal
+            transit_aspects = find_synastry_aspects(transit_planets, natal_planets)
+
+            # Harmonic analysis (transit as "person B")
+            harmony = compute_synastry_harmony(transit_aspects, natal_planets, transit_planets)
+
+            from dataclasses import asdict
+            score_params = compute_synastry_score_params(
+                harmony, natal_planets, transit_planets, "transit"
+            )
+
+            return jsonify({
+                "natal_chart": natal_chart,
+                "transit_chart": transit_chart,
+                "transit_date": f"{t_year:04d}-{t_month:02d}-{t_day:02d}",
+                "transit_aspects": transit_aspects,
+                "harmony": asdict(harmony),
+                "score_params": asdict(score_params),
+            })
+        except Exception:
+            logger.exception("transits-to-natal analysis error")
+            return jsonify({"error": "Internal server error"}), 500
 
     return app
 
