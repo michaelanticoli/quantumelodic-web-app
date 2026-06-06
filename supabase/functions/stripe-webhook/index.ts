@@ -30,7 +30,6 @@ serve(async (req) => {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
-  let event: Stripe.Event;
 
   if (!webhookSecret) {
     logStep("ERROR", { message: "STRIPE_WEBHOOK_SECRET not set — refusing to process webhook" });
