@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     let text = String(body.text ?? "").trim();
-    const voiceId = String(body.voiceId ?? VOICE_ID);
+    // Voice is server-controlled — never trust client-supplied voiceId (prevents abuse of cloned/third-party voices).
+    const voiceId = VOICE_ID;
     if (!text) return json({ error: "text required" }, 400);
     // ElevenLabs hard limit ~5000 chars; trim if needed.
     if (text.length > 4800) text = text.slice(0, 4800) + "…";
