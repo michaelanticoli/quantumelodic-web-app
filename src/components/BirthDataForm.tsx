@@ -10,9 +10,9 @@ function parseDate(raw: string): string | null {
   const cleaned = raw.trim();
   if (!cleaned) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return cleaned;
-  const mdy = cleaned.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  const mdy = cleaned.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
   if (mdy) { const [, m, d, y] = mdy; return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; }
-  const dmy = cleaned.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
+  const dmy = cleaned.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
   if (dmy) { const [, d, m, y] = dmy; const fullY = y.length === 2 ? `19${y}` : y; return `${fullY}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; }
   const months: Record<string,string> = { january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12',jan:'01',feb:'02',mar:'03',apr:'04',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
   const named = cleaned.match(/^(\w+)\s+(\d{1,2})[,\s]+(\d{4})$/i) || cleaned.match(/^(\d{1,2})\s+(\w+)[,\s]+(\d{4})$/i);
