@@ -23,8 +23,8 @@ const ResetPassword = () => {
       if (error) throw error;
       toast.success('Password updated.');
       navigate('/');
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update password');
     } finally {
       setLoading(false);
     }

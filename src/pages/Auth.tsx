@@ -41,8 +41,8 @@ const Auth = () => {
         if (error) throw error;
         toast.success('Check your email to confirm your account.');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Authentication failed');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -62,8 +62,8 @@ const Auth = () => {
       if (error) throw error;
       toast.success('Password reset link sent to your email.');
       setShowReset(false);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send reset link');
     } finally {
       setLoading(false);
     }

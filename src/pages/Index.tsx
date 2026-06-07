@@ -320,7 +320,7 @@ function hasPaidSession(): boolean {
 }
 
 function setPaidSession(): void {
-  try { sessionStorage.setItem(PAID_SESSION_KEY, 'true'); } catch {}
+  try { sessionStorage.setItem(PAID_SESSION_KEY, 'true'); } catch { return; }
 }
 
 type AppState = "paywall" | "input" | "generating" | "result";
