@@ -315,7 +315,7 @@ export function generateNatalChartSVG(
   out.push(`<text x="${cx}" y="72" text-anchor="middle"
     font-family="Arial,Helvetica,sans-serif"
     font-size="11" fill="${TEXT_MU}" letter-spacing="2"
-  >&#9737; ${escapeXml(chartData.sunSign)} &nbsp;&#183;&nbsp; &#9789; ${escapeXml(chartData.moonSign)} &nbsp;&#183;&nbsp; &#8593; ${escapeXml(chartData.ascendant)}</text>`);
+  >&#9737; ${escapeXml(chartData.sunSign)} &#160;&#183;&#160; &#9789; ${escapeXml(chartData.moonSign)} &#160;&#183;&#160; &#8593; ${escapeXml(chartData.ascendant)}</text>`);
 
   // Thin divider line under header
   out.push(`<line x1="${cx - 180}" y1="84" x2="${cx + 180}" y2="84"
@@ -509,7 +509,7 @@ export function generateNatalChartSVG(
     text-anchor="middle"
     font-family="Arial,Helvetica,sans-serif"
     font-size="11" fill="${TEXT_MU}" letter-spacing="1.5"
-  >Born ${escapeXml(dateStr)} &nbsp;&#183;&nbsp; ${escapeXml(birthData.time)} &nbsp;&#183;&nbsp; ${escapeXml(birthData.location)}</text>`);
+  >Born ${escapeXml(dateStr)} &#160;&#183;&#160; ${escapeXml(birthData.time)} &#160;&#183;&#160; ${escapeXml(birthData.location)}</text>`);
 
   out.push(`<text x="${cx}" y="${footerY + 22}"
     text-anchor="middle"
