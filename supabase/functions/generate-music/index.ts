@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────
 
 interface PlanetPosition {
   name: string;
@@ -76,7 +76,7 @@ const VALID_SIGNS = [
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
-// ── Input validation ──────────────────────────────────────────────────────────
+// ── Input validation ─────────────────────────────────────────────────────────
 
 function validateRequest(data: unknown): { valid: true; data: RequestBody } | { valid: false; error: string } {
   if (!data || typeof data !== 'object') {
@@ -278,7 +278,7 @@ function buildQMPrompt(
 
   // ── Assemble prompt ──
   // Style header comes FIRST so it survives any truncation — chart data follows
-  const styleHeader = `Generate a finished studio MP3 track, NOT meditation music. HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Style: minimalist keyboard-centered new-jazz noir with a composer's edge. Solo/felt/prepared piano must lead. Add sparse brushed snare, upright bass or cello counterpoint, tasteful Rhodes/Moog/analog texture only as shadow. Harmonic language: Chilly Gonzales piano, Radiohead In Rainbows, Kaki King guitar architecture, Tori Amos covering Björk without vocals, Philip Glass études, Grimes bedroom analog warmth. Through-composed, dry, intimate, innovative, rhythmically alive.`;
+  const styleHeader = `Generate a finished studio MP3 track, NOT meditation music. Instrumental-only composition: NO lyrics, NO words, NO intelligible vocalizations, NO spoken voice, and NO featured singer or lead vocal performance. If any human-voice texture is used, it must be sparse, non-verbal, distant, and low in the mix (ethereal/peripheral only). HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Style: minimalist keyboard-centered new-jazz noir with a composer's edge. Solo/felt/prepared piano must lead. Add sparse brushed snare, upright bass or cello counterpoint, tasteful Rhodes/Moog/analog texture only as shadow. Harmonic language: Chilly Gonzales piano, Radiohead In Rainbows, Kaki King guitar architecture, Tori Amos covering Björk without vocals, Philip Glass études, Grimes bedroom analog warmth. Through-composed, dry, intimate, innovative, rhythmically alive.`;
   const parts = [
     styleHeader,
     `${avgTempo}BPM. Mode: ${mode}. Key: ${key}.`,
@@ -319,10 +319,10 @@ const fallbackModes: Record<string, { mode: string; mood: string; tempo: string 
 function buildFallbackPrompt(sunSign: string, moonSign: string): string {
   const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
   const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
-  return `Generate a finished studio MP3 track, NOT meditation music. HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Compose a modern avant-garde piano-led instrumental in ${sun.mode} mode at a ${sun.tempo} pace, blending ${sun.mood} identity with ${moon.mood} undertones. Solo/felt/prepared piano leads with noir-jazz intelligence, inventive melodies, modal interchange, quartal voicings, chromatic mediants, suspended resolutions. Add sparse brushed snare, upright bass/cello counterpoint, tasteful Rhodes/Moog analog shadow. References: Chilly Gonzales, Radiohead In Rainbows, Kaki King architecture, Tori Amos covering Björk without vocals, Philip Glass études, Grimes bedroom analog warmth. Through-composed, dry, intimate, innovative, rhythmically alive; never static drone.`;
+  return `Generate a finished studio MP3 track, NOT meditation music. Instrumental-only composition: NO lyrics, NO words, NO intelligible vocalizations, NO spoken voice, and NO featured singer or lead vocal performance. If any human-voice texture is used, it must be sparse, non-verbal, distant, and low in the mix (ethereal/peripheral only). HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Style: minimalist keyboard-centered new-jazz noir with a composer's edge. Solo/felt/prepared piano must lead. Add sparse brushed snare, upright bass or cello counterpoint, tasteful Rhodes/Moog/analog texture only as shadow. Harmonic blend of ${sun.mode} and ${moon.mode}, ${sun.tempo} to ${moon.tempo} pulse, emotionally ${sun.mood} + ${moon.mood}. Through-composed, dry, intimate, innovative, rhythmically alive.`;
 }
 
-// ── Main handler ──────────────────────────────────────────────────────────────
+// ── Main handler ─────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
