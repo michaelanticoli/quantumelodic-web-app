@@ -16,6 +16,12 @@ export default {
         display: ['Fraunces', 'Georgia', 'serif'],
         serif: ['Fraunces', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        hero: ['Inter', 'system-ui', 'sans-serif'],
+        playfair: ['"Playfair Display"', 'Georgia', 'serif'],
+        instrument: ['"Instrument Serif"', 'Georgia', 'serif'],
+        body: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        ui: ['"Work Sans"', 'system-ui', 'sans-serif'],
+        data: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -46,6 +52,10 @@ export default {
         highlight: {
           DEFAULT: "hsl(var(--highlight))",
           foreground: "hsl(var(--highlight-foreground))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          foreground: "hsl(var(--gold-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
