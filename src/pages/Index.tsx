@@ -150,8 +150,8 @@ const SampleCard = ({ name, chart, musicalKey, src, delay = 0 }: SampleCardProps
 };
 
 const SAMPLES: SampleCardProps[] = [
-  { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E\u266d MAJOR · LYDIAN', src: '/samples/einstein.mp3' },
-  { name: 'Scorpio Sun · Taurus Moon', chart: 'Fixed water · fixed earth', musicalKey: 'A\u266d MINOR', src: '/samples/scorpio-taurus.mp3' },
+  { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E♭ MAJOR · LYDIAN', src: '/samples/einstein.mp3' },
+  { name: 'Scorpio Sun · Taurus Moon', chart: 'Fixed water · fixed earth', musicalKey: 'A♭ MINOR', src: '/samples/scorpio-taurus.mp3' },
   { name: 'Leo Sun · Aquarius Moon', chart: 'Fixed fire · fixed air', musicalKey: 'C MAJOR', src: '/samples/leo-aquarius.mp3' },
 ];
 
@@ -161,7 +161,7 @@ const SamplesSection = () => (
       <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-3">LISTEN FIRST</p>
       <h2 className="font-hero text-[32px] md:text-[40px] leading-[0.95] text-foreground">
         Every chart sounds{' '}
-        <em className="font-instrument not-italic" style={{ color: 'hsl(42 50% 58%)', fontStyle: 'italic' }}>
+        <em className="font-instrument text-gold italic">
           different.
         </em>
       </h2>
@@ -185,7 +185,7 @@ const PricingTiers = ({ onUnlock }: { onUnlock: () => void }) => {
         <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-3">THREE WAYS IN</p>
         <h2 className="font-hero text-[32px] md:text-[40px] leading-[0.95] text-foreground">
           Choose your{' '}
-          <em className="font-instrument not-italic" style={{ color: 'hsl(42 50% 58%)', fontStyle: 'italic' }}>
+          <em className="font-instrument text-gold italic">
             depth.
           </em>
         </h2>
@@ -256,7 +256,7 @@ const PricingTiers = ({ onUnlock }: { onUnlock: () => void }) => {
               </li>
             ))}
           </ul>
-          <p className="font-data text-[10px] uppercase tracking-[0.18em] mb-5" style={{ color: 'hsl(42 50% 58%)' }}>
+          <p className="font-data text-[10px] uppercase tracking-[0.18em] mb-5 text-gold">
             FOUNDING WINDOW — {remaining} OF {FOUNDING_TOTAL} READINGS LEFT AT THIS PRICE
           </p>
           <a
@@ -334,8 +334,7 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
         <h1 className="font-hero font-[200] leading-[0.9] tracking-[-0.03em] text-foreground mb-6">
           <span className="block text-[44px] md:text-[64px]">Your cosmos,</span>
           <em
-            className="block text-[44px] md:text-[64px] font-instrument not-italic"
-            style={{ color: 'hsl(42 50% 58%)', fontStyle: 'italic' }}
+            className="block text-[44px] md:text-[64px] font-instrument text-gold italic"
           >
             composed.
           </em>
@@ -375,7 +374,7 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
 
       {/* ── About ── */}
       <motion.section className="glass-card p-6 mb-12" {...fadeUp(0.1)}>
-        <p className="font-ui text-[10px] uppercase tracking-[0.25em] mb-3" style={{ color: 'hsl(42 50% 58%)' }}>
+        <p className="font-ui text-[10px] uppercase tracking-[0.25em] mb-3 text-gold">
           ABOUT THIS WORK
         </p>
         <p className="font-instrument text-base text-foreground/90 leading-relaxed italic mb-4">
