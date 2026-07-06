@@ -299,7 +299,7 @@ function buildQMPrompt(
     `Aspects: ${aspectNarrative}.`,
     retroNote,
     outerColors.length ? `Outer planet colors: ${outerColors.slice(0, 2).join(', ')}.` : '',
-    `Piano techniques in play: prepared piano clusters, muted-string plucks, pedal shimmer, chromatic chromaticism, quartal voicings, unresolved suspensions, modal interchange. Let the chart data determine where the piece breathes, tenses, and releases. Keep it avant-garde, specific, strange, and emotionally alive.`,
+    `Piano techniques in play: prepared piano clusters, muted-string plucks, pedal shimmer, chromatic voice-leading, quartal voicings, unresolved suspensions, modal interchange. Let the chart data determine where the piece breathes, tenses, and releases. Keep it avant-garde, specific, strange, and emotionally alive.`,
   ].filter(Boolean);
 
   const prompt = parts.join(' ');
