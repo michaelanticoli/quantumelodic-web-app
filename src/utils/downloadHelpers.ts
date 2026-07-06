@@ -482,87 +482,195 @@ function getRetrogradeNote(planet: string): string {
 }
 
 function getMusicalTranslation(planet: string, sign: string): string {
-  const instruments: Record<string, string> = {
-    Sun: 'radiant brass and strings, carrying the central melody',
-    Moon: 'silver flute and harp, weaving the emotional undertow',
-    Mercury: 'quick woodwinds and bells, articulating the rhythmic dialogue',
-    Venus: 'lush strings and voice, singing the harmonic sweetness',
-    Mars: 'driving percussion and distorted brass, pounding the rhythmic pulse',
-    Jupiter: 'majestic organ and full orchestra, expanding the harmonic range',
-    Saturn: 'deep cello, bass clarinet, and low strings, anchoring the structure',
-    Uranus: 'erratic synthesizers and electronic glitches, disrupting the pattern',
-    Neptune: 'ethereal choir, reverb-drenched pads, and ambient washes',
-    Pluto: 'subterranean sub-bass and industrial drones, rumbling beneath everything',
+  const pianoVoices: Record<string, string> = {
+    Sun: 'the singing middle-register melody line — warm, unashamed, the phrase that holds everything else together',
+    Moon: 'an expressive left-hand inner voice — cantabile, emotional, the undertow beneath the surface',
+    Mercury: 'swift, light right-hand figures — staccato, quick intervallic leaps, ideas passed rapidly from hand to hand',
+    Venus: 'lush, pedal-heavy chord voicings left ringing past their welcome — harmonic warmth you step into',
+    Mars: 'sharp percussive left-hand stabs and insistent rhythmic figures — the piano used as percussion',
+    Jupiter: 'broad, resonant full-register chord swells — the moment the piece opens up and breathes wide',
+    Saturn: 'a slow, deliberate bass line in the lowest register — the structural weight that keeps the form honest',
+    Uranus: 'prepared-piano techniques and unexpected register jumps — tacks on the strings, muted clusters, dissonance that arrives uninvited',
+    Neptune: 'heavily pedaled, dissolving passages — chords held until the overtones blur into ambient shimmer',
+    Pluto: 'deep sub-bass piano clusters in the very lowest octave — felt before it is heard',
   };
-  const elements: Record<string, string> = {
-    Aries: 'fierce staccato attack and driving tempo',
-    Taurus: 'sustained legato warmth and rich lower harmonics',
-    Gemini: 'playful call-and-response dialogue and rapid ornamentation',
-    Cancer: 'flowing lullaby phrasing and gentle dynamic swells',
-    Leo: 'grand theatrical dynamics with dramatic crescendos',
-    Virgo: 'precise, clean articulation and intricate counterpoint',
-    Libra: 'balanced harmonic voicings and elegant resolution',
-    Scorpio: 'intense crescendo from whisper to overwhelming power',
-    Sagittarius: 'adventurous world-music motifs and wide intervallic leaps',
-    Capricorn: 'structured ascending passages with formal discipline',
-    Aquarius: 'unexpected electronic shifts and asymmetric time signatures',
-    Pisces: 'ambient dissolution into infinite reverb and soft dissonance',
+  const signTextures: Record<string, string> = {
+    Aries: 'with fierce staccato attack and driving, uncompromising tempo',
+    Taurus: 'with sustained legato warmth and rich lower harmonics, unhurried',
+    Gemini: 'with playful call-and-response between the hands and rapid ornamentation',
+    Cancer: 'with flowing lullaby phrasing and intimate dynamic nuance',
+    Leo: 'with grand theatrical dynamics — the piece insisting on being heard',
+    Virgo: 'with precise, clean articulation and intricately voiced counterpoint',
+    Libra: 'with balanced harmonic voicings and a sense of elegant resolution withheld',
+    Scorpio: 'with intensity built from near-silence to overwhelming resonance',
+    Sagittarius: 'with wide intervallic leaps and a restless, exploratory quality',
+    Capricorn: 'with structured, ascending discipline — each phrase earning its place',
+    Aquarius: 'with asymmetric time signatures and unexpected prepared-piano dissonance',
+    Pisces: 'with ambient pedal dissolution — edges dissolving into overtone haze',
   };
-  const inst = instruments[planet] || 'resonant tones';
-  const style = elements[sign] || 'celestial expression';
-  return `${planet} channels through ${inst}, coloured by ${style}. This voice contributes a distinctive layer to the harmonic fabric of your personal composition.`;
+  const voice = pianoVoices[planet] || 'a distinctive piano voice';
+  const texture = signTextures[sign] || 'with its own expressive character';
+  return `${planet} is ${voice}, coloured ${texture}. This voice contributes its specific register, touch, and emotional weight to the overall piano composition.`;
 }
 
 // ── Holistic whole-composition description ────────────────────────
 function getHolisticComposition(reading: CosmicReading): string {
   const chart = reading.chartData;
-  const planetNames = chart.planets.filter(p => p.name !== 'Ascendant').map(p => p.name);
-  const retroCount = chart.planets.filter(p => p.isRetrograde).length;
-  
-  // Count elements
-  const elements: Record<string, number> = {};
+  const retroPlanets = chart.planets.filter(p => p.isRetrograde && p.name !== 'Ascendant');
+
+  // Count elements and modalities
   const signElements: Record<string, string> = {
     Aries: 'Fire', Taurus: 'Earth', Gemini: 'Air', Cancer: 'Water',
     Leo: 'Fire', Virgo: 'Earth', Libra: 'Air', Scorpio: 'Water',
     Sagittarius: 'Fire', Capricorn: 'Earth', Aquarius: 'Air', Pisces: 'Water',
   };
+  const signModalities: Record<string, string> = {
+    Aries: 'Cardinal', Taurus: 'Fixed', Gemini: 'Mutable', Cancer: 'Cardinal',
+    Leo: 'Fixed', Virgo: 'Mutable', Libra: 'Cardinal', Scorpio: 'Fixed',
+    Sagittarius: 'Mutable', Capricorn: 'Cardinal', Aquarius: 'Fixed', Pisces: 'Mutable',
+  };
+  const elements: Record<string, number> = {};
+  const modalities: Record<string, number> = {};
   chart.planets.forEach(p => {
     const el = signElements[p.sign];
+    const mod = signModalities[p.sign];
     if (el) elements[el] = (elements[el] || 0) + 1;
+    if (mod) modalities[mod] = (modalities[mod] || 0) + 1;
   });
-  const dominant = Object.entries(elements).sort((a, b) => b[1] - a[1]);
-  const domEl = dominant[0]?.[0] || 'Fire';
-  
-  const elementSounds: Record<string, string> = {
-    Fire: 'The dominant Fire element drives the overall energy with fast tempos, bright timbres, and assertive rhythmic patterns. Expect bold brass flourishes, percussive accents, and an ever-forward momentum.',
-    Earth: 'The dominant Earth element grounds the composition in rich, sustained harmonies and deliberate pacing. Deep bass lines, warm string pads, and a steady, unhurried pulse form the foundation.',
-    Air: 'The dominant Air element lifts the composition into light, agile textures. Quick melodic exchanges, crystalline bell tones, and an airy, spacious production style define the sonic landscape.',
-    Water: 'The dominant Water element saturates the composition with emotional depth and flowing dynamics. Lush reverb, gentle swells, and haunting vocal-like passages create an immersive, oceanic soundscape.',
+  const dominantEntries = Object.entries(elements).sort((a, b) => b[1] - a[1]);
+  const domEl = dominantEntries[0]?.[0] || 'Fire';
+  const secondEl = dominantEntries[1]?.[0];
+  const dominantModality = Object.entries(modalities).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Fixed';
+
+  // Piano-element descriptions grounded in technique
+  const elementPianoColor: Record<string, string> = {
+    Fire: `The dominant Fire element drives the piano forward: expect sharp, percussive left-hand attacks, decisive rhythmic figures, and right-hand lines that refuse to hesitate. The touch is dry, bright, assertive.`,
+    Earth: `The dominant Earth element weighs the piano down in a productive way: slow-moving, low-register harmonies, chords with deep sustain, and a deliberate pulse that never rushes. The touch is grounded, unhurried, resonant.`,
+    Air: `The dominant Air element lifts the piano into light, articulate territory: open-voiced quartal chords, staccato brightness, quick intervallic conversations between the hands. The touch is clear, mercurial, spacious.`,
+    Water: `The dominant Water element saturates the piano with emotional depth: heavily pedaled passages, harmonic ambiguity, suspended chords that refuse to resolve, melodies that surface and submerge. The touch is fluid, introspective, reverberant.`,
   };
 
-  let text = `Imagine a living composition for ${planetNames.length} instruments, each representing a planet in your chart. `;
-  text += `Your central melody — the Sun in ${chart.sunSign} — establishes the key and character, while the Moon in ${chart.moonSign} provides the emotional undercurrent that colours every phrase. `;
-  text += `The Ascendant in ${chart.ascendant} sets the opening tone, the first impression the listener receives. `;
-  text += elementSounds[domEl] || '';
-  
-  if (retroCount > 0) {
-    text += ` ${retroCount} retrograde planet${retroCount > 1 ? 's' : ''} add${retroCount === 1 ? 's' : ''} introspective passages — moments where the music turns inward, replaying earlier themes with new meaning.`;
+  const modalityPianoCharacter: Record<string, string> = {
+    Cardinal: 'Each section of this composition opens with intention — the form initiates and commits rather than waiting.',
+    Fixed: 'Motifs hold their ground; repetition earns its place by deepening rather than merely continuing.',
+    Mutable: 'The form is willing to drift and revise mid-phrase — modulations arrive as decisions, not accidents.',
+  };
+
+  const sunPlanet = chart.planets.find(p => p.name === 'Sun');
+  const moonPlanet = chart.planets.find(p => p.name === 'Moon');
+
+  // Build a sign-specific characterisation for the Sun–Moon combination
+  const sunSignColor: Record<string, string> = {
+    Aries: 'an opening that strikes before the room is ready',
+    Taurus: 'a central melody that insists on its own unhurried beauty',
+    Gemini: 'a central line that keeps branching into parallel thoughts',
+    Cancer: 'a melody shaped by memory, tender and non-linear',
+    Leo: 'a main theme that refuses to go unheard',
+    Virgo: 'a central line of precise, quietly demanding intelligence',
+    Libra: 'a melody that weighs each resolution before committing to it',
+    Scorpio: 'a central voice that earns its intensity through restraint',
+    Sagittarius: 'a theme that keeps widening, always reaching for the next interval',
+    Capricorn: 'a measured central line — disciplined, each phrase load-bearing',
+    Aquarius: 'a central voice wired differently, finding beauty in the unexpected',
+    Pisces: 'a melody that blurs its own edges, dissolving into its own pedal',
+  };
+  const moonSignColor: Record<string, string> = {
+    Aries: 'an impulsive emotional undertow — impatient, hot',
+    Taurus: 'a grounded emotional bass — slow, sensory, immovable',
+    Gemini: 'a restless inner voice — quick, curious, inconsistent in the most human way',
+    Cancer: 'a deep, protective emotional ground — all feeling, little explanation',
+    Leo: 'a warm emotional hum that wants to be felt and acknowledged',
+    Virgo: 'an analytical emotional undertow — processing, sorting, trying to make it precise',
+    Libra: 'an emotional register that weighs everything before arriving at feeling',
+    Scorpio: 'a submerged emotional current — heavy, transformative, relentless',
+    Sagittarius: 'a buoyant emotional undertow — restless, optimistic, outward-leaning',
+    Capricorn: 'a controlled, structured emotional floor — feeling held in careful check',
+    Aquarius: 'a cool, detached emotional register — feeling at one remove, observing',
+    Pisces: 'a porous, boundaryless emotional field — everything soaks through',
+  };
+
+  let text = `This is a piano composition built on ${chart.sunSign} as the tonal center and ${chart.moonSign} as the emotional ground — `;
+  text += `${sunSignColor[chart.sunSign] || 'a central melody'} carrying ${moonSignColor[chart.moonSign] || 'an expressive emotional undercurrent'}. `;
+  text += `The Ascendant in ${chart.ascendant} sets the opening gesture: the first notes the listener hears before the full picture arrives. `;
+  text += `${elementPianoColor[domEl] || ''} `;
+  if (secondEl && dominantEntries[1]?.[1] >= 2) {
+    const secondColor: Record<string, string> = {
+      Fire: 'A secondary Fire influence adds driving, rhythmic energy beneath the main texture.',
+      Earth: 'A secondary Earth influence provides grounding weight under the primary color.',
+      Air: 'A secondary Air influence lifts certain passages into lighter, more articulate territory.',
+      Water: 'A secondary Water influence introduces moments of harmonic ambiguity and emotional depth.',
+    };
+    text += `${secondColor[secondEl] || ''} `;
+  }
+  text += `${modalityPianoCharacter[dominantModality] || ''} `;
+
+  if (retroPlanets.length > 0) {
+    const retroDesc: Record<string, string> = {
+      Mercury: 'Mercury retrograde folds the quick right-hand figures inward — themes revisited, sentences reconsidered',
+      Venus: 'Venus retrograde turns the harmonic warmth inward — beauty examined rather than displayed',
+      Mars: 'Mars retrograde redirects the percussive drive into internal tension rather than outward strike',
+      Jupiter: 'Jupiter retrograde contracts the expansive gestures into deeper, more concentrated passages',
+      Saturn: 'Saturn retrograde makes the structural bass line question its own foundations',
+      Uranus: 'Uranus retrograde inverts the dissonances — the unexpected arrives quietly rather than explosively',
+      Neptune: 'Neptune retrograde sharpens the dissolving passages — the fog lifts slightly, revealing structure underneath',
+      Pluto: 'Pluto retrograde drives the low-register intensity further underground',
+    };
+    const retroLines = retroPlanets
+      .map(p => retroDesc[p.name])
+      .filter(Boolean);
+    if (retroLines.length) {
+      text += `Retrograde influence: ${retroLines.join('; ')}.`;
+    }
   }
 
-  return text;
+  return text.trim();
 }
 
 function getMusicalSummary(reading: CosmicReading): string {
   const chart = reading.chartData;
-  let text = `When all voices sound together in ${reading.musicalMode}, the result is a unique sonic signature: `;
-  
   const inner = chart.planets.filter(p => ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars'].includes(p.name));
   const outer = chart.planets.filter(p => ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'].includes(p.name));
-  
-  text += `The inner planets (${inner.map(p => p.name).join(', ')}) form the foreground — the melodies, rhythms, and harmonies you hear most clearly in daily life. `;
-  text += `The outer planets (${outer.map(p => p.name).join(', ')}) provide the deep architecture — the key changes, structural movements, and generational themes that unfold over years and decades. `;
-  text += `Together, they create a composition that is entirely yours: unrepeatable, constantly evolving, and profoundly beautiful. This is the music of your cosmos.`;
-  
+
+  // Build a specific description of how the inner planets interact as piano voices
+  const innerDesc = inner.map(p => {
+    const pianoRole: Record<string, string> = {
+      Sun: `Sun (${p.sign}) as the singing central line`,
+      Moon: `Moon (${p.sign}) as the expressive left-hand undercurrent`,
+      Mercury: `Mercury (${p.sign}) as the quick, articulate right-hand figure`,
+      Venus: `Venus (${p.sign}) as the sustained harmonic warmth`,
+      Mars: `Mars (${p.sign}) as the percussive rhythmic drive`,
+    };
+    return pianoRole[p.name] || p.name;
+  });
+
+  const outerDesc = outer.map(p => {
+    const architecturalRole: Record<string, string> = {
+      Jupiter: `Jupiter (${p.sign}) as the harmonic expansion`,
+      Saturn: `Saturn (${p.sign}) as the structural bass`,
+      Uranus: `Uranus (${p.sign}) as the prepared-piano dissonance`,
+      Neptune: `Neptune (${p.sign}) as the pedaled ambient dissolution`,
+      Pluto: `Pluto (${p.sign}) as the sub-bass undertow`,
+    };
+    return architecturalRole[p.name] || p.name;
+  });
+
+  // Describe mode-specific character
+  const modeChar: Record<string, string> = {
+    Phrygian: 'a Spanish-tinged gravity, half-step tension built into the scale itself',
+    Dorian: 'a minor key with a raised sixth — melancholy with a door left open',
+    Aeolian: 'natural minor — direct emotional access, no harmonic hedging',
+    Mixolydian: 'major with a flat seventh — brightness with an unresolved edge',
+    Lydian: 'major with a raised fourth — suspended, anticipatory, tilted toward the sky',
+    Ionian: 'straight major — clarity, resolution, the harmonic home',
+    Locrian: 'diminished, unstable, the mode that lives in perpetual tension',
+  };
+  const modeDescription = modeChar[reading.musicalMode] || `the ${reading.musicalMode} mode`;
+
+  let text = `When all the piano voices sound together in ${reading.musicalMode} — ${modeDescription} — `;
+  text += `the foreground is built from: ${innerDesc.join(', ')}. `;
+  text += `The architecture underneath is held by: ${outerDesc.join(', ')}. `;
+  text += `Foreground and architecture in this configuration produce a composition that is entirely yours — unrepeatable, shaped by a specific set of planetary distances and tensions that will never recur in exactly this form.`;
+
   return text;
 }
 // ── Multi-page PDF from rendered NatalHarmonicReport ──────────────

@@ -234,7 +234,16 @@ function buildQMPrompt(
   const moonEmotion = moonSignData?.emotional_quality || '';
   const ascPalette = ascSignData?.sonic_palette || '';
 
-  // ── Planetary instrumentation (key voices) ──
+  // ── Planetary voices → translated to piano technique/register ──
+  // Each QM archetype maps to a specific way of playing the piano — register,
+  // touch, articulation — rather than a separate instrument.
+  const PIANO_VOICE_MAP: Record<string, string> = {
+    Sun:     'singing middle-register piano line (warm, legato, unashamed)',
+    Moon:    'expressive inner-voice piano — left-hand cantabile melody, emotional undertow',
+    Mercury: 'nimble right-hand piano figures — staccato, quick intervallic leaps, articulate',
+    Venus:   'lush, sustained piano chord voicings — pedal-heavy, rings past its welcome',
+    Mars:    'percussive left-hand piano stabs — sharp attack, rhythmic, emphatic',
+  };
   const primaryVoices: string[] = [];
   const vocalPlanets = ['Sun', 'Moon', 'Venus', 'Mars', 'Mercury'];
   for (const pName of vocalPlanets) {
@@ -243,7 +252,8 @@ function buildQMPrompt(
     if (qmP) {
       const signLabel = pos ? ` in ${pos.sign}` : '';
       const retroLabel = pos?.isRetrograde ? ' ℞' : '';
-      primaryVoices.push(`${qmP.instrument} (${pName}${signLabel}${retroLabel})`);
+      const pianoVoice = PIANO_VOICE_MAP[pName] || `piano (${qmP.sonic_character} quality)`;
+      primaryVoices.push(`${pianoVoice} [${pName}${signLabel}${retroLabel}]`);
     }
   }
 
@@ -262,12 +272,12 @@ function buildQMPrompt(
       ).join('; ')
     : 'fluid harmonic movement throughout';
 
-  // ── Element sonic descriptions ──
+  // ── Element sonic descriptions — all piano technique ──
   const elementSound: Record<string, string> = {
-    Fire: 'restless, driving piano attack — sharp left-hand stabs, percussive right-hand runs, quick rhythmic phrasing',
-    Earth: 'deliberate, weighted piano chords — low register gravitas, slow harmonic movement, long sustain pedal holds',
-    Air: 'light mercurial piano lines — quick intervallic leaps, open-voiced chords, staccato brightness, quick articulation',
-    Water: 'introspective piano with inner-voice movement — harmonic ambiguity, suspended chords refusing to resolve, melody submerged beneath accompaniment',
+    Fire: 'restless, driving piano — sharp left-hand stabs, percussive attack, quick right-hand runs, bright upper-register flurries',
+    Earth: 'deliberate, weighted piano — low-register gravitas, slow harmonic movement, long sustain-pedal resonance, chords that arrive a beat late on purpose',
+    Air: 'light mercurial piano — quick intervallic leaps, open-voiced quartal chords, staccato brightness, voices darting between registers',
+    Water: 'introspective piano with inner-voice movement — harmonic ambiguity, suspended chords refusing to resolve, pedaled overtone clouds, melody submerged beneath the accompaniment',
   };
 
   // ── Retrograde colouring ──
@@ -278,7 +288,7 @@ function buildQMPrompt(
 
   // ── Assemble prompt ──
   // Style header comes FIRST so it survives any truncation — chart data follows
-  const styleHeader = `Generate a finished studio MP3 track, NOT meditation music. Instrumental-only composition: NO lyrics, NO words, NO intelligible vocalizations, NO spoken voice, and NO featured singer or lead vocal performance. If any human-voice texture is used, it must be sparse, non-verbal, distant, and low in the mix (ethereal/peripheral only). HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Style: minimalist keyboard-centered new-jazz noir with a composer's edge. Solo/felt/prepared piano must lead. Add sparse brushed snare, upright bass or cello counterpoint, tasteful Rhodes/Moog/analog texture only as shadow. Harmonic language: Chilly Gonzales piano, Radiohead In Rainbows, Kaki King guitar architecture, Tori Amos covering Björk without vocals, Philip Glass études, Grimes bedroom analog warmth. Through-composed, dry, intimate, innovative, rhythmically alive.`;
+  const styleHeader = `Instrumental piano composition — NO vocals, NO lyrics, NO sung melody, NO voice of any kind whatsoever. The piano is the ONLY lead voice and primary instrument throughout. Style: avant-garde solo/chamber piano — acoustic, felt-muted, prepared-piano techniques (plucked strings, muted clusters, objects on strings), and open-pedal resonance all in play. HARD NO to: flutes, harps, choir, orchestral pads, wind chimes, cinematic swells, spa ambience, reiki, fantasy soundtrack, or any non-piano lead. Sparse texture only: dry or reverbed acoustic piano leads; minimal accompaniment — subtle experimental percussion (bowed metal, finger-drummed body), distant cello drone or bass pluck only as shadowy undertone. Aesthetic references: Chilly Gonzales solo piano, Philip Glass études, Haushka prepared piano, Tori Amos deconstructed piano, Johann Johannsson chamber restraint. Tell the natal chart's story through the piano: let the harmonic data below shape the actual notes, dissonances, textures, and emotional arc. Through-composed, rhythmically alive, emotionally specific, strange and beautiful.`;
   const parts = [
     styleHeader,
     `${avgTempo}BPM. Mode: ${mode}. Key: ${key}.`,
@@ -289,7 +299,7 @@ function buildQMPrompt(
     `Aspects: ${aspectNarrative}.`,
     retroNote,
     outerColors.length ? `Outer planet colors: ${outerColors.slice(0, 2).join(', ')}.` : '',
-    `Avoid static drones. Use motifs, counter-melodies, syncopation, modal interchange, quartal voicings, chromatic mediants, unresolved suspensions. Keep it tasteful, fresh, strange, and emotionally specific.`,
+    `Piano techniques in play: prepared piano clusters, muted-string plucks, pedal shimmer, chromatic voice-leading, quartal voicings, unresolved suspensions, modal interchange. Let the chart data determine where the piece breathes, tenses, and releases. Keep it avant-garde, specific, strange, and emotionally alive.`,
   ].filter(Boolean);
 
   const prompt = parts.join(' ');
@@ -319,7 +329,7 @@ const fallbackModes: Record<string, { mode: string; mood: string; tempo: string 
 function buildFallbackPrompt(sunSign: string, moonSign: string): string {
   const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
   const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
-  return `Generate a finished studio MP3 track, NOT meditation music. Instrumental-only composition: NO lyrics, NO words, NO intelligible vocalizations, NO spoken voice, and NO featured singer or lead vocal performance. If any human-voice texture is used, it must be sparse, non-verbal, distant, and low in the mix (ethereal/peripheral only). HARD NO: flutes, harps, angel choir, pads, wind chimes, cinematic swells, fantasy soundtrack, spa, reiki, sleep, yoga, cherubic, glossy bath ambience. Style: minimalist keyboard-centered new-jazz noir with a composer's edge. Solo/felt/prepared piano must lead. Add sparse brushed snare, upright bass or cello counterpoint, tasteful Rhodes/Moog/analog texture only as shadow. Harmonic blend of ${sun.mode} and ${moon.mode}, ${sun.tempo} to ${moon.tempo} pulse, emotionally ${sun.mood} + ${moon.mood}. Through-composed, dry, intimate, innovative, rhythmically alive.`;
+  return `Instrumental piano composition — NO vocals, NO lyrics, NO voice of any kind. Piano is the ONLY lead instrument. Style: avant-garde solo/chamber piano — acoustic, felt-muted, prepared-piano techniques, and open-pedal resonance. HARD NO to: flutes, harps, choir, orchestral pads, wind chimes, cinematic swells, spa, fantasy soundtrack. Sparse texture: dry or reverbed acoustic piano leads; minimal experimental percussion and distant cello drone as shadow only. References: Chilly Gonzales solo piano, Philip Glass études, Haushka prepared piano, Tori Amos deconstructed piano. Harmonic blend of ${sun.mode} and ${moon.mode}, ${sun.tempo} to ${moon.tempo} pulse, emotionally ${sun.mood} + ${moon.mood}. Through-composed, rhythmically alive, emotionally specific, strange and beautiful. Tell the natal chart's story through the piano alone.`;
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────
