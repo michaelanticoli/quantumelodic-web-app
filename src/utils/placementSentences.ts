@@ -117,39 +117,72 @@ export function compositionStatement(opts: {
   const { sunSign, moonSign, ascSign, element, modality, key, tempo, topAspectName, topAspectPair, mode } = opts;
 
   const tempoFeel =
-    tempo < 70 ? 'a slow, deliberate pulse — closer to a heartbeat than a metronome'
-    : tempo < 90 ? 'a relaxed, hand-played tempo with room between the notes'
-    : tempo < 110 ? 'a moderate stride — conversational, never rushed'
-    : tempo < 130 ? 'a forward-leaning pulse with momentum to spare'
-    : 'an urgent, propulsive tempo that pulls the form along';
+    tempo < 70 ? 'a slow, deliberate pulse — the piano measured like a heartbeat finding its own time'
+    : tempo < 90 ? 'a relaxed, hand-played tempo — space between the notes that the piano actually needs'
+    : tempo < 110 ? 'a conversational stride — not rushed, the piano thinking aloud'
+    : tempo < 130 ? 'a forward-leaning pulse with momentum the left hand drives'
+    : 'an urgent, propulsive tempo that pulls the piano form along before it settles';
 
   const elementColor: Record<string, string> = {
-    Fire:  'a dry, percussive heat — left-hand stabs and short, decisive phrases',
-    Earth: 'a low, grounded weight — long bass tones, comping that arrives a beat late on purpose',
-    Air:   'a clear, articulate touch — light voicings, conversations between voices',
-    Water: 'a held, reverberant quality — felt-piano dampness and chords that bloom into their own decay',
+    Fire:  'a dry, percussive heat — the piano plays staccato and decisive, left-hand stabs, short declarative phrases',
+    Earth: 'a low, grounded weight — long bass tones and pedal resonance, comping that arrives a beat late on purpose',
+    Air:   'a clear, articulate lightness — open-voiced chords, quick hand-crossing, conversations between voices',
+    Water: 'a held, reverberant quality — felt-dampened piano and chords that bloom into their own decay',
   };
 
   const modalityColor: Record<string, string> = {
-    Cardinal: 'each section opens with intent — the form initiates rather than waits',
-    Fixed:    'the motifs hold their ground — repetitions earn their place',
-    Mutable:  'the form is willing to drift, modulate, and revise itself mid-phrase',
+    Cardinal: 'each section opens with clear intent — the piano initiates rather than waits',
+    Fixed:    'motifs hold their ground — repetitions earn their place by deepening, not just continuing',
+    Mutable:  'the form drifts and revises itself mid-phrase — modulations arrive as decisions, not accidents',
   };
 
+  // Sun and Moon sign characterizations for the piano voice
+  const sunPianoVoice: Record<string, string> = {
+    Aries:       'a central line that strikes before the room is ready',
+    Taurus:      'a central melody that insists on its own unhurried, tactile beauty',
+    Gemini:      'a main theme that keeps branching into parallel thoughts',
+    Cancer:      'a central voice shaped by memory — tender, non-linear',
+    Leo:         'a main theme that refuses to go unheard',
+    Virgo:       'a central line of precise, quietly demanding intelligence',
+    Libra:       'a melody that weighs each resolution before committing',
+    Scorpio:     'a central voice that earns intensity through sustained restraint',
+    Sagittarius: 'a theme that keeps widening, always reaching for the next interval',
+    Capricorn:   'a measured, disciplined central line — each phrase load-bearing',
+    Aquarius:    'a central voice wired differently, finding beauty in the unexpected',
+    Pisces:      'a melody that blurs its own edges, dissolving into its own pedal',
+  };
+  const moonPianoUndercurrent: Record<string, string> = {
+    Aries:       'an impulsive emotional undertow — hot, quick',
+    Taurus:      'a grounded emotional bass — sensory, immovable',
+    Gemini:      'a restless inner voice — quick, curious, never quite settling',
+    Cancer:      'a deep protective undertow — all feeling, little explanation',
+    Leo:         'a warm emotional hum that wants to be felt',
+    Virgo:       'an analytical undertow — processing, trying to make the feeling precise',
+    Libra:       'an emotional register that weighs everything before arriving',
+    Scorpio:     'a submerged current — heavy, transformative, relentless',
+    Sagittarius: 'a buoyant, outward-leaning emotional floor',
+    Capricorn:   'a controlled, structural emotional ground',
+    Aquarius:    'a cool, slightly detached inner register',
+    Pisces:      'a porous, boundaryless emotional field',
+  };
+
+  const sunVoice = sunPianoVoice[sunSign] ?? `${sunSign.toLowerCase()} character`;
+  const moonVoice = moonPianoUndercurrent[moonSign] ?? `${moonSign.toLowerCase()} emotional quality`;
+
   const aspectLine = topAspectName && topAspectPair
-    ? ` The most exact dialogue in the chart — ${topAspectPair[0]} ${topAspectName.toLowerCase()} ${topAspectPair[1]} — is the hinge the whole piece keeps returning to.`
+    ? ` The most exact dialogue — ${topAspectPair[0]} ${topAspectName.toLowerCase()} ${topAspectPair[1]} — is the harmonic tension the piece keeps returning to.`
     : '';
 
   const modeLine = mode ? ` written in ${mode.toLowerCase()} mode` : '';
 
   return (
-    `Sun in ${sunSign} is the central voice — what the composition is actually about. ` +
-    `Moon in ${moonSign} colors the room tone underneath it, and Ascendant in ${ascSign} is the way the piece introduces itself. ` +
+    `Sun in ${sunSign} is ${sunVoice} — what the piano composition is actually about. ` +
+    `Moon in ${moonSign} provides ${moonVoice} beneath every phrase. ` +
+    `Ascendant in ${ascSign} is the opening gesture — the first notes the listener hears. ` +
     `The chart pulls toward ${element.toLowerCase()}: ${elementColor[element] ?? 'its own characteristic color'}. ` +
-    `Its rhythmic posture is ${modality.toLowerCase()} — ${modalityColor[modality] ?? 'a particular kind of structural breathing'}. ` +
-    `The whole thing settles around ${key}${modeLine} at roughly ${tempo} BPM — ${tempoFeel}.` +
-    aspectLine +
-    ` None of these numbers are decorative; they’re the actual instructions the engine follows to render your composition.`
+    `Its rhythmic posture is ${modality.toLowerCase()} — ${modalityColor[modality] ?? 'a particular structural breathing'}. ` +
+    `The whole piece settles around ${key}${modeLine} at roughly ${tempo} BPM — ${tempoFeel}.` +
+    aspectLine
   );
 }
 
