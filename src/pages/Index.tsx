@@ -566,6 +566,7 @@ const ResultsView = ({
   reading,
   previewLoading,
   onMusicReady,
+  locked = false,
   onBack,
   onExplore,
 }: ResultsViewProps) => {
