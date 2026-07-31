@@ -515,6 +515,7 @@ const Index = () => {
                 audioUrl: url,
                 audioSource: source,
               }, url, source)}
+              locked={!isPaid}
               onBack={handleBack}
               onExplore={() => navigate("/explore")}
             />
