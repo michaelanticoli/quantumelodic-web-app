@@ -11,9 +11,6 @@ import { generateReport, type LunarReport } from '@/lib/reportEngine';
 import { toast } from 'sonner';
 
 // ── Payment gate ─────────────────────────────────────────────────────────────
-// FOUNDING_CLAIMED must be updated manually as purchases arrive (or fetched from an API)
-const FOUNDING_CLAIMED = 7;
-const FOUNDING_TOTAL = 50;
 // Replace with your live Stripe payment link for the Lunar Report product.
 // After creating the link in Stripe, update this constant and redeploy.
 const LUNAR_CHECKOUT_URL = 'https://buy.stripe.com/YOUR_LUNAR_LINK_HERE';
