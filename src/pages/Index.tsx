@@ -326,23 +326,27 @@ const Index = () => {
     setReadingData,
   } = cosmicCtx;
 
-  // Determine initial state: unlock on ?paid=true redirect, session key, or existing reading
-  const [appState, setAppState] = useState<AppState>(() => {
-    const returnedFromCheckout = searchParams.get('paid') === 'true';
-    if (returnedFromCheckout) {
+  // Paid state drives whether the result renders full or as a locked teaser.
+  const [isPaid, setIsPaid] = useState<boolean>(() => {
+    if (searchParams.get('paid') === 'true') {
       setPaidSession();
-      return cosmicCtx.reading ? "result" : "input";
+      return true;
     }
-    if (hasPaidSession() || cosmicCtx.reading) {
-      return cosmicCtx.reading ? "result" : "input";
-    }
-    return "paywall";
+    return hasPaidSession();
   });
+
+  const [appState, setAppState] = useState<AppState>(() =>
+    cosmicCtx.reading ? "result" : (hasPaidSession() || searchParams.get('paid') === 'true' ? "input" : "paywall"),
+  );
 
   const handleUnlock = () => {
     setPaidSession();
+    setIsPaid(true);
     setAppState("input");
   };
+
+  const handleStartFree = () => setAppState("input");
+
 
   const {
     loading,
