@@ -552,6 +552,7 @@ interface ResultsViewProps {
   reading: import("@/types/astrology").CosmicReading;
   previewLoading: boolean;
   onMusicReady: (url: string, source: "elevenlabs" | "tone") => void;
+  locked?: boolean;
   onBack: () => void;
   onExplore: () => void;
 }
