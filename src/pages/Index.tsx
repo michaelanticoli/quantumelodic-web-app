@@ -26,16 +26,11 @@ import {
 } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
-// ─── Paywall constants ──────────────────────────────────────────────────────
-// Update FOUNDING_CLAIMED manually as purchases arrive (or replace with an API call).
-const FOUNDING_CLAIMED = 3;
-const FOUNDING_TOTAL = 50;
-// Replace with your live Stripe payment link. Add ?paid=true as the success redirect param.
+// ─── Offer constants ────────────────────────────────────────────────────────
+// TODO: Replace with your live $25 Stripe payment link.
+// Set its success redirect to: https://quantumelodies.com/?paid=true
 const CHECKOUT_URL = 'https://buy.stripe.com/9B614mbaWfPu5ebcCZe7m0b';
-// TODO: Replace with your live Stripe payment link for The Key tier.
-const CHECKOUT_URL_KEY = 'https://buy.stripe.com/TODO_KEY';
-// TODO: Replace with your live Stripe payment link for The Full Score tier.
-const CHECKOUT_URL_SCORE = 'https://buy.stripe.com/TODO_SCORE';
+const PRICE = '$25';
 const PAID_SESSION_KEY = 'quantumelodic_paid';
 
 const fadeUp = (delay = 0) => ({
