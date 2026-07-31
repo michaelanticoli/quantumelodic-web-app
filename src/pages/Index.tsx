@@ -146,24 +146,13 @@ const SampleCard = ({ name, chart, musicalKey, src, delay = 0 }: SampleCardProps
 
 const SAMPLES: SampleCardProps[] = [
   { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E♭ MAJOR · LYDIAN', src: '/samples/einstein.mp3' },
-  { name: 'Scorpio Sun · Taurus Moon', chart: 'Fixed water · fixed earth', musicalKey: 'A♭ MINOR', src: '/samples/scorpio-taurus.mp3' },
-  { name: 'Leo Sun · Aquarius Moon', chart: 'Fixed fire · fixed air', musicalKey: 'C MAJOR', src: '/samples/leo-aquarius.mp3' },
 ];
 
 const SamplesSection = () => (
-  <motion.section id="samples" className="mb-16" {...fadeUp(0.1)}>
-    <div className="text-center mb-8">
-      <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-3">LISTEN FIRST</p>
-      <h2 className="font-hero text-[32px] md:text-[40px] leading-[0.95] text-foreground">
-        Every chart sounds{' '}
-        <em className="font-instrument text-gold italic">
-          different.
-        </em>
-      </h2>
-      <p className="font-body text-sm text-foreground/60 mt-3">
-        Same system, different birth data, different music.
-      </p>
-    </div>
+  <motion.section id="samples" className="mb-14" {...fadeUp(0.1)}>
+    <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-4 text-center">
+      LISTEN — ONE CHART
+    </p>
     <div className="space-y-4">
       {SAMPLES.map((s, i) => (
         <SampleCard key={s.src} {...s} delay={0.05 * i} />
@@ -172,139 +161,46 @@ const SamplesSection = () => (
   </motion.section>
 );
 
-const PricingTiers = ({ onUnlock }: { onUnlock: () => void }) => {
-  const remaining = FOUNDING_TOTAL - FOUNDING_CLAIMED;
-  return (
-    <motion.section className="mb-16" {...fadeUp(0.1)}>
-      <div className="text-center mb-8">
-        <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-3">THREE WAYS IN</p>
-        <h2 className="font-hero text-[32px] md:text-[40px] leading-[0.95] text-foreground">
-          Choose your{' '}
-          <em className="font-instrument text-gold italic">
-            depth.
-          </em>
-        </h2>
+const OfferCard = () => (
+  <motion.section className="mb-12" {...fadeUp(0.1)}>
+    <div
+      className="rounded-[18px] border bg-card/60 backdrop-blur-sm p-6"
+      style={{ borderColor: 'hsl(168 95% 55% / 0.5)', boxShadow: '0 0 40px hsl(168 75% 45% / 0.12)' }}
+    >
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <h2 className="font-playfair text-xl text-foreground">The Composition</h2>
+        <span className="font-data text-2xl text-foreground shrink-0">{PRICE}</span>
       </div>
+      <ul className="space-y-1.5 mb-6">
+        {[
+          'Your piece of music, composed from your exact chart',
+          'Full written analysis, narrated in the maker’s voice',
+          'Delivered within 24 hours',
+        ].map(item => (
+          <li key={item} className="flex items-start gap-2 font-body text-sm text-foreground/70">
+            <span className="text-accent mt-0.5 shrink-0">—</span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      <a
+        href={CHECKOUT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full text-center py-3.5 rounded-full font-ui text-xs uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
+      >
+        Order the Composition — {PRICE}
+      </a>
+      <p className="font-body text-[11px] text-muted-foreground/60 leading-relaxed mt-4">
+        Want the notated score, lossless master, and a commercial license? Reply after purchase.
+      </p>
+    </div>
 
-      <div className="space-y-4">
-        {/* Tier 1 — The Key */}
-        <div className="rounded-[18px] border border-border/50 bg-card/50 backdrop-blur-sm p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span className="font-ui text-[9px] uppercase tracking-[0.25em] text-muted-foreground/60">ENTRY</span>
-              <h3 className="font-playfair text-xl text-foreground mt-0.5">The Key</h3>
-            </div>
-            <span className="font-data text-2xl text-foreground shrink-0">$14.99</span>
-          </div>
-          <p className="font-body text-sm text-foreground/65 leading-relaxed mb-4">
-            The written reading. It answers the opening question — what key is your chart in?
-          </p>
-          <ul className="space-y-1.5 mb-5">
-            {['Your musical key and mode', 'Core placements, interpreted in writing', 'Designed PDF, delivered instantly'].map(item => (
-              <li key={item} className="flex items-start gap-2 font-body text-xs text-foreground/70">
-                <span className="text-accent mt-0.5 shrink-0">—</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <a
-            href={CHECKOUT_URL_KEY}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 rounded-full border border-foreground/25 font-ui text-xs uppercase tracking-[0.2em] text-foreground hover:border-accent hover:text-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            Get the Key
-          </a>
-        </div>
+    <ResonanceGuarantee />
+  </motion.section>
+);
 
-        {/* Tier 2 — The Composition */}
-        <div
-          className="rounded-[18px] border bg-card/60 backdrop-blur-sm p-6 relative"
-          style={{ borderColor: 'hsl(168 95% 55% / 0.5)', boxShadow: '0 0 40px hsl(168 75% 45% / 0.12)' }}
-        >
-          <span
-            className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full font-ui text-[9px] uppercase tracking-[0.25em]"
-            style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
-          >
-            MOST CHOSEN
-          </span>
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span className="font-ui text-[9px] uppercase tracking-[0.25em] text-accent">CORE</span>
-              <h3 className="font-playfair text-xl text-foreground mt-0.5">The Composition</h3>
-            </div>
-            <span className="font-data text-2xl text-foreground shrink-0">$47</span>
-          </div>
-          <p className="font-body text-sm text-foreground/65 leading-relaxed mb-4">
-            The full astro-harmonic analysis — and the piece of music composed from your exact placements.
-          </p>
-          <ul className="space-y-1.5 mb-4">
-            {[
-              'Your custom composition, chart-exact',
-              'Full written analysis of every placement',
-              'Narrated PDF report',
-              'Delivered within 24 hours',
-            ].map(item => (
-              <li key={item} className="flex items-start gap-2 font-body text-xs text-foreground/70">
-                <span className="text-accent mt-0.5 shrink-0">—</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="font-data text-[10px] uppercase tracking-[0.18em] mb-5 text-gold">
-            FOUNDING WINDOW — {remaining} OF {FOUNDING_TOTAL} READINGS LEFT AT THIS PRICE
-          </p>
-          <a
-            href={CHECKOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 rounded-full font-ui text-xs uppercase tracking-[0.2em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
-          >
-            Order the Composition
-          </a>
-        </div>
-
-        {/* Tier 3 — The Full Score */}
-        <div className="rounded-[18px] border border-border/50 bg-card/50 backdrop-blur-sm p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span className="font-ui text-[9px] uppercase tracking-[0.25em] text-muted-foreground/60">COMPLETE</span>
-              <h3 className="font-playfair text-xl text-foreground mt-0.5">The Full Score</h3>
-            </div>
-            <span className="font-data text-2xl text-foreground shrink-0">$97</span>
-          </div>
-          <p className="font-body text-sm text-foreground/65 leading-relaxed mb-4">
-            Everything — the complete notated work, licensed for your own use.
-          </p>
-          <ul className="space-y-1.5 mb-5">
-            {[
-              'The Composition, in lossless WAV',
-              '20-page deep-dive chart report',
-              '12-month Moontuner lunar calendar',
-              'Commercial license for your own content',
-            ].map(item => (
-              <li key={item} className="flex items-start gap-2 font-body text-xs text-foreground/70">
-                <span className="text-accent mt-0.5 shrink-0">—</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <a
-            href={CHECKOUT_URL_SCORE}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 rounded-full border border-foreground/25 font-ui text-xs uppercase tracking-[0.2em] text-foreground hover:border-accent hover:text-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            Get the Full Score
-          </a>
-        </div>
-      </div>
-
-      <ResonanceGuarantee />
-    </motion.section>
-  );
-};
 
 interface PaywallViewProps {
   onUnlock: () => void;
