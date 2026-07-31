@@ -182,7 +182,11 @@ export function useCosmicReading() {
       const previewRequestId = previewRequestRef.current;
 
       // Generate the ElevenLabs MP3 composition after the result screen mounts.
-      schedulePreviewAudio(chart, birthData.name || 'Unknown', previewRequestId);
+      // Skipped for the free preview — the composition is the paid product.
+      if (withAudio) {
+        schedulePreviewAudio(chart, birthData.name || 'Unknown', previewRequestId);
+      }
+
 
       return cosmicReading;
 
