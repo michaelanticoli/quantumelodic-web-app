@@ -198,43 +198,18 @@ const QuantumMelodic = () => {
             </p>
           </motion.header>
 
-          {/* ── Founding Reading Block ── */}
-          <motion.section
-            className="glass-card p-6 mb-8 space-y-4"
-            {...fadeUp(0.1)}
-          >
+          {/* ── The offer ── */}
+          <motion.section className="glass-card p-6 mb-8 space-y-3" {...fadeUp(0.1)}>
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-accent" />
-              <h2 className="font-display text-base font-semibold tracking-wide">Founding Readings</h2>
+              <h2 className="font-display text-base font-semibold tracking-wide">The Astro-Harmonic Report</h2>
             </div>
-
             <p className="text-sm text-foreground/80 leading-relaxed">
-              The first 50 Astro-Harmonic Reports are{' '}
-              <span className="text-foreground font-semibold">$47</span>.
-              After the fiftieth, the price becomes{' '}
-              <span className="text-muted-foreground line-through">$97</span>.
+              One composition, one full reading —{' '}
+              <span className="text-foreground font-semibold">{PRICE}</span>. One-time, no subscription.
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              You receive the same full reading either way. Founding pricing exists for the people willing to be early —
-              the ones who help prove the work resonates.
-            </p>
-
-            {/* Progress bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-                <span>{FOUNDING_CLAIMED} of {FOUNDING_TOTAL} claimed</span>
-                <span>{FOUNDING_TOTAL - FOUNDING_CLAIMED} remaining</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-accent"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${claimedPct}%` }}
-                  transition={{ delay: 0.6, duration: 1, ease: 'easeOut' }}
-                />
-              </div>
-            </div>
           </motion.section>
+
 
           {/* ── First CTA ── */}
           <motion.div className="mb-12" {...fadeUp(0.15)}>
