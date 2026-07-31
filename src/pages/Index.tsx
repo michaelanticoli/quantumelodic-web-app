@@ -390,7 +390,7 @@ const Index = () => {
   const handleFormSubmit = async (data: BirthData) => {
     setAppState("generating");
     try {
-      const result = await generateReading(data);
+      const result = await generateReading(data, { withAudio: isPaid });
       if (result) {
         // Persist the chart immediately; audio state is updated via context as it arrives.
         setReadingData(result, null, null);
