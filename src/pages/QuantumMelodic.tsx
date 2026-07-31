@@ -153,7 +153,7 @@ const ReportPreviewSection = () => {
 
 const QuantumMelodic = () => {
   const navigate = useNavigate();
-  const claimedPct = Math.round((FOUNDING_CLAIMED / FOUNDING_TOTAL) * 100);
+  
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
