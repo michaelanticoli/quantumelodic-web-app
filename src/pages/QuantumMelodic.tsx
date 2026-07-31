@@ -4,12 +4,9 @@ import { Play, Pause, ShieldCheck, Music2, FileText, Sparkles, Star } from 'luci
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { useNavigate } from 'react-router-dom';
 
-// Update this number manually as Founding Readings are claimed
-const FOUNDING_CLAIMED = 3;
-const FOUNDING_TOTAL = 50;
-
 // Replace with your live Stripe payment link
 const CHECKOUT_URL = 'https://buy.stripe.com/YOUR_LINK_HERE';
+const PRICE = '$25';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
