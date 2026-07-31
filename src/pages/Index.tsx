@@ -412,7 +412,7 @@ const Index = () => {
       <title>Astro-Harmonics: Your Cosmos Composed</title>
       <meta
         name="description"
-        content="Astro-Harmonics translates your birth chart into a piece of music only you will ever have. Every planet voiced. Every aspect rendered as frequency."
+        content="Find your chart's musical key free, then have your birth chart composed into a piece of music only you will ever have — $25."
       />
 
       <CosmicBackground />
