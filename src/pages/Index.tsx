@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Play, Pause, ShieldCheck, Music2, FileText, Sparkles, Star } from "lucide-react";
+import { Loader2, Play, Pause } from "lucide-react";
 import { CosmicBackground } from "@/components/CosmicBackground";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
 import { AspectLegend } from "@/components/AspectLegend";
