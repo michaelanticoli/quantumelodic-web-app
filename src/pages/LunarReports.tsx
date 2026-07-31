@@ -62,36 +62,18 @@ function Paywall() {
         </p>
       </motion.header>
 
-      {/* Founding block */}
-      <motion.section className="glass-card p-6 space-y-4" {...fadeUp(0.1)}>
+      {/* Offer */}
+      <motion.section className="glass-card p-6 space-y-3" {...fadeUp(0.1)}>
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-accent" />
-          <h2 className="font-display text-base font-semibold tracking-wide">Founding Access</h2>
+          <h2 className="font-display text-base font-semibold tracking-wide">The Lunar Report</h2>
         </div>
         <p className="text-sm text-foreground/80 leading-relaxed">
-          The first {FOUNDING_TOTAL} Lunar Reports are{' '}
-          <span className="text-foreground font-semibold">$17</span>.
-          After the {FOUNDING_TOTAL}th, the price becomes{' '}
-          <span className="text-muted-foreground line-through">$27</span>.
+          Your full twelve-month lunar arc —{' '}
+          <span className="text-foreground font-semibold">$17</span>. One-time, no subscription.
         </p>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Same full report either way. Founding pricing is for the people willing to be early.
-        </p>
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-            <span>{FOUNDING_CLAIMED} of {FOUNDING_TOTAL} claimed</span>
-            <span>{FOUNDING_TOTAL - FOUNDING_CLAIMED} remaining</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-accent"
-              initial={{ width: 0 }}
-              animate={{ width: `${claimedPct}%` }}
-              transition={{ delay: 0.6, duration: 1, ease: 'easeOut' }}
-            />
-          </div>
-        </div>
       </motion.section>
+
 
       {/* CTA */}
       <motion.div {...fadeUp(0.15)}>
