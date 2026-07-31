@@ -202,11 +202,12 @@ const OfferCard = () => (
 );
 
 
-interface PaywallViewProps {
+interface LandingViewProps {
+  onStartFree: () => void;
   onUnlock: () => void;
 }
 
-const PaywallView = ({ onUnlock }: PaywallViewProps) => (
+const LandingView = ({ onStartFree, onUnlock }: LandingViewProps) => (
   <motion.main
     key="paywall"
     className="relative z-10 min-h-screen px-5 pt-10 pb-24"
@@ -220,63 +221,52 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
       {/* ── Hero ── */}
       <motion.header className="text-center mb-14 pt-8" {...fadeUp(0.05)}>
         <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent/70 mb-5">
-          <span className="text-accent">—</span> ASTRO-HARMONIC NATAL ANALYSIS
+          <span className="text-accent">—</span> WHAT KEY IS YOUR CHART IN?
         </p>
         <h1 className="font-hero font-[200] leading-[0.9] tracking-[-0.03em] text-foreground mb-6">
           <span className="block text-[44px] md:text-[64px]">Your cosmos,</span>
-          <em
-            className="block text-[44px] md:text-[64px] font-instrument text-gold italic"
-          >
+          <em className="block text-[44px] md:text-[64px] font-instrument text-gold italic">
             composed.
           </em>
         </h1>
         <div className="divider-gold max-w-[80px] mx-auto mb-6" />
-        <p className="font-body text-foreground/70 text-base md:text-[1.15rem] max-w-md mx-auto leading-relaxed">
-          Your birth chart, translated into a piece of music only you will ever have. Every planet voiced.
-          Every aspect rendered as frequency. Less horoscope. More harmonics.
+        <p className="font-body text-foreground/70 text-base md:text-[1.15rem] max-w-sm mx-auto leading-relaxed">
+          Your birth chart, rendered as a piece of music only you will ever have.
         </p>
-        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a
-            href={CHECKOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-full font-ui text-xs uppercase tracking-[0.22em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={onStartFree}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-full font-ui text-xs uppercase tracking-[0.22em] transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             style={{ background: 'hsl(40 10% 96%)', color: 'hsl(240 6% 4%)' }}
           >
-            Order your composition — $47
-          </a>
+            Find your key — free
+          </button>
           <a
             href="#samples"
             className="w-full sm:w-auto px-7 py-3.5 rounded-full border border-foreground/25 font-ui text-xs uppercase tracking-[0.22em] text-foreground hover:border-accent hover:text-accent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent text-center"
           >
-            Hear a chart first
+            Hear a chart
           </a>
         </div>
         <p className="font-data text-[10px] uppercase tracking-[0.18em] text-foreground/35 mt-4">
-          Delivered within 24 hours · One-time purchase · No subscription
+          No account · No card · Your chart in 30 seconds
         </p>
       </motion.header>
 
-      {/* ── Samples ── */}
+      {/* ── One sample ── */}
       <SamplesSection />
 
-      {/* ── Pricing ── */}
-      <PricingTiers onUnlock={onUnlock} />
+      {/* ── The offer ── */}
+      <OfferCard />
 
       {/* ── About ── */}
-      <motion.section className="glass-card p-6 mb-12" {...fadeUp(0.1)}>
-        <p className="font-ui text-[10px] uppercase tracking-[0.25em] mb-3 text-gold">
-          ABOUT THIS WORK
-        </p>
-        <p className="font-instrument text-base text-foreground/90 leading-relaxed italic mb-4">
+      <motion.section className="glass-card p-6 mb-10" {...fadeUp(0.1)}>
+        <p className="font-instrument text-base text-foreground/90 leading-relaxed italic mb-3">
           Your birth carried a sound worth hearing.
         </p>
         <p className="font-body text-sm text-foreground/70 leading-relaxed">
-          The Astro-Harmonic Engine is one composer-astrologer's system, built over years: every aspect
-          mapped to its musical interval, every planet given a voice and an instrument, every element rendered
-          as frequency. Each composition is generated from your exact placements — never a template. The
-          narration is read in the maker's own voice, so a thousand readings can ship without losing the human
-          imprint.
+          One composer-astrologer's system: every aspect mapped to its interval, every planet given an
+          instrument. Composed from your exact placements — never a template.
         </p>
       </motion.section>
 
@@ -292,7 +282,7 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
           onClick={onUnlock}
           className="underline underline-offset-2 hover:text-foreground/70 transition-colors"
         >
-          Click here to access your reading
+          Access your reading
         </button>
       </motion.p>
 
@@ -304,16 +294,14 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
         transition={{ delay: 1.1 }}
       >
         <p className="font-data text-[9px] uppercase tracking-[0.25em] text-foreground/40">
-          QUANTUMELODIES.COM · WHAT KEY IS YOUR CHART IN?
-        </p>
-        <p className="font-data text-[9px] uppercase tracking-[0.25em] text-foreground/40">
-          PART OF THE MOONTUNER SYSTEM · ASTROLOGY WITH AGENCY
+          QUANTUMELODIES.COM · PART OF THE MOONTUNER SYSTEM
         </p>
       </motion.footer>
 
     </div>
   </motion.main>
 );
+
 
 // ─── Helper to read/write payment session ───────────────────────────────────
 function hasPaidSession(): boolean {
