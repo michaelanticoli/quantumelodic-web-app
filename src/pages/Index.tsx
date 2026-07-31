@@ -834,8 +834,89 @@ const ResultsView = ({
     setShowShareMenu(false);
   };
 
+  // ── Free preview: chart + key, everything else locked ──
+  if (locked) {
+    const teaserKey = qmReading?.overallKey || musicalMode;
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <motion.button
+          className="fixed top-5 left-5 z-50 text-muted-foreground/60 hover:text-foreground transition-colors text-sm tracking-wide flex items-center gap-1.5"
+          onClick={onBack}
+          whileHover={{ x: -2 }}
+        >
+          <span className="text-lg leading-none">‹</span>
+          <span>New chart</span>
+        </motion.button>
+
+        <motion.div className="text-center mb-5 pt-4" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
+          <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent/70 mb-3">YOUR FREE PREVIEW</p>
+          <h2 className="font-hero text-2xl md:text-3xl text-foreground leading-tight">{name}</h2>
+        </motion.div>
+
+        <motion.div
+          className="flex justify-center mb-6"
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <ZodiacWheel planets={chartData.planets} animate={false} />
+        </motion.div>
+
+        <motion.div
+          className="rounded-[18px] border border-border/50 bg-card/50 backdrop-blur-sm p-6 mb-6 text-center"
+          {...fadeUp(0.15)}
+        >
+          <p className="font-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60 mb-2">
+            YOUR CHART IS IN
+          </p>
+          <p className="font-playfair text-3xl text-foreground mb-4">{teaserKey}</p>
+          <p className="font-body text-sm text-foreground/70 leading-relaxed">
+            The Sun in {chartData.sunSign} sets the key. The Moon in {chartData.moonSign} carries the
+            undercurrent beneath every phrase. {chartData.ascendant} rising is the opening bar — the first
+            thing a listener hears.
+          </p>
+        </motion.div>
+
+        {/* Locked: the composition and the full report */}
+        <motion.div className="relative rounded-[18px] overflow-hidden mb-6" {...fadeUp(0.2)}>
+          <div className="pointer-events-none select-none blur-[6px] opacity-40 p-6 space-y-3" aria-hidden>
+            <div className="h-28 rounded-xl border border-accent/30 bg-accent/5" />
+            <div className="h-3 w-2/3 rounded bg-foreground/25" />
+            <div className="h-3 w-full rounded bg-foreground/15" />
+            <div className="h-3 w-5/6 rounded bg-foreground/15" />
+            <div className="h-3 w-3/4 rounded bg-foreground/15" />
+            <div className="h-3 w-full rounded bg-foreground/15" />
+            <div className="h-3 w-1/2 rounded bg-foreground/15" />
+          </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
+            style={{ background: 'linear-gradient(hsl(240 6% 4% / 0.4), hsl(240 6% 4% / 0.9))' }}>
+            <p className="font-ui text-[10px] uppercase tracking-[0.28em] text-accent mb-3">STILL SEALED</p>
+            <p className="font-body text-sm text-foreground/80 max-w-xs leading-relaxed">
+              Your composition, the full written analysis, and the narrated report.
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.a
+          href={CHECKOUT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full text-center py-4 rounded-full font-ui text-xs uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-90"
+          style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
+          {...fadeUp(0.25)}
+        >
+          Hear your chart — {PRICE}
+        </motion.a>
+        <p className="font-data text-[10px] uppercase tracking-[0.18em] text-foreground/35 mt-3 text-center">
+          Delivered within 24 hours · One-time · Seven-day resonance guarantee
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-2xl mx-auto">
+
       {/* Back */}
       <motion.button
         className="fixed top-5 left-5 z-50 text-muted-foreground/60 hover:text-foreground transition-colors text-sm tracking-wide flex items-center gap-1.5"
