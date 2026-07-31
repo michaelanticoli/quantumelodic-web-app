@@ -42,21 +42,15 @@ const fadeUp = (delay = 0) => ({
 // ─── Paywall sub-components ─────────────────────────────────────────────────
 
 const ResonanceGuarantee = () => (
-  <motion.div
-    className="mt-8 py-5 px-5 border border-border/40"
+  <motion.p
+    className="mt-6 py-4 px-5 border border-border/40 font-body text-xs text-foreground/60 leading-relaxed"
     style={{ borderLeft: '2px solid hsl(168 95% 55%)' }}
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ delay: 0.6 }}
   >
-    <p className="font-ui text-[10px] uppercase tracking-[0.25em] text-accent mb-2">
-      THE RESONANCE GUARANTEE
-    </p>
-    <p className="font-body text-sm text-foreground/70 leading-relaxed">
-      If the composition doesn't feel like yours, say so within seven days. Full refund — and you keep the
-      report. This work is meant to resonate. If it doesn't, you owe nothing.
-    </p>
-  </motion.div>
+    If it doesn't feel like yours, say so within seven days — full refund, and you keep the report.
+  </motion.p>
 );
 
 interface SampleCardProps {
