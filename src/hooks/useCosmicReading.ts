@@ -118,7 +118,8 @@ export function useCosmicReading() {
     }, 600);
   }, [clearScheduledPreview, generatePreviewAudio]);
 
-  const generateReading = useCallback(async (birthData: BirthData) => {
+  const generateReading = useCallback(async (birthData: BirthData, options?: { withAudio?: boolean }) => {
+    const withAudio = options?.withAudio !== false;
     previewRequestRef.current += 1;
     clearScheduledPreview();
     setLoading(true);
