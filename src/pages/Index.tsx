@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Play, Pause, ShieldCheck, Music2, FileText, Sparkles, Star } from "lucide-react";
+import { Loader2, Play, Pause } from "lucide-react";
 import { CosmicBackground } from "@/components/CosmicBackground";
 import { ZodiacWheel } from "@/components/ZodiacWheel";
 import { AspectLegend } from "@/components/AspectLegend";
@@ -26,16 +26,11 @@ import {
 } from "@/utils/downloadHelpers";
 import type { BirthData } from "@/types/astrology";
 
-// ─── Paywall constants ──────────────────────────────────────────────────────
-// Update FOUNDING_CLAIMED manually as purchases arrive (or replace with an API call).
-const FOUNDING_CLAIMED = 3;
-const FOUNDING_TOTAL = 50;
-// Replace with your live Stripe payment link. Add ?paid=true as the success redirect param.
+// ─── Offer constants ────────────────────────────────────────────────────────
+// TODO: Replace with your live $25 Stripe payment link.
+// Set its success redirect to: https://quantumelodies.com/?paid=true
 const CHECKOUT_URL = 'https://buy.stripe.com/9B614mbaWfPu5ebcCZe7m0b';
-// TODO: Replace with your live Stripe payment link for The Key tier.
-const CHECKOUT_URL_KEY = 'https://buy.stripe.com/TODO_KEY';
-// TODO: Replace with your live Stripe payment link for The Full Score tier.
-const CHECKOUT_URL_SCORE = 'https://buy.stripe.com/TODO_SCORE';
+const PRICE = '$25';
 const PAID_SESSION_KEY = 'quantumelodic_paid';
 
 const fadeUp = (delay = 0) => ({
@@ -47,21 +42,15 @@ const fadeUp = (delay = 0) => ({
 // ─── Paywall sub-components ─────────────────────────────────────────────────
 
 const ResonanceGuarantee = () => (
-  <motion.div
-    className="mt-8 py-5 px-5 border border-border/40"
+  <motion.p
+    className="mt-6 py-4 px-5 border border-border/40 font-body text-xs text-foreground/60 leading-relaxed"
     style={{ borderLeft: '2px solid hsl(168 95% 55%)' }}
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ delay: 0.6 }}
   >
-    <p className="font-ui text-[10px] uppercase tracking-[0.25em] text-accent mb-2">
-      THE RESONANCE GUARANTEE
-    </p>
-    <p className="font-body text-sm text-foreground/70 leading-relaxed">
-      If the composition doesn't feel like yours, say so within seven days. Full refund — and you keep the
-      report. This work is meant to resonate. If it doesn't, you owe nothing.
-    </p>
-  </motion.div>
+    If it doesn't feel like yours, say so within seven days — full refund, and you keep the report.
+  </motion.p>
 );
 
 interface SampleCardProps {
@@ -151,24 +140,13 @@ const SampleCard = ({ name, chart, musicalKey, src, delay = 0 }: SampleCardProps
 
 const SAMPLES: SampleCardProps[] = [
   { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E♭ MAJOR · LYDIAN', src: '/samples/einstein.mp3' },
-  { name: 'Scorpio Sun · Taurus Moon', chart: 'Fixed water · fixed earth', musicalKey: 'A♭ MINOR', src: '/samples/scorpio-taurus.mp3' },
-  { name: 'Leo Sun · Aquarius Moon', chart: 'Fixed fire · fixed air', musicalKey: 'C MAJOR', src: '/samples/leo-aquarius.mp3' },
 ];
 
 const SamplesSection = () => (
-  <motion.section id="samples" className="mb-16" {...fadeUp(0.1)}>
-    <div className="text-center mb-8">
-      <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-3">LISTEN FIRST</p>
-      <h2 className="font-hero text-[32px] md:text-[40px] leading-[0.95] text-foreground">
-        Every chart sounds{' '}
-        <em className="font-instrument text-gold italic">
-          different.
-        </em>
-      </h2>
-      <p className="font-body text-sm text-foreground/60 mt-3">
-        Same system, different birth data, different music.
-      </p>
-    </div>
+  <motion.section id="samples" className="mb-14" {...fadeUp(0.1)}>
+    <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-4 text-center">
+      LISTEN — ONE CHART
+    </p>
     <div className="space-y-4">
       {SAMPLES.map((s, i) => (
         <SampleCard key={s.src} {...s} delay={0.05 * i} />
@@ -177,145 +155,53 @@ const SamplesSection = () => (
   </motion.section>
 );
 
-const PricingTiers = ({ onUnlock }: { onUnlock: () => void }) => {
-  const remaining = FOUNDING_TOTAL - FOUNDING_CLAIMED;
-  return (
-    <motion.section className="mb-16" {...fadeUp(0.1)}>
-      <div className="text-center mb-8">
-        <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-3">THREE WAYS IN</p>
-        <h2 className="font-hero text-[32px] md:text-[40px] leading-[0.95] text-foreground">
-          Choose your{' '}
-          <em className="font-instrument text-gold italic">
-            depth.
-          </em>
-        </h2>
+const OfferCard = () => (
+  <motion.section className="mb-12" {...fadeUp(0.1)}>
+    <div
+      className="rounded-[18px] border bg-card/60 backdrop-blur-sm p-6"
+      style={{ borderColor: 'hsl(168 95% 55% / 0.5)', boxShadow: '0 0 40px hsl(168 75% 45% / 0.12)' }}
+    >
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <h2 className="font-playfair text-xl text-foreground">The Composition</h2>
+        <span className="font-data text-2xl text-foreground shrink-0">{PRICE}</span>
       </div>
+      <ul className="space-y-1.5 mb-6">
+        {[
+          'Your piece of music, composed from your exact chart',
+          'Full written analysis, narrated in the maker’s voice',
+          'Delivered within 24 hours',
+        ].map(item => (
+          <li key={item} className="flex items-start gap-2 font-body text-sm text-foreground/70">
+            <span className="text-accent mt-0.5 shrink-0">—</span>
+            {item}
+          </li>
+        ))}
+      </ul>
+      <a
+        href={CHECKOUT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full text-center py-3.5 rounded-full font-ui text-xs uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
+      >
+        Order the Composition — {PRICE}
+      </a>
+      <p className="font-body text-[11px] text-muted-foreground/60 leading-relaxed mt-4">
+        Want the notated score, lossless master, and a commercial license? Reply after purchase.
+      </p>
+    </div>
 
-      <div className="space-y-4">
-        {/* Tier 1 — The Key */}
-        <div className="rounded-[18px] border border-border/50 bg-card/50 backdrop-blur-sm p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span className="font-ui text-[9px] uppercase tracking-[0.25em] text-muted-foreground/60">ENTRY</span>
-              <h3 className="font-playfair text-xl text-foreground mt-0.5">The Key</h3>
-            </div>
-            <span className="font-data text-2xl text-foreground shrink-0">$14.99</span>
-          </div>
-          <p className="font-body text-sm text-foreground/65 leading-relaxed mb-4">
-            The written reading. It answers the opening question — what key is your chart in?
-          </p>
-          <ul className="space-y-1.5 mb-5">
-            {['Your musical key and mode', 'Core placements, interpreted in writing', 'Designed PDF, delivered instantly'].map(item => (
-              <li key={item} className="flex items-start gap-2 font-body text-xs text-foreground/70">
-                <span className="text-accent mt-0.5 shrink-0">—</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <a
-            href={CHECKOUT_URL_KEY}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 rounded-full border border-foreground/25 font-ui text-xs uppercase tracking-[0.2em] text-foreground hover:border-accent hover:text-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            Get the Key
-          </a>
-        </div>
+    <ResonanceGuarantee />
+  </motion.section>
+);
 
-        {/* Tier 2 — The Composition */}
-        <div
-          className="rounded-[18px] border bg-card/60 backdrop-blur-sm p-6 relative"
-          style={{ borderColor: 'hsl(168 95% 55% / 0.5)', boxShadow: '0 0 40px hsl(168 75% 45% / 0.12)' }}
-        >
-          <span
-            className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full font-ui text-[9px] uppercase tracking-[0.25em]"
-            style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
-          >
-            MOST CHOSEN
-          </span>
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span className="font-ui text-[9px] uppercase tracking-[0.25em] text-accent">CORE</span>
-              <h3 className="font-playfair text-xl text-foreground mt-0.5">The Composition</h3>
-            </div>
-            <span className="font-data text-2xl text-foreground shrink-0">$47</span>
-          </div>
-          <p className="font-body text-sm text-foreground/65 leading-relaxed mb-4">
-            The full astro-harmonic analysis — and the piece of music composed from your exact placements.
-          </p>
-          <ul className="space-y-1.5 mb-4">
-            {[
-              'Your custom composition, chart-exact',
-              'Full written analysis of every placement',
-              'Narrated PDF report',
-              'Delivered within 24 hours',
-            ].map(item => (
-              <li key={item} className="flex items-start gap-2 font-body text-xs text-foreground/70">
-                <span className="text-accent mt-0.5 shrink-0">—</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="font-data text-[10px] uppercase tracking-[0.18em] mb-5 text-gold">
-            FOUNDING WINDOW — {remaining} OF {FOUNDING_TOTAL} READINGS LEFT AT THIS PRICE
-          </p>
-          <a
-            href={CHECKOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 rounded-full font-ui text-xs uppercase tracking-[0.2em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
-          >
-            Order the Composition
-          </a>
-        </div>
 
-        {/* Tier 3 — The Full Score */}
-        <div className="rounded-[18px] border border-border/50 bg-card/50 backdrop-blur-sm p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span className="font-ui text-[9px] uppercase tracking-[0.25em] text-muted-foreground/60">COMPLETE</span>
-              <h3 className="font-playfair text-xl text-foreground mt-0.5">The Full Score</h3>
-            </div>
-            <span className="font-data text-2xl text-foreground shrink-0">$97</span>
-          </div>
-          <p className="font-body text-sm text-foreground/65 leading-relaxed mb-4">
-            Everything — the complete notated work, licensed for your own use.
-          </p>
-          <ul className="space-y-1.5 mb-5">
-            {[
-              'The Composition, in lossless WAV',
-              '20-page deep-dive chart report',
-              '12-month Moontuner lunar calendar',
-              'Commercial license for your own content',
-            ].map(item => (
-              <li key={item} className="flex items-start gap-2 font-body text-xs text-foreground/70">
-                <span className="text-accent mt-0.5 shrink-0">—</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <a
-            href={CHECKOUT_URL_SCORE}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3 rounded-full border border-foreground/25 font-ui text-xs uppercase tracking-[0.2em] text-foreground hover:border-accent hover:text-accent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            Get the Full Score
-          </a>
-        </div>
-      </div>
-
-      <ResonanceGuarantee />
-    </motion.section>
-  );
-};
-
-interface PaywallViewProps {
+interface LandingViewProps {
+  onStartFree: () => void;
   onUnlock: () => void;
 }
 
-const PaywallView = ({ onUnlock }: PaywallViewProps) => (
+const LandingView = ({ onStartFree, onUnlock }: LandingViewProps) => (
   <motion.main
     key="paywall"
     className="relative z-10 min-h-screen px-5 pt-10 pb-24"
@@ -329,63 +215,52 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
       {/* ── Hero ── */}
       <motion.header className="text-center mb-14 pt-8" {...fadeUp(0.05)}>
         <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent/70 mb-5">
-          <span className="text-accent">—</span> ASTRO-HARMONIC NATAL ANALYSIS
+          <span className="text-accent">—</span> WHAT KEY IS YOUR CHART IN?
         </p>
         <h1 className="font-hero font-[200] leading-[0.9] tracking-[-0.03em] text-foreground mb-6">
           <span className="block text-[44px] md:text-[64px]">Your cosmos,</span>
-          <em
-            className="block text-[44px] md:text-[64px] font-instrument text-gold italic"
-          >
+          <em className="block text-[44px] md:text-[64px] font-instrument text-gold italic">
             composed.
           </em>
         </h1>
         <div className="divider-gold max-w-[80px] mx-auto mb-6" />
-        <p className="font-body text-foreground/70 text-base md:text-[1.15rem] max-w-md mx-auto leading-relaxed">
-          Your birth chart, translated into a piece of music only you will ever have. Every planet voiced.
-          Every aspect rendered as frequency. Less horoscope. More harmonics.
+        <p className="font-body text-foreground/70 text-base md:text-[1.15rem] max-w-sm mx-auto leading-relaxed">
+          Your birth chart, rendered as a piece of music only you will ever have.
         </p>
-        <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <a
-            href={CHECKOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-full font-ui text-xs uppercase tracking-[0.22em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={onStartFree}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-full font-ui text-xs uppercase tracking-[0.22em] transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             style={{ background: 'hsl(40 10% 96%)', color: 'hsl(240 6% 4%)' }}
           >
-            Order your composition — $47
-          </a>
+            Find your key — free
+          </button>
           <a
             href="#samples"
             className="w-full sm:w-auto px-7 py-3.5 rounded-full border border-foreground/25 font-ui text-xs uppercase tracking-[0.22em] text-foreground hover:border-accent hover:text-accent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent text-center"
           >
-            Hear a chart first
+            Hear a chart
           </a>
         </div>
         <p className="font-data text-[10px] uppercase tracking-[0.18em] text-foreground/35 mt-4">
-          Delivered within 24 hours · One-time purchase · No subscription
+          No account · No card · Your chart in 30 seconds
         </p>
       </motion.header>
 
-      {/* ── Samples ── */}
+      {/* ── One sample ── */}
       <SamplesSection />
 
-      {/* ── Pricing ── */}
-      <PricingTiers onUnlock={onUnlock} />
+      {/* ── The offer ── */}
+      <OfferCard />
 
       {/* ── About ── */}
-      <motion.section className="glass-card p-6 mb-12" {...fadeUp(0.1)}>
-        <p className="font-ui text-[10px] uppercase tracking-[0.25em] mb-3 text-gold">
-          ABOUT THIS WORK
-        </p>
-        <p className="font-instrument text-base text-foreground/90 leading-relaxed italic mb-4">
+      <motion.section className="glass-card p-6 mb-10" {...fadeUp(0.1)}>
+        <p className="font-instrument text-base text-foreground/90 leading-relaxed italic mb-3">
           Your birth carried a sound worth hearing.
         </p>
         <p className="font-body text-sm text-foreground/70 leading-relaxed">
-          The Astro-Harmonic Engine is one composer-astrologer's system, built over years: every aspect
-          mapped to its musical interval, every planet given a voice and an instrument, every element rendered
-          as frequency. Each composition is generated from your exact placements — never a template. The
-          narration is read in the maker's own voice, so a thousand readings can ship without losing the human
-          imprint.
+          One composer-astrologer's system: every aspect mapped to its interval, every planet given an
+          instrument. Composed from your exact placements — never a template.
         </p>
       </motion.section>
 
@@ -401,7 +276,7 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
           onClick={onUnlock}
           className="underline underline-offset-2 hover:text-foreground/70 transition-colors"
         >
-          Click here to access your reading
+          Access your reading
         </button>
       </motion.p>
 
@@ -413,16 +288,14 @@ const PaywallView = ({ onUnlock }: PaywallViewProps) => (
         transition={{ delay: 1.1 }}
       >
         <p className="font-data text-[9px] uppercase tracking-[0.25em] text-foreground/40">
-          QUANTUMELODIES.COM · WHAT KEY IS YOUR CHART IN?
-        </p>
-        <p className="font-data text-[9px] uppercase tracking-[0.25em] text-foreground/40">
-          PART OF THE MOONTUNER SYSTEM · ASTROLOGY WITH AGENCY
+          QUANTUMELODIES.COM · PART OF THE MOONTUNER SYSTEM
         </p>
       </motion.footer>
 
     </div>
   </motion.main>
 );
+
 
 // ─── Helper to read/write payment session ───────────────────────────────────
 function hasPaidSession(): boolean {
@@ -447,23 +320,27 @@ const Index = () => {
     setReadingData,
   } = cosmicCtx;
 
-  // Determine initial state: unlock on ?paid=true redirect, session key, or existing reading
-  const [appState, setAppState] = useState<AppState>(() => {
-    const returnedFromCheckout = searchParams.get('paid') === 'true';
-    if (returnedFromCheckout) {
+  // Paid state drives whether the result renders full or as a locked teaser.
+  const [isPaid, setIsPaid] = useState<boolean>(() => {
+    if (searchParams.get('paid') === 'true') {
       setPaidSession();
-      return cosmicCtx.reading ? "result" : "input";
+      return true;
     }
-    if (hasPaidSession() || cosmicCtx.reading) {
-      return cosmicCtx.reading ? "result" : "input";
-    }
-    return "paywall";
+    return hasPaidSession();
   });
+
+  const [appState, setAppState] = useState<AppState>(() =>
+    cosmicCtx.reading ? "result" : (hasPaidSession() || searchParams.get('paid') === 'true' ? "input" : "paywall"),
+  );
 
   const handleUnlock = () => {
     setPaidSession();
+    setIsPaid(true);
     setAppState("input");
   };
+
+  const handleStartFree = () => setAppState("input");
+
 
   const {
     loading,
@@ -507,7 +384,7 @@ const Index = () => {
   const handleFormSubmit = async (data: BirthData) => {
     setAppState("generating");
     try {
-      const result = await generateReading(data);
+      const result = await generateReading(data, { withAudio: isPaid });
       if (result) {
         // Persist the chart immediately; audio state is updated via context as it arrives.
         setReadingData(result, null, null);
@@ -535,14 +412,14 @@ const Index = () => {
       <title>Astro-Harmonics: Your Cosmos Composed</title>
       <meta
         name="description"
-        content="Astro-Harmonics translates your birth chart into a piece of music only you will ever have. Every planet voiced. Every aspect rendered as frequency."
+        content="Find your chart's musical key free, then have your birth chart composed into a piece of music only you will ever have — $25."
       />
 
       <CosmicBackground />
 
       <AnimatePresence mode="wait">
         {appState === "paywall" && (
-          <PaywallView key="paywall" onUnlock={handleUnlock} />
+          <LandingView key="paywall" onStartFree={handleStartFree} onUnlock={handleUnlock} />
         )}
 
         {appState === "input" && (
@@ -632,6 +509,7 @@ const Index = () => {
                 audioUrl: url,
                 audioSource: source,
               }, url, source)}
+              locked={!isPaid}
               onBack={handleBack}
               onExplore={() => navigate("/explore")}
             />
@@ -668,6 +546,7 @@ interface ResultsViewProps {
   reading: import("@/types/astrology").CosmicReading;
   previewLoading: boolean;
   onMusicReady: (url: string, source: "elevenlabs" | "tone") => void;
+  locked?: boolean;
   onBack: () => void;
   onExplore: () => void;
 }
@@ -681,6 +560,7 @@ const ResultsView = ({
   reading,
   previewLoading,
   onMusicReady,
+  locked = false,
   onBack,
   onExplore,
 }: ResultsViewProps) => {
@@ -948,8 +828,89 @@ const ResultsView = ({
     setShowShareMenu(false);
   };
 
+  // ── Free preview: chart + key, everything else locked ──
+  if (locked) {
+    const teaserKey = qmReading?.overallKey || musicalMode;
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <motion.button
+          className="fixed top-5 left-5 z-50 text-muted-foreground/60 hover:text-foreground transition-colors text-sm tracking-wide flex items-center gap-1.5"
+          onClick={onBack}
+          whileHover={{ x: -2 }}
+        >
+          <span className="text-lg leading-none">‹</span>
+          <span>New chart</span>
+        </motion.button>
+
+        <motion.div className="text-center mb-5 pt-4" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
+          <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent/70 mb-3">YOUR FREE PREVIEW</p>
+          <h2 className="font-hero text-2xl md:text-3xl text-foreground leading-tight">{name}</h2>
+        </motion.div>
+
+        <motion.div
+          className="flex justify-center mb-6"
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <ZodiacWheel planets={chartData.planets} animate={false} />
+        </motion.div>
+
+        <motion.div
+          className="rounded-[18px] border border-border/50 bg-card/50 backdrop-blur-sm p-6 mb-6 text-center"
+          {...fadeUp(0.15)}
+        >
+          <p className="font-ui text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60 mb-2">
+            YOUR CHART IS IN
+          </p>
+          <p className="font-playfair text-3xl text-foreground mb-4">{teaserKey}</p>
+          <p className="font-body text-sm text-foreground/70 leading-relaxed">
+            The Sun in {chartData.sunSign} sets the key. The Moon in {chartData.moonSign} carries the
+            undercurrent beneath every phrase. {chartData.ascendant} rising is the opening bar — the first
+            thing a listener hears.
+          </p>
+        </motion.div>
+
+        {/* Locked: the composition and the full report */}
+        <motion.div className="relative rounded-[18px] overflow-hidden mb-6" {...fadeUp(0.2)}>
+          <div className="pointer-events-none select-none blur-[6px] opacity-40 p-6 space-y-3" aria-hidden>
+            <div className="h-28 rounded-xl border border-accent/30 bg-accent/5" />
+            <div className="h-3 w-2/3 rounded bg-foreground/25" />
+            <div className="h-3 w-full rounded bg-foreground/15" />
+            <div className="h-3 w-5/6 rounded bg-foreground/15" />
+            <div className="h-3 w-3/4 rounded bg-foreground/15" />
+            <div className="h-3 w-full rounded bg-foreground/15" />
+            <div className="h-3 w-1/2 rounded bg-foreground/15" />
+          </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
+            style={{ background: 'linear-gradient(hsl(240 6% 4% / 0.4), hsl(240 6% 4% / 0.9))' }}>
+            <p className="font-ui text-[10px] uppercase tracking-[0.28em] text-accent mb-3">STILL SEALED</p>
+            <p className="font-body text-sm text-foreground/80 max-w-xs leading-relaxed">
+              Your composition, the full written analysis, and the narrated report.
+            </p>
+          </div>
+        </motion.div>
+
+        <motion.a
+          href={CHECKOUT_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full text-center py-4 rounded-full font-ui text-xs uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-90"
+          style={{ background: 'hsl(168 95% 55%)', color: 'hsl(240 6% 4%)' }}
+          {...fadeUp(0.25)}
+        >
+          Hear your chart — {PRICE}
+        </motion.a>
+        <p className="font-data text-[10px] uppercase tracking-[0.18em] text-foreground/35 mt-3 text-center">
+          Delivered within 24 hours · One-time · Seven-day resonance guarantee
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-2xl mx-auto">
+
       {/* Back */}
       <motion.button
         className="fixed top-5 left-5 z-50 text-muted-foreground/60 hover:text-foreground transition-colors text-sm tracking-wide flex items-center gap-1.5"

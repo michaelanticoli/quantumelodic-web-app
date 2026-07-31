@@ -4,12 +4,9 @@ import { Play, Pause, ShieldCheck, Music2, FileText, Sparkles, Star } from 'luci
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { useNavigate } from 'react-router-dom';
 
-// Update this number manually as Founding Readings are claimed
-const FOUNDING_CLAIMED = 3;
-const FOUNDING_TOTAL = 50;
-
 // Replace with your live Stripe payment link
 const CHECKOUT_URL = 'https://buy.stripe.com/YOUR_LINK_HERE';
+const PRICE = '$25';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -45,7 +42,7 @@ const CtaButton = ({ delay = 0 }: { delay?: number }) => (
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
     >
-      Order your Astro-Harmonic Report — $47
+      Order your Astro-Harmonic Report — {PRICE}
     </motion.a>
     <RefundGuarantee />
   </div>
@@ -156,14 +153,14 @@ const ReportPreviewSection = () => {
 
 const QuantumMelodic = () => {
   const navigate = useNavigate();
-  const claimedPct = Math.round((FOUNDING_CLAIMED / FOUNDING_TOTAL) * 100);
+  
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       <title>Astro-Harmonic Report — Your Birth Chart, Composed</title>
       <meta
         name="description"
-        content="Your birth chart, composed into a piece of music only you will ever have. The Astro-Harmonic Report — $47 Founding Reading."
+        content="Your birth chart, composed into a piece of music only you will ever have. The Astro-Harmonic Report — $25."
       />
 
       <CosmicBackground />
@@ -201,43 +198,18 @@ const QuantumMelodic = () => {
             </p>
           </motion.header>
 
-          {/* ── Founding Reading Block ── */}
-          <motion.section
-            className="glass-card p-6 mb-8 space-y-4"
-            {...fadeUp(0.1)}
-          >
+          {/* ── The offer ── */}
+          <motion.section className="glass-card p-6 mb-8 space-y-3" {...fadeUp(0.1)}>
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-accent" />
-              <h2 className="font-display text-base font-semibold tracking-wide">Founding Readings</h2>
+              <h2 className="font-display text-base font-semibold tracking-wide">The Astro-Harmonic Report</h2>
             </div>
-
             <p className="text-sm text-foreground/80 leading-relaxed">
-              The first 50 Astro-Harmonic Reports are{' '}
-              <span className="text-foreground font-semibold">$47</span>.
-              After the fiftieth, the price becomes{' '}
-              <span className="text-muted-foreground line-through">$97</span>.
+              One composition, one full reading —{' '}
+              <span className="text-foreground font-semibold">{PRICE}</span>. One-time, no subscription.
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              You receive the same full reading either way. Founding pricing exists for the people willing to be early —
-              the ones who help prove the work resonates.
-            </p>
-
-            {/* Progress bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-                <span>{FOUNDING_CLAIMED} of {FOUNDING_TOTAL} claimed</span>
-                <span>{FOUNDING_TOTAL - FOUNDING_CLAIMED} remaining</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-accent"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${claimedPct}%` }}
-                  transition={{ delay: 0.6, duration: 1, ease: 'easeOut' }}
-                />
-              </div>
-            </div>
           </motion.section>
+
 
           {/* ── First CTA ── */}
           <motion.div className="mb-12" {...fadeUp(0.15)}>
