@@ -160,7 +160,7 @@ const QuantumMelodic = () => {
       <title>Astro-Harmonic Report — Your Birth Chart, Composed</title>
       <meta
         name="description"
-        content="Your birth chart, composed into a piece of music only you will ever have. The Astro-Harmonic Report — $47 Founding Reading."
+        content="Your birth chart, composed into a piece of music only you will ever have. The Astro-Harmonic Report — $25."
       />
 
       <CosmicBackground />
