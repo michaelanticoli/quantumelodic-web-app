@@ -425,7 +425,7 @@ const Index = () => {
 
       <AnimatePresence mode="wait">
         {appState === "paywall" && (
-          <PaywallView key="paywall" onUnlock={handleUnlock} />
+          <LandingView key="paywall" onStartFree={handleStartFree} onUnlock={handleUnlock} />
         )}
 
         {appState === "input" && (
