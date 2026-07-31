@@ -42,7 +42,7 @@ const CtaButton = ({ delay = 0 }: { delay?: number }) => (
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
     >
-      Order your Astro-Harmonic Report — $47
+      Order your Astro-Harmonic Report — {PRICE}
     </motion.a>
     <RefundGuarantee />
   </div>
