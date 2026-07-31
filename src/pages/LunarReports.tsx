@@ -43,7 +43,6 @@ const fadeUp = (delay = 0) => ({
 });
 
 function Paywall() {
-  const claimedPct = Math.round((FOUNDING_CLAIMED / FOUNDING_TOTAL) * 100);
   return (
     <div className="max-w-xl mx-auto pt-8 pb-24 space-y-10">
       {/* Hero */}
