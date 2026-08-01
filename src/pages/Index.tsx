@@ -139,13 +139,15 @@ const SampleCard = ({ name, chart, musicalKey, src, delay = 0 }: SampleCardProps
 };
 
 const SAMPLES: SampleCardProps[] = [
-  { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E♭ MAJOR · LYDIAN', src: '/samples/einstein.mp3' },
+  { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E♭ MAJOR · LYDIAN', src: debut1Asset.url },
+  { name: 'Frida Kahlo', chart: 'Cancer Sun · Taurus Moon', musicalKey: 'B MINOR · AEOLIAN', src: debutLiteAsset.url },
+  { name: 'Nikola Tesla', chart: 'Cancer Sun · Sagittarius Moon', musicalKey: 'A MINOR · DORIAN', src: '/sample-composition.mp3' },
 ];
 
 const SamplesSection = () => (
   <motion.section id="samples" className="mb-14" {...fadeUp(0.1)}>
     <p className="font-ui text-[10px] uppercase tracking-[0.3em] text-accent mb-4 text-center">
-      LISTEN — ONE CHART
+      LISTEN — THREE CHARTS
     </p>
     <div className="space-y-4">
       {SAMPLES.map((s, i) => (
