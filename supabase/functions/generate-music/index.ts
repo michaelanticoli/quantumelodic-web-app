@@ -311,26 +311,28 @@ function buildQMPrompt(
 
 // ── Fallback prompt (when QM data unavailable) ────────────────────────────────
 
-const fallbackModes: Record<string, { mode: string; mood: string; tempo: string }> = {
-  'Aries': { mode: 'Phrygian', mood: 'fierce, energetic, bold', tempo: 'fast' },
-  'Taurus': { mode: 'Ionian', mood: 'grounded, sensual, luxurious', tempo: 'slow' },
-  'Gemini': { mode: 'Mixolydian', mood: 'playful, curious, mercurial', tempo: 'upbeat' },
-  'Cancer': { mode: 'Aeolian', mood: 'nurturing, emotional, nostalgic', tempo: 'gentle' },
-  'Leo': { mode: 'Lydian', mood: 'majestic, radiant, theatrical', tempo: 'moderate' },
-  'Virgo': { mode: 'Dorian', mood: 'precise, analytical, ethereal', tempo: 'moderate' },
-  'Libra': { mode: 'Ionian', mood: 'harmonious, balanced, elegant', tempo: 'flowing' },
-  'Scorpio': { mode: 'Locrian', mood: 'intense, mysterious, transformative', tempo: 'slow' },
-  'Sagittarius': { mode: 'Mixolydian', mood: 'adventurous, expansive, optimistic', tempo: 'fast' },
-  'Capricorn': { mode: 'Dorian', mood: 'structured, ambitious, timeless', tempo: 'steady' },
-  'Aquarius': { mode: 'Lydian', mood: 'innovative, eccentric, futuristic', tempo: 'varied' },
-  'Pisces': { mode: 'Phrygian', mood: 'dreamy, spiritual, otherworldly', tempo: 'flowing' },
+const fallbackModes: Record<string, { mode: string; mood: string; key: string; bpm: number }> = {
+  'Aries': { mode: 'Phrygian', mood: 'fierce, energetic, bold', key: 'A minor', bpm: 140 },
+  'Taurus': { mode: 'Ionian', mood: 'grounded, sensual, luxurious', key: 'F major', bpm: 72 },
+  'Gemini': { mode: 'Mixolydian', mood: 'playful, curious, mercurial', key: 'G major', bpm: 120 },
+  'Cancer': { mode: 'Aeolian', mood: 'nurturing, emotional, nostalgic', key: 'A minor', bpm: 66 },
+  'Leo': { mode: 'Lydian', mood: 'majestic, radiant, theatrical', key: 'D major', bpm: 108 },
+  'Virgo': { mode: 'Dorian', mood: 'precise, analytical, ethereal', key: 'D minor', bpm: 96 },
+  'Libra': { mode: 'Ionian', mood: 'harmonious, balanced, elegant', key: 'Bb major', bpm: 88 },
+  'Scorpio': { mode: 'Locrian', mood: 'intense, mysterious, transformative', key: 'B locrian', bpm: 76 },
+  'Sagittarius': { mode: 'Mixolydian', mood: 'adventurous, expansive, optimistic', key: 'E major', bpm: 132 },
+  'Capricorn': { mode: 'Dorian', mood: 'structured, ambitious, timeless', key: 'C minor', bpm: 84 },
+  'Aquarius': { mode: 'Lydian', mood: 'innovative, eccentric, futuristic', key: 'F# major', bpm: 116 },
+  'Pisces': { mode: 'Phrygian', mood: 'dreamy, spiritual, otherworldly', key: 'E phrygian', bpm: 60 },
 };
 
 function buildFallbackPrompt(sunSign: string, moonSign: string): string {
   const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
   const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
-  return `Instrumental piano composition — NO vocals, NO lyrics, NO voice of any kind. Piano is the ONLY lead instrument. Style: avant-garde solo/chamber piano — acoustic, felt-muted, prepared-piano techniques, and open-pedal resonance. HARD NO to: flutes, harps, choir, orchestral pads, wind chimes, cinematic swells, spa, fantasy soundtrack. Sparse texture: dry or reverbed acoustic piano leads; minimal experimental percussion and distant cello drone as shadow only. References: Chilly Gonzales solo piano, Philip Glass études, Haushka prepared piano, Tori Amos deconstructed piano. Harmonic blend of ${sun.mode} and ${moon.mode}, ${sun.tempo} to ${moon.tempo} pulse, emotionally ${sun.mood} + ${moon.mood}. Through-composed, rhythmically alive, emotionally specific, strange and beautiful. Tell the natal chart's story through the piano alone.`;
+  const bpm = Math.round((sun.bpm + moon.bpm) / 2);
+  return `Instrumental piano composition — NO vocals, NO lyrics, NO voice of any kind. Piano is the ONLY lead instrument. Style: avant-garde solo/chamber piano — acoustic, felt-muted, prepared-piano techniques, and open-pedal resonance. HARD NO to: flutes, harps, choir, orchestral pads, wind chimes, cinematic swells, spa, fantasy soundtrack. Sparse texture: dry or reverbed acoustic piano leads; minimal experimental percussion and distant cello drone as shadow only. References: Chilly Gonzales solo piano, Philip Glass études, Haushka prepared piano, Tori Amos deconstructed piano. STRICT TONAL SPEC — obey exactly: tonic/key centre is ${sun.key}; governing scale/mode is ${sun.mode} coloured by ${moon.mode}; tempo is ${bpm} BPM steady. Open on the tonic of ${sun.key} and cadence back to it; do not transpose and do not drift from ${bpm} BPM. Emotionally ${sun.mood} + ${moon.mood}. Through-composed, rhythmically alive, emotionally specific, strange and beautiful. Tell the natal chart's story through the piano alone.`;
 }
+
 
 // ── Main handler ─────────────────────────────────────────────────────────
 
