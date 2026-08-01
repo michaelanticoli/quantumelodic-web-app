@@ -17,6 +17,8 @@ import { useCosmicReadingContext } from "@/contexts/CosmicReadingContext";
 import { useQuantumMelodicData } from "@/hooks/useQuantumMelodicData";
 import { useToast } from "@/hooks/use-toast";
 import { generateChartMusic } from "@/lib/cosmicReadings";
+import debut1Asset from "@/assets/moontuner-debut-1.mp3.asset.json";
+import debutLiteAsset from "@/assets/moontuner-debut-lite.mp3.asset.json";
 import {
   createDownloadableAudioUrl,
   createNatalHarmonicPdfUrl,
