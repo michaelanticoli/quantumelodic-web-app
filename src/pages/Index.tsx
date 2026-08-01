@@ -141,10 +141,11 @@ const SampleCard = ({ name, chart, musicalKey, src, delay = 0 }: SampleCardProps
 };
 
 const SAMPLES: SampleCardProps[] = [
-  { name: 'Albert Einstein', chart: 'Pisces Sun · Sagittarius Moon', musicalKey: 'E♭ MAJOR · LYDIAN', src: debut1Asset.url },
-  { name: 'Frida Kahlo', chart: 'Cancer Sun · Taurus Moon', musicalKey: 'B MINOR · AEOLIAN', src: debutLiteAsset.url },
-  { name: 'Nikola Tesla', chart: 'Cancer Sun · Sagittarius Moon', musicalKey: 'A MINOR · DORIAN', src: '/sample-composition.mp3' },
+  { name: 'Chart No. 01', chart: 'Virgo Sun · Capricorn Moon', musicalKey: 'D MINOR · DORIAN', src: debut1Asset.url },
+  { name: 'Chart No. 02', chart: 'Cardinal air · mutable ascendant', musicalKey: 'C MAJOR · IONIAN', src: debutLiteAsset.url },
+  { name: 'Chart No. 03', chart: 'Cancer Sun · Sagittarius Moon', musicalKey: 'A MINOR · AEOLIAN', src: '/sample-composition.mp3' },
 ];
+
 
 const SamplesSection = () => (
   <motion.section id="samples" className="mb-14" {...fadeUp(0.1)}>
