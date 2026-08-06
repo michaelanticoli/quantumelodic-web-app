@@ -4,8 +4,8 @@ import { Play, Pause, ShieldCheck, Music2, FileText, Sparkles, Star } from 'luci
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { useNavigate } from 'react-router-dom';
 
-// Replace with your live Stripe payment link
-const CHECKOUT_URL = 'https://buy.stripe.com/YOUR_LINK_HERE';
+// Live Stripe payment link for Astro-Harmonic report (charges $25)
+const CHECKOUT_URL = 'https://buy.stripe.com/bJe28q0Si6oGgPde2J2Ji0e';
 const PRICE = '$25';
 
 const fadeUp = (delay = 0) => ({
