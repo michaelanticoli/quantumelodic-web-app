@@ -31,7 +31,7 @@ import type { BirthData } from "@/types/astrology";
 // ─── Offer constants ────────────────────────────────────────────────────────
 // TODO: Replace with your live $25 Stripe payment link.
 // Set its success redirect to: https://quantumelodies.com/?paid=true
-const CHECKOUT_URL = 'https://buy.stripe.com/9B614mbaWfPu5ebcCZe7m0b';
+const CHECKOUT_URL = 'https://buy.stripe.com/6oU3cua6S5aQayv5axe7m0d';
 const PRICE = '$25';
 const PAID_SESSION_KEY = 'quantumelodic_paid';
 

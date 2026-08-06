@@ -5,7 +5,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { useNavigate } from 'react-router-dom';
 
 // Live Stripe payment link for Astro-Harmonic report (charges $25)
-const CHECKOUT_URL = 'https://buy.stripe.com/bJe28q0Si6oGgPde2J2Ji0e';
+const CHECKOUT_URL = 'https://buy.stripe.com/6oU3cua6S5aQayv5axe7m0d';
 const PRICE = '$25';
 
 const fadeUp = (delay = 0) => ({
