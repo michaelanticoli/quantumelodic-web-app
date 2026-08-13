@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Expose-Headers': 'X-Sun-Sign, X-Moon-Sign, X-Key, X-Mode, X-Tempo, X-QM-Enhanced',
 };
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -195,12 +196,19 @@ function calculateTopAspects(planets: PlanetPosition[], qmAspects: QMAspect[], l
 
 // ── QuantumMelodic prompt builder ─────────────────────────────────────────────
 
+interface MusicSpec {
+  prompt: string;
+  key: string;
+  mode: string;
+  tempo: number;
+}
+
 function buildQMPrompt(
   req: RequestBody,
   qmSigns: QMSign[],
   qmPlanets: QMPlanet[],
   qmAspects: QMAspect[],
-): string {
+): MusicSpec {
   const { sunSign, moonSign, ascendant, planets } = req;
 
   const sunSignData = qmSigns.find(s => s.name === sunSign);
@@ -306,7 +314,8 @@ function buildQMPrompt(
 
   // ElevenLabs music API — 1500 char ceiling; style header is front-loaded so prohibitions survive any trim
   const MAX_PROMPT_LENGTH = 1500;
-  return prompt.length > MAX_PROMPT_LENGTH ? prompt.substring(0, MAX_PROMPT_LENGTH - 3) + '...' : prompt;
+  const trimmed = prompt.length > MAX_PROMPT_LENGTH ? prompt.substring(0, MAX_PROMPT_LENGTH - 3) + '...' : prompt;
+  return { prompt: trimmed, key, mode, tempo: avgTempo };
 }
 
 // ── Fallback prompt (when QM data unavailable) ────────────────────────────────
@@ -326,11 +335,12 @@ const fallbackModes: Record<string, { mode: string; mood: string; key: string; b
   'Pisces': { mode: 'Phrygian', mood: 'dreamy, spiritual, otherworldly', key: 'E phrygian', bpm: 60 },
 };
 
-function buildFallbackPrompt(sunSign: string, moonSign: string): string {
+function buildFallbackPrompt(sunSign: string, moonSign: string): MusicSpec {
   const sun = fallbackModes[sunSign] || fallbackModes['Leo'];
   const moon = fallbackModes[moonSign] || fallbackModes['Cancer'];
   const bpm = Math.round((sun.bpm + moon.bpm) / 2);
-  return `Instrumental piano composition — NO vocals, NO lyrics, NO voice of any kind. Piano is the ONLY lead instrument. Style: avant-garde solo/chamber piano — acoustic, felt-muted, prepared-piano techniques, and open-pedal resonance. HARD NO to: flutes, harps, choir, orchestral pads, wind chimes, cinematic swells, spa, fantasy soundtrack. Sparse texture: dry or reverbed acoustic piano leads; minimal experimental percussion and distant cello drone as shadow only. References: Chilly Gonzales solo piano, Philip Glass études, Haushka prepared piano, Tori Amos deconstructed piano. STRICT TONAL SPEC — obey exactly: tonic/key centre is ${sun.key}; governing scale/mode is ${sun.mode} coloured by ${moon.mode}; tempo is ${bpm} BPM steady. Open on the tonic of ${sun.key} and cadence back to it; do not transpose and do not drift from ${bpm} BPM. Emotionally ${sun.mood} + ${moon.mood}. Through-composed, rhythmically alive, emotionally specific, strange and beautiful. Tell the natal chart's story through the piano alone.`;
+  const prompt = `Instrumental piano composition — NO vocals, NO lyrics, NO voice of any kind. Piano is the ONLY lead instrument. Style: avant-garde solo/chamber piano — acoustic, felt-muted, prepared-piano techniques, and open-pedal resonance. HARD NO to: flutes, harps, choir, orchestral pads, wind chimes, cinematic swells, spa, fantasy soundtrack. Sparse texture: dry or reverbed acoustic piano leads; minimal experimental percussion and distant cello drone as shadow only. References: Chilly Gonzales solo piano, Philip Glass études, Haushka prepared piano, Tori Amos deconstructed piano. STRICT TONAL SPEC — obey exactly: tonic/key centre is ${sun.key}; governing scale/mode is ${sun.mode} coloured by ${moon.mode}; tempo is ${bpm} BPM steady. Open on the tonic of ${sun.key} and cadence back to it; do not transpose and do not drift from ${bpm} BPM. Emotionally ${sun.mood} + ${moon.mood}. Through-composed, rhythmically alive, emotionally specific, strange and beautiful. Tell the natal chart's story through the piano alone.`;
+  return { prompt, key: sun.key, mode: sun.mode, tempo: bpm };
 }
 
 
@@ -377,7 +387,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
 
-    let prompt: string;
+    let spec: MusicSpec;
     // Track which data source was used for the X-QM-Enhanced response header
     let promptSource: 'qm-tables' | 'fallback-tables' | 'fallback-prompt' = 'fallback-prompt';
 
@@ -397,25 +407,26 @@ serve(async (req) => {
         const qmAspects = aspectsResult.data;
 
         if (qmSigns.length > 0 && qmPlanets.length > 0) {
-          prompt = buildQMPrompt(validation.data, qmSigns, qmPlanets, qmAspects);
+          spec = buildQMPrompt(validation.data, qmSigns, qmPlanets, qmAspects);
           // Determine if we used the primary qm_* tables or the fallback names
           const usedPrimary =
             signsResult.tableUsed === 'qm_signs' && planetsResult.tableUsed === 'qm_planets';
           promptSource = usedPrimary ? 'qm-tables' : 'fallback-tables';
-          console.log(`Built QuantumMelodic prompt via ${promptSource}. Length:`, prompt.length);
+          console.log(`Built QuantumMelodic prompt via ${promptSource}. Length:`, spec.prompt.length);
         } else {
           console.warn('All sign/planet table attempts returned 0 rows — using fallback prompt');
-          prompt = buildFallbackPrompt(sunSign, moonSign);
+          spec = buildFallbackPrompt(sunSign, moonSign);
         }
       } catch (dbErr) {
         console.warn('QM DB fetch failed, using fallback prompt:', dbErr);
-        prompt = buildFallbackPrompt(sunSign, moonSign);
+        spec = buildFallbackPrompt(sunSign, moonSign);
       }
     } else {
       console.warn('Supabase env vars missing — using fallback prompt');
-      prompt = buildFallbackPrompt(sunSign, moonSign);
+      spec = buildFallbackPrompt(sunSign, moonSign);
     }
 
+    const prompt = spec.prompt;
     console.log('Final music prompt:', prompt);
 
     // ── Call ElevenLabs Music API ──
@@ -457,16 +468,15 @@ serve(async (req) => {
     const audioBuffer = await response.arrayBuffer();
     console.log('Music generated successfully, size:', audioBuffer.byteLength, 'bytes');
 
-    // Determine musical mode for header
-    const modeForHeader = fallbackModes[sunSign]?.mode || 'Dorian';
-
     return new Response(audioBuffer, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'audio/mpeg',
         'X-Sun-Sign': sunSign,
         'X-Moon-Sign': moonSign,
-        'X-Mode': modeForHeader,
+        'X-Key': spec.key,
+        'X-Mode': spec.mode,
+        'X-Tempo': String(spec.tempo),
         'X-QM-Enhanced': promptSource,
       },
     });

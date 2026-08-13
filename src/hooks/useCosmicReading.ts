@@ -68,7 +68,7 @@ export function useCosmicReading() {
         throw new Error(`Music render timed out after ${PREVIEW_RENDER_TIMEOUT_MS / 1000}s`);
       }
 
-      const { url, source } = result;
+      const { url, source, assignedKey, assignedMode, assignedTempo, keyVerified, detectedKey } = result;
 
       if (previewRequestRef.current !== requestId) {
         URL.revokeObjectURL(url);
@@ -81,8 +81,13 @@ export function useCosmicReading() {
         return url;
       });
       setReading((current) => current ? { ...current, audioUrl: url, audioSource: source } : current);
+      const keyLine = assignedKey
+        ? `${assignedKey}${assignedMode ? ` · ${assignedMode}` : ''}${assignedTempo ? ` · ${assignedTempo} BPM` : ''}`
+        : null;
       toast('Your ElevenLabs composition is ready', {
-        description: 'A finished MP3 track generated from your chart.',
+        description: keyLine
+          ? `${keyLine}${keyVerified === false ? ` (rendered closer to ${detectedKey?.label ?? 'another key'})` : ' — key verified'}`
+          : 'A finished MP3 track generated from your chart.',
       });
     } catch (audioErr) {
       if (previewRequestRef.current !== requestId) return;
