@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { planetSynesthesia } from '@/lib/synesthesia';
 import { motion } from 'framer-motion';
 import type { PlanetPosition } from '@/types/astrology';
 import type { ComputedAspect } from '@/types/quantumMelodic';
@@ -255,10 +256,17 @@ export const InteractiveZodiacWheel = ({
         const isEnabled = !enabledPlanets || isAsc || enabledPlanets.has(planet.name);
         const radius = isAsc ? 14 : 20;
         const planetKey = toPlanetName(planet.name);
+        const syn = planetSynesthesia(planet.name, planet.sign);
+        const synColor = syn?.lightColor;
 
         return (
           <g key={planet.name} opacity={isEnabled ? 1 : 0.18}>
-            {isSel && (
+            {synColor && (
+              <circle cx={x} cy={y} r={radius + (isSel ? 10 : 4)}
+                fill={synColor} opacity={isSel ? 0.35 : 0.12}
+                filter="url(#glow-lg)" pointerEvents="none" />
+            )}
+            {isSel && !synColor && (
               <circle cx={x} cy={y} r={radius + 8}
                 fill="hsl(var(--accent) / 0.18)"
                 filter="url(#glow-lg)" />
@@ -267,7 +275,7 @@ export const InteractiveZodiacWheel = ({
             <motion.circle
               cx={x} cy={y} r={radius}
               fill={isSel ? 'hsl(var(--accent))' : 'hsl(var(--background))'}
-              stroke={isSel ? 'hsl(var(--accent))' : 'hsl(var(--foreground) / 0.35)'}
+              stroke={isSel ? 'hsl(var(--accent))' : (synColor ?? 'hsl(var(--foreground) / 0.35)')}
               strokeWidth={isSel ? 1.5 : 0.75}
               className="cursor-pointer"
               onClick={() => onPlanetClick(planet)}

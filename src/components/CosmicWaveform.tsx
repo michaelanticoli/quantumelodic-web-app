@@ -3,7 +3,8 @@
  * Renders a minimal starfield + thin frequency bars that react to audio.
  * When idle it breathes gently. Zero heavy canvas wave-layers.
  */
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
+import { fftToChroma, pitchClassHue, PITCH_CLASSES } from '@/lib/synesthesia';
 
 export type WaveformPalette = 'gold' | 'fire' | 'earth' | 'air' | 'water';
 
@@ -12,6 +13,8 @@ interface CosmicWaveformProps {
   palette?: WaveformPalette;
   idleIntensity?: number;
   className?: string;
+  /** Show the live Chromatone pitch-colour ring + dominant note readout */
+  showChroma?: boolean;
 }
 
 // Primary hues per palette (HSL h values)
@@ -39,7 +42,11 @@ export const CosmicWaveform = ({
   palette = 'gold',
   idleIntensity = 0.4,
   className = '',
+  showChroma = true,
 }: CosmicWaveformProps) => {
+  const chromaRef = useRef<number[]>(new Array(12).fill(0));
+  const [dominant, setDominant] = useState<number | null>(null);
+  const lastDomRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -60,8 +67,8 @@ export const CosmicWaveform = ({
       const ctx = audioCtxRef.current;
       if (!analyserRef.current) {
         analyserRef.current = ctx.createAnalyser();
-        analyserRef.current.fftSize = 256;
-        analyserRef.current.smoothingTimeConstant = 0.85;
+        analyserRef.current.fftSize = 8192;
+        analyserRef.current.smoothingTimeConstant = 0.8;
         analyserRef.current.connect(ctx.destination);
       }
       if (!sourceRef.current) {
@@ -104,11 +111,16 @@ export const CosmicWaveform = ({
     if (analyserRef.current) {
       analyserRef.current.getByteFrequencyData(freqDataRef.current);
       const binCount = freqDataRef.current.length;
-      const step = Math.floor(binCount / 32);
+      // Log-spaced bands over the musical range (~40Hz–4kHz)
+      const sr = audioCtxRef.current?.sampleRate || 44100;
+      const binHz = sr / (binCount * 2);
+      const target = fftToChroma(freqDataRef.current, sr, binCount * 2);
+      chromaRef.current = chromaRef.current.map((c, i) => c * 0.85 + target[i] * 0.15);
+      const edges = Array.from({ length: 33 }, (_, k) => Math.max(1, Math.floor((40 * Math.pow(100, k / 32)) / binHz)));
       for (let b = 0; b < 32; b++) {
-        let sum = 0;
-        for (let i = b * step; i < (b + 1) * step; i++) sum += freqDataRef.current[i];
-        bands.push((sum / step) / 255);
+        let sum = 0; let n = 0;
+        for (let i = edges[b]; i <= Math.max(edges[b], edges[b + 1] - 1); i++) { sum += freqDataRef.current[i]; n++; }
+        bands.push((sum / Math.max(n, 1)) / 255);
       }
     }
     const hasAudio = bands.length > 0 && bands.some(v => v > 0.02);
@@ -123,7 +135,22 @@ export const CosmicWaveform = ({
     ctx.fillStyle = 'rgba(0,0,0,0.92)';
     ctx.fillRect(0, 0, w, h);
 
-    const [h1, h2] = PALETTE_HUE[paletteRef.current];
+    let [h1, h2] = PALETTE_HUE[paletteRef.current];
+    // ── Synesthetic tint: dominant pitch class drives hue (Chromatone wheel) ──
+    const chroma = chromaRef.current;
+    let dom = -1; let domV = 0;
+    chroma.forEach((v, i) => { if (v > domV) { domV = v; dom = i; } });
+    if (hasAudio && dom >= 0 && domV > 0.3) {
+      h1 = pitchClassHue(dom);
+      h2 = pitchClassHue(dom + 7); // the fifth
+      if (lastDomRef.current !== dom) { lastDomRef.current = dom; setDominant(dom); }
+      // ambient glow of the sounding note
+      const glow = ctx.createRadialGradient(w / 2, h * 0.7, 0, w / 2, h * 0.7, w * 0.6);
+      glow.addColorStop(0, `hsla(${h1}, 90%, 55%, 0.18)`);
+      glow.addColorStop(1, `hsla(${h1}, 90%, 55%, 0)`);
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+    }
 
     // ── Stars ──────────────────────────────────────────────
     starsRef.current.forEach(star => {
@@ -144,7 +171,7 @@ export const CosmicWaveform = ({
       const v = bands[i] || 0;
       const barH = v * maxBarH;
       const x = (i / barCount) * w + w / barCount / 2;
-      const hue = h1 + ((h2 - h1) * i) / barCount;
+      const hue = hasAudio && domV > 0.3 ? pitchClassHue(Math.round((i / barCount) * 12 * 2)) : h1 + ((h2 - h1) * i) / barCount;
       const alpha = 0.4 + v * 0.6;
 
       // Bar
@@ -180,8 +207,22 @@ export const CosmicWaveform = ({
     ctx.lineTo(w, baseY);
     ctx.stroke();
 
+    // ── Chroma ring (12 pitch classes on the colour wheel) ──
+    if (showChroma) {
+      const rx = w - 34, ry = 34, rr = 20;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const v = hasAudio ? chroma[i] : 0.15;
+        ctx.beginPath();
+        ctx.arc(rx + Math.cos(a) * rr, ry + Math.sin(a) * rr, 1.5 + v * 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${pitchClassHue(i)}, 90%, 60%, ${0.25 + v * 0.75})`;
+        ctx.fill();
+      }
+    }
+    if (!hasAudio && lastDomRef.current !== null) { lastDomRef.current = null; setDominant(null); }
+
     rafRef.current = requestAnimationFrame(draw);
-  }, [idleIntensity]);
+  }, [idleIntensity, showChroma]);
 
   useEffect(() => {
     rafRef.current = requestAnimationFrame(draw);
@@ -189,10 +230,20 @@ export const CosmicWaveform = ({
   }, [draw]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      style={{ width: '100%', height: '100%', display: 'block' }}
-    />
+    <div className="relative w-full h-full">
+      <canvas
+        ref={canvasRef}
+        className={className}
+        style={{ width: '100%', height: '100%', display: 'block' }}
+      />
+      {showChroma && dominant !== null && (
+        <span
+          className="absolute top-[26px] right-[34px] translate-x-1/2 -translate-y-1/2 font-mono text-[10px] text-foreground pointer-events-none"
+          aria-live="polite"
+        >
+          {PITCH_CLASSES[dominant]}
+        </span>
+      )}
+    </div>
   );
 };
