@@ -7,6 +7,7 @@ import { elementInfo, qualityInfo, getFrequencyCategory, houseWisdom } from '@/u
 import { Button } from '@/components/ui/button';
 import { CosmicWaveform, paletteFromSign } from '@/components/CosmicWaveform';
 import { requestGeneratedSound } from '@/lib/supabaseSound';
+import { planetSynesthesia } from '@/lib/synesthesia';
 import { PlanetSigil, ZodiacSigil, toPlanetName, toZodiacSign } from '@/components/sigils';
 
 interface EnrichedPlanet {
@@ -42,6 +43,7 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
   const elemInfo = signData?.element ? elementInfo[signData.element] : null;
   const qualInfo = signData?.modality ? qualityInfo[signData.modality] : null;
   const houseWisdomInfo = houseWisdom[houseNumber];
+  const syn = planetSynesthesia(position.name, position.sign);
 
   const cleanupAudio = useCallback(() => {
     if (audioRef.current) {
@@ -154,6 +156,27 @@ export const PlanetDetailPanel = ({ planet, onClose }: Props) => {
         </div>
 
         <div className="p-6 space-y-6">
+          {syn && (
+            <section>
+              <h3 className="text-xs uppercase tracking-widest text-primary mb-3">Synesthetic Signature</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass rounded-xl p-4 flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full shrink-0" style={{ background: syn.lightColor, boxShadow: `0 0 18px ${syn.lightColor}` }} />
+                  <div>
+                    <p className="text-lg font-light text-foreground">{syn.wavelengthNm} nm</p>
+                    <p className="text-xs text-muted-foreground">Cosmic Octave light · {syn.hz} Hz ({syn.note})</p>
+                  </div>
+                </div>
+                <div className="glass rounded-xl p-4 flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full shrink-0" style={{ background: `hsl(${syn.signHue} 90% 55%)`, boxShadow: `0 0 18px hsl(${syn.signHue} 90% 55%)` }} />
+                  <div>
+                    <p className="text-lg font-light text-foreground">{syn.signNote}</p>
+                    <p className="text-xs text-muted-foreground">{position.sign} on the chroma wheel</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
           {/* Planetary Frequency */}
           {qmData && (
             <section>
