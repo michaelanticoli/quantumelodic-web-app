@@ -116,21 +116,11 @@ export const CosmicWaveform = ({
       const binHz = sr / (binCount * 2);
       const target = fftToChroma(freqDataRef.current, sr, binCount * 2);
       chromaRef.current = chromaRef.current.map((c, i) => c * 0.85 + target[i] * 0.15);
-      const step = 1;
       const edges = Array.from({ length: 33 }, (_, k) => Math.max(1, Math.floor((40 * Math.pow(100, k / 32)) / binHz)));
       for (let b = 0; b < 32; b++) {
         let sum = 0; let n = 0;
         for (let i = edges[b]; i <= Math.max(edges[b], edges[b + 1] - 1); i++) { sum += freqDataRef.current[i]; n++; }
         bands.push((sum / Math.max(n, 1)) / 255);
-      }
-      void step;
-    }
-    if (false) {
-      const step = 1;
-      for (let b = 0; b < 32; b++) {
-        let sum = 0;
-        for (let i = b * step; i < (b + 1) * step; i++) sum += freqDataRef.current[i];
-        bands.push((sum / step) / 255);
       }
     }
     const hasAudio = bands.length > 0 && bands.some(v => v > 0.02);
